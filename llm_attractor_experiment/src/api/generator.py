@@ -1,0 +1,152 @@
+from __future__ import annotations
+
+import random
+import time
+from dataclasses import dataclass
+from typing import Any
+
+from openai import OpenAI
+
+from src.config import Config
+from src.utils.logging import get_logger
+
+log = get_logger(__name__)
+
+
+@dataclass
+class GenerationResult:
+    output_text: str
+    model: str
+    response_id: str | None
+    latency_sec: float
+    retries: int
+    raw: dict
+    logprobs: Any | None = None
+
+
+_RETRYABLE_HINTS = (
+    "rate limit",
+    "timeout",
+    "temporar",
+    "overload",
+    "503",
+    "502",
+    "500",
+    "connection",
+)
+
+
+def _is_retryable(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return any(h in msg for h in _RETRYABLE_HINTS)
+
+
+def generate_step(
+    client: OpenAI,
+    context_text: str,
+    config: Config,
+    system_prompt: str | None = None,
+    max_retries: int = 5,
+    base_delay: float = 2.0,
+) -> GenerationResult:
+    """
+    Single recursive step. Uses the Responses API, client-side context only
+    (store=False), never passes previous_response_id.
+    """
+    if not context_text.strip():
+        raise ValueError("context_text must be non-empty")
+
+    system = system_prompt or "Continue the text naturally. Do not summarize or explain."
+
+    request: dict[str, Any] = {
+        "model": config.generation_model,
+        "input": [
+            {"role": "developer", "content": system},
+            {"role": "user", "content": context_text},
+        ],
+        "max_output_tokens": config.max_output_tokens,
+        "store": False,
+    }
+    # Some newer reasoning models reject temperature/top_p; only include if set.
+    if config.temperature is not None:
+        request["temperature"] = config.temperature
+    if config.top_p is not None:
+        request["top_p"] = config.top_p
+    if config.include_logprobs:
+        request["include"] = ["message.output_text.logprobs"]
+
+    last_exc: Exception | None = None
+    for attempt in range(max_retries + 1):
+        t0 = time.monotonic()
+        try:
+            resp = client.responses.create(**request)
+            latency = time.monotonic() - t0
+            text = _extract_output_text(resp)
+            logprobs = _extract_logprobs(resp) if config.include_logprobs else None
+            raw = _response_to_dict(resp)
+            return GenerationResult(
+                output_text=text,
+                model=getattr(resp, "model", config.generation_model),
+                response_id=getattr(resp, "id", None),
+                latency_sec=latency,
+                retries=attempt,
+                raw=raw,
+                logprobs=logprobs,
+            )
+        except Exception as exc:  # openai raises typed exceptions; catch broadly
+            last_exc = exc
+            if attempt >= max_retries or not _is_retryable(exc):
+                log.error("responses.create failed (attempt %d): %s", attempt, exc)
+                raise
+            delay = base_delay * (2**attempt) + random.uniform(0, 0.5)
+            log.warning(
+                "responses.create retryable error (attempt %d, sleeping %.1fs): %s",
+                attempt,
+                delay,
+                exc,
+            )
+            time.sleep(delay)
+
+    raise RuntimeError(f"generate_step exhausted retries: {last_exc}")
+
+
+def _extract_output_text(resp: Any) -> str:
+    text = getattr(resp, "output_text", None)
+    if text:
+        return text
+    # Fallback: walk resp.output for content blocks
+    out = getattr(resp, "output", None) or []
+    chunks: list[str] = []
+    for item in out:
+        content = getattr(item, "content", None) or []
+        for c in content:
+            t = getattr(c, "text", None)
+            if isinstance(t, str):
+                chunks.append(t)
+            elif hasattr(t, "value"):
+                chunks.append(t.value)
+    return "".join(chunks)
+
+
+def _extract_logprobs(resp: Any) -> Any | None:
+    out = getattr(resp, "output", None) or []
+    for item in out:
+        content = getattr(item, "content", None) or []
+        for c in content:
+            lp = getattr(c, "logprobs", None)
+            if lp is not None:
+                try:
+                    return lp if isinstance(lp, (list, dict)) else lp.model_dump()
+                except Exception:
+                    return None
+    return None
+
+
+def _response_to_dict(resp: Any) -> dict:
+    try:
+        return resp.model_dump()
+    except Exception:
+        try:
+            return dict(resp)
+        except Exception:
+            return {"repr": repr(resp)}

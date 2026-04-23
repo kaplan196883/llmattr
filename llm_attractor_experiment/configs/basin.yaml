@@ -1,0 +1,54 @@
+experiment_id: exp_basin
+
+generation_model: gpt-4o-mini
+embedding_model: text-embedding-3-small
+
+steps_per_run: 20
+runs_per_condition: 10
+initial_conditions_per_family: 3
+
+max_output_tokens: 120
+temperature: 0.7
+top_p: 1.0
+include_logprobs: false
+
+clip_rule: tail_chars
+max_context_chars: 12000
+
+rolling_window_k: 3
+context_tail_chars: 4000
+observables: [output, rolling_k3]
+
+pca_dims: [2, 10]
+
+clustering:
+  method: dbscan
+  dbscan: {eps: 0.35, min_samples: 4}
+  kmeans: {n_clusters: 6}
+
+recurrence: {metric: cosine, epsilon: 0.25, tau: 3}
+dwell: {space: pca10}
+
+basin:
+  target_region_late_fraction: 0.3
+  target_step_fraction: 0.7
+  perturbations: [suffix, neutral_sentence, seed_only, paraphrase]
+  perturbation_suffix: " (Let the thought continue.)"
+  neutral_sentence: " A brief pause preceded the next thought."
+
+baseline_modes: [no_feedback]
+
+batch_embeddings: false
+use_evals: false
+
+seed: 11
+parallel_trajectories: 1
+output_dir: data
+
+prompt_families:
+  - name: reflective
+    system_prompt: "Continue the text naturally. Do not summarize or explain."
+    initial_conditions:
+      - "I keep returning to the same thought without knowing why."
+      - "The shape of attention is the shape of what becomes real."
+      - "Every explanation seems to orbit something it cannot touch."

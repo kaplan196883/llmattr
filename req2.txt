@@ -1,0 +1,339 @@
+Below is a coding-agent plan with the **exact OpenAI API surfaces** to use, in the order they should be used.
+
+## 1. Overall rule for the runner
+
+Use the **Responses API** for generation and the **Embeddings API** for representation. OpenAI recommends Responses for new projects, and it supports text generation, stateful interactions, and optional output logprobs. For this experiment, however, the agent should **not** rely on server-side conversation state for the main loop; it should rebuild the visible context client-side each step so the experimental state matches the append-only model exactly. ([OpenAI Developers][1])
+
+The loop to implement is:
+
+[
+Y_t \sim P_\theta(\cdot\mid X_t,N),\qquad
+X_{t+1}=\operatorname{clip}(X_t \Vert Y_t)
+]
+
+So every generation call uses the current serialized (X_t) as input, and the code itself performs append + clip.
+
+## 2. APIs the coding agent should use
+
+For the core experiment, use these endpoints or SDK methods:
+
+* **Generation**
+
+  * REST: `POST /responses`
+  * Python SDK: `client.responses.create(...)` ([OpenAI Developers][2])
+
+* **Embeddings**
+
+  * REST: `POST /embeddings`
+  * Python SDK: `client.embeddings.create(...)` ([OpenAI Developers][3])
+
+* **Optional large-scale async processing**
+
+  * Upload batch input file: `POST /files` with `purpose="batch"`
+  * Create batch: `POST /batches`
+  * Poll batch: `GET /batches/{batch_id}`
+  * Retrieve batch results via the Files API using the `output_file_id` returned by the batch object. ([OpenAI Developers][4])
+
+* **Optional managed evaluation harness**
+
+  * Create eval: `POST /evals`
+  * Create eval run: `POST /evals/{eval_id}/runs` ([OpenAI Developers][5])
+
+## 3. Core execution plan
+
+### Step A — Experiment bootstrap
+
+The coding agent should first load config, initialize the OpenAI client, and verify the configured generation and embedding models. OpenAI’s quickstart and Python SDK docs show the standard SDK setup flow. ([OpenAI Developers][6])
+
+Minimum config:
+
+```yaml
+experiment_id: exp_001
+generation_model: gpt-5.4-mini
+embedding_model: text-embedding-3-large
+steps_per_run: 40
+runs_per_condition: 20
+max_output_tokens: 120
+temperature: 0.8
+top_p: 1.0
+include_logprobs: true
+clip_rule: tail_chars
+max_context_chars: 12000
+observables:
+  - output
+  - rolling_k3
+  - context_tail
+pca_dims: [2, 10, 20]
+```
+
+The exact model choice can be configurable; the main requirement is that one generation model and one embedding model stay fixed within an experiment run.
+
+### Step B — Generation call per time step
+
+For every trajectory step, call `client.responses.create(...)` with the current serialized context. The coding agent should use plain text generation, fixed generation settings, and optionally request output logprobs using `include=["message.output_text.logprobs"]`, which the Responses reference supports. ([OpenAI Developers][2])
+
+Recommended request pattern:
+
+```python
+resp = client.responses.create(
+    model=config.generation_model,
+    input=[
+        {
+            "role": "developer",
+            "content": "Continue the text naturally. Do not summarize previous text unless the text itself does so."
+        },
+        {
+            "role": "user",
+            "content": context_text
+        }
+    ],
+    max_output_tokens=config.max_output_tokens,
+    temperature=config.temperature,
+    top_p=config.top_p,
+    include=["message.output_text.logprobs"] if config.include_logprobs else [],
+    store=False,
+)
+```
+
+The coding agent should then read `resp.output_text`, append it locally, clip locally, and persist both the pre-step and post-step state.
+
+### Step C — Append-only update
+
+After each response:
+
+[
+X_{t+1}=\operatorname{clip}(X_t \Vert Y_t)
+]
+
+This is local logic, not an API call. The coding agent must keep the clipping rule deterministic and fixed for the entire experiment.
+
+### Step D — Observable construction
+
+For every completed trajectory, the coding agent should build at least these observable texts:
+
+[
+\phi_1(t)=Y_t
+]
+[
+\phi_2(t)=Y_{t-2}\Vert Y_{t-1}\Vert Y_t
+]
+[
+\phi_3(t)=\text{tail}_M(X_t)
+]
+
+No API call is needed yet; this is preprocessing before embeddings.
+
+### Step E — Embedding calls
+
+Use `client.embeddings.create(...)` to embed the observable texts. The embeddings reference supports sending a single string or an array of strings, and the embeddings guide explicitly frames embeddings as vectors for similarity, clustering, anomaly detection, and related analyses. The reference also states that each input must stay within the model’s input limit and cannot be empty. ([OpenAI Developers][3])
+
+Recommended pattern:
+
+```python
+emb = client.embeddings.create(
+    model=config.embedding_model,
+    input=list_of_observable_texts
+)
+```
+
+The coding agent should batch these requests aggressively, because embeddings can be created for multiple inputs in one request. ([OpenAI Developers][3])
+
+### Step F — PCA and metrics
+
+PCA, clustering, recurrence, dwell, and basin analysis are all local analysis steps. No additional OpenAI API call is needed here. The agent should run these on raw embeddings and on PCA-reduced spaces.
+
+## 4. What the coding agent should log from each API call
+
+For each `responses.create` call, save:
+
+* model
+* full request payload
+* full response payload
+* extracted `output_text`
+* logprobs if requested
+* latency
+* retry count
+* trajectory identifiers
+
+For each `embeddings.create` call, save:
+
+* model
+* list of input IDs
+* original input text hash
+* returned embedding vector
+* batch size
+* latency
+* retry count
+
+This makes the experiment auditable and reproducible.
+
+## 5. Exact call flow for the main experiment
+
+The coding agent should implement this sequence.
+
+### Per experiment
+
+1. Load config.
+2. Initialize OpenAI client.
+3. Create output directories.
+4. Save config snapshot.
+
+### Per prompt family
+
+5. Generate or load initial contexts.
+
+### Per run
+
+6. Set `context = X0`.
+7. For `t in 0..T-1`:
+
+   * call `client.responses.create(...)`
+   * extract `Y_t`
+   * log raw response
+   * compute `context = clip(context + Y_t)`
+   * save step record
+
+### After all runs
+
+8. Build observable texts for all steps.
+9. Call `client.embeddings.create(...)` in batches for each observable type.
+10. Save embedding matrix and metadata.
+11. Run PCA locally.
+12. Run recurrence, dwell, and basin metrics locally.
+13. Write report.
+
+## 6. Exact call flow for large-scale async mode
+
+If the experiment gets large enough that synchronous calls are too slow, the coding agent should use Batch for the **embedding phase first**, and optionally for independent generation jobs that do not require stepwise feedback. Batch is designed for asynchronous groups of requests, offers a separate higher-rate-limit pool, 50% lower costs, and a 24-hour turnaround window. The batch input must be JSONL, uploaded with purpose `batch`, and may contain up to 50,000 requests and 200 MB. ([OpenAI Developers][7])
+
+The exact Batch flow is:
+
+1. Build JSONL file of requests.
+2. Upload with `client.files.create(file=..., purpose="batch")`. ([OpenAI Developers][4])
+3. Create batch with `client.batches.create(input_file_id=..., ...)`. ([OpenAI Developers][8])
+4. Poll with `client.batches.retrieve(batch_id)`. ([OpenAI Developers][9])
+5. When complete, fetch the result file using the Files API and the `output_file_id` returned by the batch object. ([OpenAI Developers][7])
+
+The coding agent should **not** use Batch for the recursive append-only generation loop itself unless it restructures that loop into stages, because each step depends on the previous output.
+
+## 7. Optional eval-harness plan
+
+If you want a managed evaluation surface on top of the custom metrics, the coding agent can register the dataset with Evals and run evaluation jobs through the Evals API. The official flow is: create the eval definition first, then create runs against that eval with a data source and model configuration. ([OpenAI Developers][5])
+
+This is optional. For your hypothesis, the main evidence still comes from your custom recurrence, dwell, and basin metrics, not from a built-in grader.
+
+## 8. Suggested Python SDK wrappers
+
+The coding agent should implement exactly these wrappers.
+
+```python
+def generate_step(context_text: str, config) -> dict:
+    # wraps client.responses.create(...)
+    ...
+```
+
+```python
+def embed_observables(texts: list[str], config) -> list[list[float]]:
+    # wraps client.embeddings.create(...)
+    ...
+```
+
+```python
+def upload_batch_file(path: str) -> str:
+    # wraps client.files.create(..., purpose="batch")
+    ...
+```
+
+```python
+def create_batch(input_file_id: str, endpoint: str) -> str:
+    # wraps client.batches.create(...)
+    ...
+```
+
+```python
+def poll_batch(batch_id: str) -> dict:
+    # wraps client.batches.retrieve(...)
+    ...
+```
+
+```python
+def create_eval(definition: dict) -> str:
+    # wraps client.evals.create(...)
+    ...
+```
+
+```python
+def run_eval(eval_id: str, run_config: dict) -> str:
+    # wraps client.evals.runs.create(...)
+    ...
+```
+
+## 9. Data products the agent must produce
+
+The coding agent should write these files:
+
+* `raw_steps.jsonl` — one record per generation step
+* `observables.parquet` — one row per observable instance
+* `embeddings.npy` or `embeddings.parquet` — vectors plus metadata
+* `pca_2.csv`, `pca_10.csv`, `pca_20.csv`
+* `recurrence_metrics.csv`
+* `dwell_metrics.csv`
+* `basin_metrics.csv`
+* `report.md`
+
+## 10. Minimal call examples the agent should follow
+
+### Generation
+
+Use `client.responses.create(...)` for every recursive step. Responses is the recommended interface for new projects and supports text generation plus output logprobs inclusion. ([OpenAI Developers][1])
+
+### Embeddings
+
+Use `client.embeddings.create(...)` with arrays of strings for each observable batch. The API allows embedding multiple inputs in one call. ([OpenAI Developers][3])
+
+### Batch
+
+Use `client.files.create(..., purpose="batch")`, then `client.batches.create(...)`, then `client.batches.retrieve(...)`, then retrieve the output file via the Files API. ([OpenAI Developers][4])
+
+### Evals
+
+Use `client.evals.create(...)` once to register the evaluation structure, then `client.evals.runs.create(...)` for evaluation runs. ([OpenAI Developers][5])
+
+## 11. Decision rules for the coding agent
+
+The coding agent should follow these rules:
+
+* Use **Responses** for all recursive generation.
+* Use **Embeddings** for all representation-space construction.
+* Use **Batch** only for large asynchronous workloads, especially embeddings and other non-step-dependent jobs.
+* Use **Evals** only as an optional management layer, not as the main hypothesis test.
+* Never let server-side chat state replace the explicit client-side append-only state.
+
+## 12. Final implementation order
+
+The coding agent should implement in this exact order:
+
+1. `client.responses.create(...)` runner
+2. append-only context update
+3. observable builders
+4. `client.embeddings.create(...)`
+5. PCA + recurrence
+6. dwell + basins
+7. baselines
+8. optional Batch integration
+9. optional Evals integration
+10. report writer
+
+That gives you a correct first experiment before adding scale or orchestration.
+
+If you want, I can convert this into a **ready-to-paste implementation brief for Codex / a coding agent**, with explicit tasks and acceptance criteria for each file.
+
+[1]: https://developers.openai.com/api/docs/guides/migrate-to-responses?utm_source=chatgpt.com "Migrate to the Responses API"
+[2]: https://developers.openai.com/api/reference/resources/responses/methods/create/?utm_source=chatgpt.com "Create a model response | OpenAI API Reference"
+[3]: https://developers.openai.com/api/reference/resources/embeddings/methods/create/?utm_source=chatgpt.com "Create embeddings | OpenAI API Reference"
+[4]: https://developers.openai.com/api/reference/resources/files/methods/create/?utm_source=chatgpt.com "Upload file | OpenAI API Reference"
+[5]: https://developers.openai.com/api/reference/resources/evals/methods/create/?utm_source=chatgpt.com "Create eval | OpenAI API Reference"
+[6]: https://developers.openai.com/api/docs/quickstart?utm_source=chatgpt.com "Developer quickstart | OpenAI API"
+[7]: https://developers.openai.com/api/docs/guides/batch?utm_source=chatgpt.com "Batch API"
+[8]: https://developers.openai.com/api/reference/resources/batches/methods/create/?utm_source=chatgpt.com "Create batch | OpenAI API Reference"
+[9]: https://developers.openai.com/api/reference/resources/batches/methods/retrieve/?utm_source=chatgpt.com "Retrieve batch | OpenAI API Reference"

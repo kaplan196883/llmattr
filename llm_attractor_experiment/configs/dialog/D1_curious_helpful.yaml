@@ -1,0 +1,105 @@
+# D1 — curious user meets helpful agent
+# Two LLMs alternating turns. User (role_a) seeds the conversation with an
+# opener, Agent (role_b) responds first, then they alternate. Transcript grows.
+#
+# Scientific question: do dialog trajectories form attractor basins in the
+# transcript-embedding space? Is the basin shared between roles, or does each
+# role orbit its own attractor region inside a larger joint manifold?
+experiment_id: exp_dialog_D1_curious_helpful
+
+generation_model: gpt-4o-mini
+embedding_model: text-embedding-3-small
+
+# Each "step" is one turn by one role. steps_per_run=20 → 10 turns per role.
+steps_per_run: 20
+runs_per_condition: 3
+initial_conditions_per_family: 2
+
+max_output_tokens: 140       # slightly longer to let replies breathe
+temperature: 0.8
+top_p: 1.0
+include_logprobs: false
+
+clip_rule: tail_chars
+max_context_chars: 12000
+
+rolling_window_k: 3
+context_tail_chars: 4000
+context_full_chars: 8000
+observables: [output, rolling_k3, context_tail]
+
+pca_dims: [2, 10, 20]
+
+clustering: {method: kmeans, dbscan: {eps: 0.08, min_samples: 4}, kmeans: {n_clusters: 8}}
+recurrence: {metric: cosine, epsilon: 0.15, tau: 3}
+dwell: {space: pca10}
+
+tsne:
+  enabled: true
+  perplexity: 20            # smaller since we only have ~60 × 20 = 1,200 pts
+  pre_pca_dim: 50
+  metric: cosine
+  include_in_metrics: false
+  recurrence_epsilon_std_frac: 0.08
+  cluster_in_tsne: false
+
+basin:
+  target_region_late_fraction: 0.3
+  target_step_fraction: 0.7
+  perturbations: [seed_only]
+
+basin_entry:   {enabled: true, late_fraction: 0.3, fraction_after: 0.7}
+late_recurrence: {enabled: true, start_fraction: 0.5, use_basin_entry: true}
+exit_return:   {enabled: true, start_fraction: 0.0, use_basin_entry: true}
+bootstrap:     {enabled: true, n_resamples: 1000, confidence: 0.95}
+
+# Dialog mode has no meaningful no_feedback / independent_regeneration baselines
+# (those require a single-role operator). time_shuffled is still a valid
+# post-hoc temporal null.
+baseline_modes: [time_shuffled]
+
+loop_mode: append
+
+# Dialog-specific configuration block. Read by src/experiments/dialog/main.py
+# via cfg.raw_dict (not part of the base Config dataclass).
+dialog:
+  role_a:
+    name: user
+    system_prompt: |
+      You are roleplaying as a curious user in an ongoing conversation.
+      Read the transcript and respond naturally as the User, asking a
+      follow-up question or sharing a related thought based on the Agent's
+      last message. Keep responses to 1-2 sentences. Do not restate the
+      whole conversation.
+  role_b:
+    name: agent
+    system_prompt: |
+      You are a thoughtful assistant in an ongoing conversation. Read the
+      transcript and respond naturally as the Agent to the User's last
+      message. Keep responses to 1-2 sentences. Do not restate the whole
+      conversation.
+  initiator: role_b   # Agent speaks first, responding to the User's opener
+
+batch_embeddings: false
+use_evals: false
+
+seed: 42
+parallel_trajectories: 1
+output_dir: data
+
+prompt_families:
+  - name: philosophy
+    system_prompt: "(unused in dialog mode)"
+    initial_conditions:
+      - "What is the nature of consciousness?"
+      - "Can free will exist in a deterministic universe?"
+  - name: practical
+    system_prompt: "(unused in dialog mode)"
+    initial_conditions:
+      - "I'm trying to decide between two job offers and I'm stuck."
+      - "How should I approach a difficult conversation with my manager?"
+  - name: creative
+    system_prompt: "(unused in dialog mode)"
+    initial_conditions:
+      - "I want to start writing a short story but I don't know where to begin."
+      - "What makes a piece of music emotionally resonant?"

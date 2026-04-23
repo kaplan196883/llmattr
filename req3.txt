@@ -1,0 +1,509 @@
+Below is a ready-to-paste implementation brief for a coding agent.
+
+# Implementation brief: recursive LLM attractor experiment
+
+Build a Python project that tests **Hypothesis 1**: in a bounded append-only recursive loop, an LLM exhibits endogenous attractor-like regimes that become visible in a suitable representation space.
+
+Use the **Responses API** for generation and the **Embeddings API** for representation. Responses is the primary interface for generation, and embeddings support vector representations suitable for clustering and recurrence analysis. If scale becomes a bottleneck, add **Batch** for asynchronous bulk jobs. **Evals** is optional and should be treated as experiment orchestration, not as the main evidence engine. ([OpenAI Developers][1])
+
+The experiment must implement this loop exactly:
+[
+Y_t \sim P_\theta(\cdot \mid X_t, N), \qquad X_{t+1} = \operatorname{clip}(X_t \Vert Y_t)
+]
+The experimental state is the client-side serialized context. Do **not** let hidden server-side conversation state replace this state definition, even though Responses supports stateful interactions. ([OpenAI Developers][2])
+
+## Deliverables
+
+Produce a runnable project that can:
+
+1. generate recursive append-only trajectories,
+2. construct multiple observables,
+3. embed them,
+4. run PCA,
+5. compute recurrence, dwell, and basin metrics,
+6. compare against baselines,
+7. emit plots and a final markdown report.
+
+## Project layout
+
+```text
+llm_attractor_experiment/
+├── README.md
+├── requirements.txt
+├── .env.example
+├── configs/
+│   ├── default.yaml
+│   ├── deterministic.yaml
+│   ├── stochastic.yaml
+│   └── basin.yaml
+├── src/
+│   ├── main.py
+│   ├── config.py
+│   ├── api/
+│   │   ├── openai_client.py
+│   │   ├── generator.py
+│   │   ├── embedder.py
+│   │   ├── batch_jobs.py
+│   │   └── evals_runner.py
+│   ├── core/
+│   │   ├── context.py
+│   │   ├── trajectory.py
+│   │   ├── observables.py
+│   │   └── baselines.py
+│   ├── analysis/
+│   │   ├── pca.py
+│   │   ├── clustering.py
+│   │   ├── recurrence.py
+│   │   ├── dwell.py
+│   │   ├── basin.py
+│   │   └── robustness.py
+│   ├── reports/
+│   │   ├── plots.py
+│   │   └── summary.py
+│   └── utils/
+│       ├── io.py
+│       ├── logging.py
+│       ├── text.py
+│       └── seeds.py
+├── data/
+│   ├── raw/
+│   ├── embeddings/
+│   ├── metrics/
+│   └── reports/
+└── tests/
+```
+
+## Phase 1: configuration and bootstrap
+
+Create a YAML-driven config system. Required fields:
+
+```yaml
+experiment_id: exp_001
+generation_model: gpt-5.4-mini
+embedding_model: text-embedding-3-large
+steps_per_run: 40
+runs_per_condition: 20
+max_output_tokens: 120
+temperature: 0.8
+top_p: 1.0
+include_logprobs: true
+clip_rule: tail_chars
+max_context_chars: 12000
+rolling_window_k: 3
+context_tail_chars: 4000
+observables: [output, rolling_k3, context_tail]
+pca_dims: [2, 10, 20]
+baseline_modes: [no_feedback, time_shuffled, independent_regeneration]
+batch_embeddings: true
+use_evals: false
+```
+
+On every run, save a frozen config snapshot into the output folder.
+
+Acceptance criteria: one command can start an experiment from config, and reruns preserve reproducibility metadata.
+
+## Phase 2: OpenAI client wrapper
+
+Implement `src/api/openai_client.py` with a single configured SDK client.
+
+```python
+from openai import OpenAI
+
+def make_client() -> OpenAI:
+    return OpenAI()
+```
+
+The OpenAI Python library uses `OpenAI()` as the standard entry point, and the primary generation interface is Responses. ([OpenAI Developers][1])
+
+Acceptance criteria: one smoke test can instantiate the client and perform one generation call plus one embedding call.
+
+## Phase 3: generation API integration
+
+Implement `src/api/generator.py` using:
+
+```python
+client.responses.create(...)
+```
+
+The Responses create method is the correct API for text generation. It accepts input messages and generation controls, and can return output logprobs when requested through `include`. ([OpenAI Developers][3])
+
+Use this request shape:
+
+```python
+def generate_step(client, context_text: str, config) -> dict:
+    resp = client.responses.create(
+        model=config.generation_model,
+        input=[
+            {
+                "role": "developer",
+                "content": "Continue the text naturally. Do not summarize or explain."
+            },
+            {
+                "role": "user",
+                "content": context_text
+            }
+        ],
+        max_output_tokens=config.max_output_tokens,
+        temperature=config.temperature,
+        top_p=config.top_p,
+        include=["message.output_text.logprobs"] if config.include_logprobs else [],
+        store=False,
+    )
+    return {
+        "output_text": resp.output_text,
+        "raw_response": resp,
+    }
+```
+
+Do not use `previous_response_id` in the main loop. Always resend the full visible experimental state.
+
+Acceptance criteria: one call returns text, raw payload, and optional logprobs, with retries and structured error logging.
+
+## Phase 4: context state and append-only update
+
+Implement `src/core/context.py`.
+
+Required functions:
+
+```python
+def clip_context(text: str, max_chars: int) -> str:
+    return text[-max_chars:]
+
+def append_only_update(context_text: str, output_text: str, max_chars: int) -> str:
+    return clip_context(context_text + output_text, max_chars)
+```
+
+Support at least:
+
+* `tail_chars`
+* optional `tail_tokens` later
+* optional `strict_stop`
+
+Acceptance criteria: deterministic clipping, no mutation of earlier state other than deterministic overflow clipping.
+
+## Phase 5: trajectory runner
+
+Implement `src/core/trajectory.py`.
+
+Main function:
+
+```python
+def run_trajectory(client, initial_context: str, config, ids: dict) -> list[dict]:
+    ...
+```
+
+Per step:
+
+1. call `generate_step(...)`
+2. save `context_before`
+3. save `output_text`
+4. compute `context_after = append_only_update(...)`
+5. persist the step record immediately
+
+Step record schema:
+
+```json
+{
+  "experiment_id": "exp_001",
+  "prompt_family": "philosophy",
+  "initial_condition_id": "ic_003",
+  "run_id": "run_014",
+  "step": 7,
+  "context_before": "...",
+  "output_text": "...",
+  "context_after": "...",
+  "context_length_chars": 11842,
+  "model": "gpt-5.4-mini",
+  "temperature": 0.8,
+  "top_p": 1.0
+}
+```
+
+Acceptance criteria: one completed trajectory produces a JSONL file with one row per step.
+
+## Phase 6: observable construction
+
+Implement `src/core/observables.py`.
+
+Support these three observables:
+
+```python
+def observable_output(step) -> str:
+    return step["output_text"]
+
+def observable_rolling(steps, t, k=3, sep="\n<SEP>\n") -> str:
+    start = max(0, t - k + 1)
+    return sep.join(s["output_text"] for s in steps[start:t+1])
+
+def observable_context_tail(step, max_chars=4000) -> str:
+    return step["context_after"][-max_chars:]
+```
+
+The rolling observable is the primary candidate, because it preserves short-horizon dynamics better than single outputs alone.
+
+Acceptance criteria: deterministic text serialization, unit tests for edge cases at early time steps.
+
+## Phase 7: embeddings API integration
+
+Implement `src/api/embedder.py` using:
+
+```python
+client.embeddings.create(...)
+```
+
+The embeddings API accepts a string or an array of strings, so batch observable texts together. Inputs must not be empty, and each input must stay within the embedding model input limit. ([OpenAI Developers][4])
+
+Use this pattern:
+
+```python
+import numpy as np
+
+def embed_texts(client, texts: list[str], config) -> np.ndarray:
+    resp = client.embeddings.create(
+        model=config.embedding_model,
+        input=texts,
+    )
+    mat = np.array([d.embedding for d in resp.data], dtype=np.float32)
+    norms = np.linalg.norm(mat, axis=1, keepdims=True) + 1e-12
+    return mat / norms
+```
+
+Persist:
+
+* the vectors,
+* row metadata,
+* hashes of input texts.
+
+Acceptance criteria: embeddings are batched, cached, reloadable, and linked back to trajectory step metadata.
+
+## Phase 8: PCA and representation analysis
+
+Implement `src/analysis/pca.py`.
+
+Fit PCA jointly on all vectors for a given observable type. Save:
+
+* `pca_2.csv`
+* `pca_10.csv`
+* `pca_20.csv`
+* explained variance ratios
+* fitted PCA object if convenient
+
+Use PCA-2 only for visualization. Use PCA-10 or PCA-20, or raw embeddings, for metrics.
+
+Acceptance criteria: reproducible projections and plots per observable type.
+
+## Phase 9: recurrence metric
+
+Implement `src/analysis/recurrence.py`.
+
+Define recurrence for a trajectory (z_t) by:
+
+[
+|z_t - z_s| < \varepsilon,\qquad |t-s|>\tau
+]
+
+Compute:
+
+* recurrence count
+* recurrence rate
+* nearest nonlocal neighbor distance
+* average return lag
+
+Support:
+
+* cosine distance in raw embeddings
+* euclidean distance in PCA space
+
+Acceptance criteria: metrics produced per run and aggregated globally.
+
+## Phase 10: dwell metric
+
+Implement `src/analysis/dwell.py`.
+
+Cluster the points first, using DBSCAN by default and KMeans as an option. Then compute:
+
+* contiguous dwell lengths per cluster
+* mean dwell time
+* median dwell time
+* longest dwell
+* re-entry count
+
+Acceptance criteria: dwell statistics for every candidate region, both per-run and pooled.
+
+## Phase 11: basin metric
+
+Implement `src/analysis/basin.py`.
+
+For each base initial condition, generate perturbed variants:
+
+* tiny suffix perturbation
+* neutral sentence insertion
+* paraphrase if already supplied in config
+* seed-only changes
+
+Then run trajectories and measure convergence into the same late-time region.
+
+Simple basin score:
+
+[
+\text{BasinScore} = \frac{#{\text{perturbed runs entering target region by }T^*}}{#{\text{perturbed runs}}}
+]
+
+Acceptance criteria: one table per prompt family and one global summary.
+
+## Phase 12: baselines
+
+Implement `src/core/baselines.py`.
+
+Required baselines:
+
+`no_feedback`: every step generates from the original (X_0), never from updated context.
+
+`time_shuffled`: keep the same point cloud but shuffle time order after embedding.
+
+`independent_regeneration`: generate independent outputs from a fixed family prompt at every step.
+
+These are needed so the final report can say whether structure comes from recursive self-conditioning rather than prompt-only effects.
+
+Acceptance criteria: all metrics computed for main regime and baselines with side-by-side comparisons.
+
+## Phase 13: batch support
+
+Implement `src/api/batch_jobs.py` for large embedding jobs first.
+
+Use:
+
+1. `client.files.create(..., purpose="batch")`
+2. `client.batches.create(...)`
+3. `client.batches.retrieve(batch_id)`
+
+The Batch API supports asynchronous batches and accepts `/v1/responses` and `/v1/embeddings` as endpoints. ([OpenAI Developers][5])
+
+Skeleton:
+
+```python
+def upload_batch_file(client, path: str):
+    with open(path, "rb") as f:
+        return client.files.create(file=f, purpose="batch")
+
+def create_batch(client, input_file_id: str, endpoint: str):
+    return client.batches.create(
+        input_file_id=input_file_id,
+        endpoint=endpoint,
+        completion_window="24h",
+    )
+
+def poll_batch(client, batch_id: str):
+    return client.batches.retrieve(batch_id)
+```
+
+Use Batch for embeddings before trying it for generation, because recursive generation is step-dependent.
+
+Acceptance criteria: one embedding batch can be submitted, polled, and ingested back into the local analysis pipeline.
+
+## Phase 14: optional evals layer
+
+Implement `src/api/evals_runner.py` only if `use_evals: true`.
+
+Use:
+
+* `client.evals.create(...)`
+* `client.evals.runs.create(...)`
+
+The Evals API creates an evaluation definition and then launches runs against it. ([OpenAI Developers][6])
+
+Treat this as experiment orchestration only. The hypothesis decision still comes from your custom recurrence, dwell, and basin metrics.
+
+Acceptance criteria: optional only; project should work without Evals.
+
+## Phase 15: report generation
+
+Implement `src/reports/summary.py` and `src/reports/plots.py`.
+
+Generate:
+
+* PCA trajectory plots
+* cluster occupancy plots
+* recurrence distributions
+* dwell distributions
+* basin convergence plots
+* baseline comparison tables
+* final `report.md`
+
+Final classification:
+
+* `not supported`
+* `weak support`
+* `moderate support`
+* `strong support`
+
+Recommended rule:
+
+`strong support` if recurrence, dwell, and basin all exceed baselines and remain visible across at least two observables and at least one non-2D space.
+
+## CLI
+
+Implement these commands:
+
+```bash
+python -m src.main run --config configs/default.yaml
+python -m src.main embed --config configs/default.yaml
+python -m src.main analyze --config configs/default.yaml
+python -m src.main report --config configs/default.yaml
+python -m src.main all --config configs/default.yaml
+python -m src.main resume --config configs/default.yaml
+```
+
+## Tests
+
+Add unit tests for:
+
+* clipping
+* rolling observables
+* recurrence logic
+* dwell extraction
+* basin score computation
+
+Add one end-to-end integration test with a tiny configuration.
+
+## Minimal first milestone
+
+Before scaling, get this working:
+
+* 3 prompt families
+* 5 initial conditions per family
+* 3 runs per condition
+* 15 steps per run
+* output + rolling_k3 + context_tail
+* PCA-2 and PCA-10
+* recurrence + dwell + basin
+* no_feedback baseline
+
+## Hard constraints for the coding agent
+
+Do not:
+
+* use hidden server-side state as the experiment state,
+* fit PCA per trajectory,
+* rely on PCA-2 pictures as evidence,
+* skip baselines,
+* use only one observable.
+
+## Definition of done
+
+The project is done when one command can run the full pipeline and produce:
+
+* raw step logs,
+* embedded observables,
+* PCA projections,
+* recurrence/dwell/basin metrics,
+* baseline comparisons,
+* a final markdown report stating whether Hypothesis 1 is supported.
+
+
+[1]: https://developers.openai.com/api/reference/python/?utm_source=chatgpt.com "OpenAI Python API library"
+[2]: https://developers.openai.com/api/reference/responses/overview/?utm_source=chatgpt.com "Responses Overview | OpenAI API Reference"
+[3]: https://developers.openai.com/api/reference/resources/responses/methods/create/?utm_source=chatgpt.com "Create a model response | OpenAI API Reference"
+[4]: https://developers.openai.com/api/reference/resources/embeddings/methods/create/?utm_source=chatgpt.com "Create embeddings | OpenAI API Reference"
+[5]: https://developers.openai.com/api/reference/resources/batches/methods/create/?utm_source=chatgpt.com "Create batch | OpenAI API Reference"
+[6]: https://developers.openai.com/api/reference/resources/evals/methods/create/?utm_source=chatgpt.com "Create eval | OpenAI API Reference"

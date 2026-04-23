@@ -1,0 +1,53 @@
+# ============================================================================
+# SECRETS — must never leak
+# ============================================================================
+.env
+.env.local
+*.pem
+*.key
+
+# ============================================================================
+# Python
+# ============================================================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+env/
+.tox/
+
+# ============================================================================
+# OS / editors
+# ============================================================================
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ============================================================================
+# Experiment run logs (large, recreatable, not part of scientific record)
+# ============================================================================
+llm_attractor_experiment/data/op_logs/
+llm_attractor_experiment/data/run*.out
+llm_attractor_experiment/data/*.log
+
+# ============================================================================
+# Derived binary artifacts (regeneratable from raw/steps.jsonl via `embed`)
+# Kept excluded to keep repo size reasonable. Cost to regen all: ~$30.
+# ============================================================================
+llm_attractor_experiment/data/**/embeddings/**/*.npy
+llm_attractor_experiment/data/**/embeddings/**/*.parquet
+
+# Empty placeholder subdirs at data/ root (experiments live under data/exp_*)
+llm_attractor_experiment/data/reports/
+llm_attractor_experiment/data/raw/
+llm_attractor_experiment/data/metrics/
+llm_attractor_experiment/data/embeddings/
