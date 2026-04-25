@@ -35,7 +35,7 @@ from src.config import Config, PromptFamily, limit_initial_conditions, load_conf
 from src.core.trajectory import RunIds
 from src.experiments.dialog.observables import build_dialog_observables
 from src.experiments.dialog.trajectory import Role, make_jsonl_sink, run_dialog_trajectory
-from src.main import cmd_analyze, cmd_report, STEPS_FILE, MANIFEST_FILE
+from src.main import cmd_analyze, cmd_report, STEPS_FILE, MANIFEST_FILE, _prune_uncommitted_steps
 from src.utils.io import ensure_dir, read_json, read_jsonl, save_npy, write_json, write_parquet
 from src.utils.logging import get_logger, setup_logging
 from src.utils.seeds import set_global_seed
@@ -92,6 +92,7 @@ def cmd_run_dialog(cfg: Config) -> None:
     steps_path = cfg.raw_dir / STEPS_FILE
     manifest_path = cfg.raw_dir / MANIFEST_FILE
     manifest = _load_manifest(manifest_path)
+    _prune_uncommitted_steps(steps_path, manifest)
     raw_sink = make_jsonl_sink(steps_path)
 
     sink_lock = threading.Lock()

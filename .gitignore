@@ -46,6 +46,16 @@ llm_attractor_experiment/data/*.log
 llm_attractor_experiment/data/**/embeddings/**/*.npy
 llm_attractor_experiment/data/**/embeddings/**/*.parquet
 
+# Animations and large rendered outputs (regeneratable from embeddings)
+llm_attractor_experiment/data/**/*.mp4
+llm_attractor_experiment/data/**/*.gif
+
+# Third-party PDFs (papers, references)
+*.pdf
+
+# Local Claude/agent state
+.claude/
+
 # Empty placeholder subdirs at data/ root (experiments live under data/exp_*)
 llm_attractor_experiment/data/reports/
 llm_attractor_experiment/data/raw/

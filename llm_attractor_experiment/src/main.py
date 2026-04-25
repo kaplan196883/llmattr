@@ -90,6 +90,7 @@ def cmd_run(cfg: Config) -> None:
     steps_path = cfg.raw_dir / STEPS_FILE
     manifest_path = cfg.raw_dir / MANIFEST_FILE
     manifest = _load_manifest(manifest_path)
+    _prune_uncommitted_steps(steps_path, manifest)
     sink = make_jsonl_sink(steps_path)
 
     planned = _plan_runs(cfg)
@@ -195,6 +196,60 @@ def _load_manifest(path: Path) -> dict:
         except Exception:
             pass
     return {}
+
+
+def _prune_uncommitted_steps(steps_path: Path, manifest: dict) -> None:
+    """
+    Before a (re)run, drop any records in steps.jsonl whose run_key is not
+    marked 'completed' in the manifest. These are stray records from crashed
+    or killed previous launches; leaving them in place causes duplicate-write
+    issues when the worker re-runs the same trajectory.
+
+    Safe to call when the file doesn't exist (no-op) or the manifest is empty
+    (truncates the file entirely — there's nothing to keep).
+    """
+    if not steps_path.exists():
+        return
+    completed_keys = {k for k, v in manifest.items() if v.get("status") == "completed"}
+    total = 0
+    kept = 0
+    dropped = 0
+    bad = 0
+    import json as _json
+    tmp_path = steps_path.with_name(steps_path.name + ".prune.tmp")
+    with steps_path.open("r", encoding="utf-8") as fin, tmp_path.open(
+        "w", encoding="utf-8"
+    ) as fout:
+        for line in fin:
+            stripped = line.rstrip("\n")
+            if not stripped.strip():
+                continue
+            try:
+                rec = _json.loads(stripped)
+            except Exception:
+                bad += 1
+                continue
+            total += 1
+            regime = rec.get("regime")
+            family = rec.get("prompt_family")
+            ic = rec.get("initial_condition_id")
+            run = rec.get("run_id")
+            if regime is None or family is None or ic is None or run is None:
+                bad += 1
+                continue
+            run_key = f"{regime}|{family}|{ic}|{run}"
+            if run_key in completed_keys:
+                fout.write(line if line.endswith("\n") else line + "\n")
+                kept += 1
+            else:
+                dropped += 1
+    if dropped > 0 or bad > 0:
+        log.warning(
+            "pruned steps.jsonl: kept %d, dropped %d stray, dropped %d malformed (total seen=%d)",
+            kept, dropped, bad, total,
+        )
+    # Always replace — even a no-op rewrite verifies the file is intact.
+    tmp_path.replace(steps_path)
 
 
 # ---------------------------- EMBED ----------------------------------------

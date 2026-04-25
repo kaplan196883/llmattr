@@ -153,17 +153,19 @@ def build_o2_paraphrase_replace(library: dict) -> dict:
 
 # ---- D1 dialog (curious user + helpful agent) --------------------------------
 
+DIALOG_FAMILIES = [
+    "philosophy_dialog",
+    "practical_dialog",
+    "creative_dialog",
+    "reflective",
+    "emotional",
+]
+
 
 def build_d1_dialog(library: dict) -> dict:
     # Dialog uses conversational-style families. The family-level system_prompt
     # is "(unused)" because dialog uses dialog.role_a / role_b system_prompts.
-    dialog_families = [
-        "philosophy_dialog",
-        "practical_dialog",
-        "creative_dialog",
-        "reflective",
-        "emotional",
-    ]
+    dialog_families = DIALOG_FAMILIES
     cfg = {
         "experiment_id": "exp_pub_D1_dialog_curious_helpful",
         "generation_model": "gpt-4o-mini",
@@ -227,6 +229,282 @@ def build_d1_dialog(library: dict) -> dict:
     return cfg
 
 
+# ---- D1_v2 dialog (curious user + helpful agent) at 40 steps -----------------
+
+
+def build_d1_dialog_v2(library: dict) -> dict:
+    """
+    D1 at 40 steps per run instead of 20, matching O1/O2 resolution.
+    Uses a distinct experiment_id so D1_pub results remain intact.
+    """
+    cfg = build_d1_dialog(library)
+    cfg["experiment_id"] = "exp_pub_D1_dialog_curious_helpful_v2"
+    cfg["steps_per_run"] = 40  # 20 turns per role
+    return cfg
+
+
+# ---- O3 summarize + negate, replace mode -------------------------------------
+
+
+def build_o3_summarize_negate_replace(library: dict) -> dict:
+    """
+    Publication-scale version of the small-N REPORT2 O3b finding
+    (summarize-then-negate with replace mode): tests whether the absorbing /
+    highly-contractive regime reproduces at 15 × 30 × 3 × 40 resolution.
+    """
+    system_prompt = (
+        "Summarize the preceding text in one sentence, then state the opposite "
+        "meaning in one sentence. Return both sentences."
+    )
+    all_families = list(library.keys())
+    cfg = {
+        "experiment_id": "exp_pub_O3_summarize_negate_replace",
+        "generation_model": "gpt-4o-mini",
+        "embedding_model": "text-embedding-3-small",
+        "steps_per_run": 40,
+        "runs_per_condition": 3,
+        "initial_conditions_per_family": 30,
+        "max_output_tokens": 120,
+        "temperature": 0.8,
+        "top_p": 1.0,
+        "include_logprobs": False,
+        "clip_rule": "tail_chars",
+        "max_context_chars": 12000,
+        "loop_mode": "replace",
+        "rolling_window_k": 3,
+        "context_tail_chars": 4000,
+        "context_full_chars": 8000,
+        "observables": ["output", "rolling_k3", "context_tail"],
+        **ANALYSIS_BLOCK,
+        "baseline_modes": ["no_feedback", "time_shuffled"],
+        "batch_embeddings": False,
+        "use_evals": False,
+        "seed": 42,
+        "parallel_trajectories": 24,
+        "output_dir": "data",
+        "prompt_families": make_family_block(library, all_families, system_prompt),
+    }
+    return cfg
+
+
+# ---- Perturbation pilot ------------------------------------------------------
+
+
+def build_d1_perturbation_pilot(library: dict) -> dict:
+    """
+    Perturbation-response pilot using D1 dialog at reduced scope:
+    5 families × 5 ICs × 2 runs = 50 base trajectories, 4 conditions each
+    = 200 perturbed trajectories × 30 steps × 2 turns ≈ 12,000 generations.
+    """
+    cfg = build_d1_dialog(library)
+    # 5 ICs per family
+    for fam in cfg["prompt_families"]:
+        fam["initial_conditions"] = fam["initial_conditions"][:5]
+    cfg["experiment_id"] = "exp_perturb_D1_pilot"
+    cfg["temperature"] = 0.8
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 5
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []  # irrelevant for perturbation pilot
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control", "neutral", "lorem", "adversarial"],
+        "adversarial_source_experiment": "exp_pub_D1_dialog_curious_helpful_v2",
+    }
+    return cfg
+
+
+def build_operator_perturbation_pilot(
+    library: dict, base_builder, exp_id: str, source_exp_id: str,
+) -> dict:
+    """Shared builder for O1/O2/O3 perturbation pilots. Reduced scope, 5 families."""
+    cfg = base_builder(library)
+    keep = set(DIALOG_FAMILIES)
+    cfg["prompt_families"] = [
+        {**fam, "initial_conditions": fam["initial_conditions"][:5]}
+        for fam in cfg["prompt_families"]
+        if fam["name"] in keep
+    ]
+    cfg["experiment_id"] = exp_id
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 5
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control", "neutral", "lorem", "adversarial"],
+        "adversarial_source_experiment": source_exp_id,
+    }
+    return cfg
+
+
+# ---- Dose-response pilots ---------------------------------------------------
+
+DOSE_TOKENS = [20, 80, 200, 400]
+
+
+def build_d1_dose_response(library: dict) -> dict:
+    """
+    D1 dose-response: fix perturbation type = neutral, vary token count.
+    5 families × 5 ICs × 2 runs = 50 base × 5 conditions (control + 4 doses)
+    = 250 trajectories × 30 steps × 2 turns = ~15,000 generations.
+    """
+    cfg = build_d1_dialog(library)
+    for fam in cfg["prompt_families"]:
+        fam["initial_conditions"] = fam["initial_conditions"][:5]
+    cfg["experiment_id"] = "exp_perturb_D1_dose"
+    cfg["temperature"] = 0.8
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 5
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control"] + [f"neutral_dose{d}" for d in DOSE_TOKENS],
+        "adversarial_source_experiment": "exp_pub_D1_dialog_curious_helpful_v2",
+    }
+    return cfg
+
+
+def build_o1_dose_response(library: dict) -> dict:
+    """O1 dose-response, same scope as D1."""
+    cfg = build_o1_continue(library)
+    keep = set(DIALOG_FAMILIES)
+    cfg["prompt_families"] = [
+        {**fam, "initial_conditions": fam["initial_conditions"][:5]}
+        for fam in cfg["prompt_families"]
+        if fam["name"] in keep
+    ]
+    cfg["experiment_id"] = "exp_perturb_O1_dose"
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 5
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control"] + [f"neutral_dose{d}" for d in DOSE_TOKENS],
+        "adversarial_source_experiment": "exp_pub_O1_continue",
+    }
+    return cfg
+
+
+# Finer resolutions: D1 sub-token (find actual barrier) + O1 adversarial (find in-distribution dose response)
+D1_FINE_DOSES = [5, 10, 15]
+O1_ADV_DOSES = [20, 80, 200, 400]
+
+
+def build_d1_dose_fine(library: dict) -> dict:
+    """D1 sub-token dose sweep — find where D1 falls below saturation."""
+    cfg = build_d1_perturbation_pilot(library)
+    cfg["experiment_id"] = "exp_perturb_D1_dose_fine"
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control"] + [f"neutral_dose{d}" for d in D1_FINE_DOSES],
+        "adversarial_source_experiment": "exp_pub_D1_dialog_curious_helpful_v2",
+    }
+    return cfg
+
+
+def build_o1_dose_adversarial(library: dict) -> dict:
+    """O1 adversarial-text dose sweep — find O1's sensitivity to in-distribution drift."""
+    cfg = build_o1_dose_response(library)
+    cfg["experiment_id"] = "exp_perturb_O1_dose_adversarial"
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": 15,
+        "conditions": ["control"] + [f"adversarial_dose{d}" for d in O1_ADV_DOSES],
+        "adversarial_source_experiment": "exp_pub_O1_continue",
+    }
+    return cfg
+
+
+# Injection-time (basin-hardening) sweeps: same dose, vary when injection happens.
+
+def build_d1_inject_at(library: dict, override_step: int) -> dict:
+    """D1 with neutral_dose80 injection at the chosen step."""
+    cfg = build_d1_perturbation_pilot(library)
+    cfg["experiment_id"] = f"exp_perturb_D1_inject_t{override_step}"
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": override_step,
+        "conditions": ["control", "neutral_dose80"],
+        "adversarial_source_experiment": "exp_pub_D1_dialog_curious_helpful_v2",
+    }
+    return cfg
+
+
+def build_o1_inject_at(library: dict, override_step: int) -> dict:
+    """O1 with adversarial_dose200 injection at the chosen step."""
+    cfg = build_o1_dose_response(library)
+    cfg["experiment_id"] = f"exp_perturb_O1_inject_t{override_step}"
+    cfg["perturbation"] = {
+        "enabled": True,
+        "override_step": override_step,
+        "conditions": ["control", "adversarial_dose200"],
+        "adversarial_source_experiment": "exp_pub_O1_continue",
+    }
+    return cfg
+
+
+# ---- O1 temperature sweep ----------------------------------------------------
+
+
+def build_o1_t_sweep(library: dict, temperature: float, scope_label: str) -> dict:
+    """
+    Reduced-scope O1 (continue / append) at a chosen temperature for the
+    operator T-sweep. 5 families × 15 ICs × 2 runs × 30 steps = 150 trajectories.
+    Deliberately mirrors D1 T-sweep scope for direct cross-regime comparison.
+    """
+    cfg = build_o1_continue(library)
+    # Keep same 5 families as D1 for structural parity
+    keep_families = set(DIALOG_FAMILIES)
+    cfg["prompt_families"] = [
+        {**fam, "initial_conditions": fam["initial_conditions"][:15]}
+        for fam in cfg["prompt_families"]
+        if fam["name"] in keep_families
+    ]
+    cfg["experiment_id"] = f"exp_pub_O1_Tsweep_T{scope_label}"
+    cfg["temperature"] = temperature
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 15
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []
+    return cfg
+
+
+# ---- D1 temperature sweep ----------------------------------------------------
+
+
+def build_d1_t_sweep(library: dict, temperature: float, scope_label: str) -> dict:
+    """
+    Reduced-scope D1 dialog at a chosen temperature for the T-sweep experiment.
+    5 families × 15 ICs × 2 runs × 30 steps = 150 trajectories (~30% of D1_pub_v2).
+    Kept deliberately small so multiple temperatures can run in parallel.
+    """
+    cfg = build_d1_dialog(library)
+    # Truncate initial conditions to 15 per family
+    for fam in cfg["prompt_families"]:
+        fam["initial_conditions"] = fam["initial_conditions"][:15]
+    cfg["experiment_id"] = f"exp_pub_D1_Tsweep_T{scope_label}"
+    cfg["temperature"] = temperature
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 15
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []  # skip baseline, only recursive is needed for basin_predictability
+    return cfg
+
+
 # ---- main --------------------------------------------------------------------
 
 
@@ -238,6 +516,8 @@ def main(argv: list[str] | None = None) -> int:
     o1 = build_o1_continue(library)
     o2 = build_o2_paraphrase_replace(library)
     d1 = build_d1_dialog(library)
+    d1_v2 = build_d1_dialog_v2(library)
+    o3 = build_o3_summarize_negate_replace(library)
 
     write_yaml(
         ROOT / "configs" / "operators" / "O1_pub.yaml",
@@ -254,20 +534,108 @@ def main(argv: list[str] | None = None) -> int:
         "Publication-grade D1: curious user + helpful agent dialog. 5 dialog-appropriate families × 30 ICs × 3 runs × 20 steps.",
         d1,
     )
+    write_yaml(
+        ROOT / "configs" / "dialog" / "D1_pub_v2.yaml",
+        "Publication-grade D1_v2: curious user + helpful agent dialog. 5 families × 30 ICs × 3 runs × 40 steps (2x D1_pub).",
+        d1_v2,
+    )
+    write_yaml(
+        ROOT / "configs" / "operators" / "O3_pub.yaml",
+        "Publication-grade O3: summarize+negate / replace. 15 families × 30 ICs × 3 runs × 40 steps.",
+        o3,
+    )
+
+    # T-sweep configs: reduced-scope D1 at 3 additional temperatures for basin-predictability comparison
+    for T, label in [(0.3, "03"), (0.6, "06"), (1.2, "12")]:
+        cfg = build_d1_t_sweep(library, T, label)
+        write_yaml(
+            ROOT / "configs" / "dialog" / f"D1_Tsweep_T{label}.yaml",
+            f"D1 temperature-sweep: T={T}. 5 families × 15 ICs × 2 runs × 30 steps.",
+            cfg,
+        )
+    # Perturbation pilot — D1 dialog
+    pert = build_d1_perturbation_pilot(library)
+    write_yaml(
+        ROOT / "configs" / "perturbation" / "D1_pilot.yaml",
+        "Perturbation-response pilot: D1 dialog, 5×5×2 bases × 4 conditions, inject at step 15.",
+        pert,
+    )
+    # Perturbation pilots — operators O1/O2/O3
+    for name, builder, source in [
+        ("O1", build_o1_continue,                "exp_pub_O1_continue"),
+        ("O2", build_o2_paraphrase_replace,      "exp_pub_O2_paraphrase_replace"),
+        ("O3", build_o3_summarize_negate_replace,"exp_pub_O3_summarize_negate_replace"),
+    ]:
+        p = build_operator_perturbation_pilot(
+            library, builder, f"exp_perturb_{name}_pilot", source,
+        )
+        write_yaml(
+            ROOT / "configs" / "perturbation" / f"{name}_pilot.yaml",
+            f"Perturbation-response pilot: {name} operator, 5×5×2 bases × 4 conditions, inject at step 15.",
+            p,
+        )
+    # Dose-response pilots
+    write_yaml(
+        ROOT / "configs" / "perturbation" / "D1_dose.yaml",
+        "D1 dose-response: neutral perturbation at 4 doses (20/80/200/400 tokens) + control.",
+        build_d1_dose_response(library),
+    )
+    write_yaml(
+        ROOT / "configs" / "perturbation" / "O1_dose.yaml",
+        "O1 dose-response: neutral perturbation at 4 doses (20/80/200/400 tokens) + control.",
+        build_o1_dose_response(library),
+    )
+    write_yaml(
+        ROOT / "configs" / "perturbation" / "D1_dose_fine.yaml",
+        "D1 sub-token dose sweep: neutral at 5/10/15 tokens + control (find actual barrier).",
+        build_d1_dose_fine(library),
+    )
+    write_yaml(
+        ROOT / "configs" / "perturbation" / "O1_dose_adversarial.yaml",
+        "O1 adversarial dose sweep: adversarial at 20/80/200/400 tokens + control.",
+        build_o1_dose_adversarial(library),
+    )
+    # Injection-time (basin-hardening) sweeps
+    for t in [5, 25]:
+        write_yaml(
+            ROOT / "configs" / "perturbation" / f"D1_inject_t{t}.yaml",
+            f"D1 basin-hardening: neutral_dose80 injection at step {t}.",
+            build_d1_inject_at(library, t),
+        )
+        write_yaml(
+            ROOT / "configs" / "perturbation" / f"O1_inject_t{t}.yaml",
+            f"O1 basin-hardening: adversarial_dose200 injection at step {t}.",
+            build_o1_inject_at(library, t),
+        )
+
+    # O1 T-sweep: same scope/temperatures (includes T=0.8 anchor at reduced scope for fair comparison with D1)
+    for T, label in [(0.3, "03"), (0.6, "06"), (0.8, "08"), (1.2, "12")]:
+        cfg = build_o1_t_sweep(library, T, label)
+        write_yaml(
+            ROOT / "configs" / "operators" / f"O1_Tsweep_T{label}.yaml",
+            f"O1 temperature-sweep: T={T}. 5 families × 15 ICs × 2 runs × 30 steps.",
+            cfg,
+        )
 
     print("\nplanned trajectory counts:")
-    print(f"  O1: 15 × 30 × 3 = {15*30*3} recursive + {15*30*3} no_feedback = {15*30*3*2} trajectories")
-    print(f"  O2: 15 × 30 × 3 = {15*30*3} recursive + {15*30*3} no_feedback = {15*30*3*2} trajectories")
-    print(f"  D1: 5 × 30 × 3 = {5*30*3} recursive (dialog, no no_feedback)")
+    print(f"  O1:    15 × 30 × 3 = {15*30*3} recursive + {15*30*3} no_feedback = {15*30*3*2} trajectories")
+    print(f"  O2:    15 × 30 × 3 = {15*30*3} recursive + {15*30*3} no_feedback = {15*30*3*2} trajectories")
+    print(f"  O3:    15 × 30 × 3 = {15*30*3} recursive + {15*30*3} no_feedback = {15*30*3*2} trajectories")
+    print(f"  D1:    5 × 30 × 3 = {5*30*3} recursive (dialog, no no_feedback)")
+    print(f"  D1_v2: 5 × 30 × 3 = {5*30*3} recursive (dialog, no no_feedback)")
     print()
-    print("total generation calls (40 for O1/O2, 20 for D1):")
+    print("total generation calls (40 for O1/O2/O3/D1_v2, 20 for D1):")
     o1_calls = 15 * 30 * 3 * 2 * 40
     o2_calls = 15 * 30 * 3 * 2 * 40
+    o3_calls = 15 * 30 * 3 * 2 * 40
     d1_calls = 5 * 30 * 3 * 20
-    total = o1_calls + o2_calls + d1_calls
-    print(f"  O1: {o1_calls:>8} calls")
-    print(f"  O2: {o2_calls:>8} calls")
-    print(f"  D1: {d1_calls:>8} calls")
+    d1v2_calls = 5 * 30 * 3 * 40
+    total = o1_calls + o2_calls + o3_calls + d1_calls + d1v2_calls
+    print(f"  O1:    {o1_calls:>8} calls")
+    print(f"  O2:    {o2_calls:>8} calls")
+    print(f"  O3:    {o3_calls:>8} calls")
+    print(f"  D1:    {d1_calls:>8} calls")
+    print(f"  D1_v2: {d1v2_calls:>8} calls")
     print(f"  total: {total:,} calls")
     print(f"\napprox cost @ gpt-4o-mini ($0.15/M in, $0.60/M out, ~2k tokens in + 150 out avg):")
     in_cost = total * 2000 * 0.15 / 1_000_000
