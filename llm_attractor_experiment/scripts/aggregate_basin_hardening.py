@@ -15,7 +15,7 @@ Reads:
   data/exp_perturb_O1_inject_t25/reports/perturbation/switching_summary.csv
 
 Writes:
-  data/perturbation_basin_hardening/
+  data/aggregated/perturbation_basin_hardening/
     - basin_hardening.csv
     - basin_hardening.png
     - basin_hardening_summary.md
@@ -157,7 +157,7 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "perturbation_basin_hardening"
+    out_dir = data_dir / "aggregated" / "perturbation_basin_hardening"
     ensure_dir(out_dir)
 
     df = load_rows(data_dir)

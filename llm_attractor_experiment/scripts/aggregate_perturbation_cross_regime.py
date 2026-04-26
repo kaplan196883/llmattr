@@ -5,7 +5,7 @@ switching rates + relaxation curves into a single publication-style comparison.
 Reads per-pilot switching_summary.csv and relaxation_table.csv from each
 data/exp_perturb_*_pilot/reports/perturbation/ directory.
 
-Writes: data/perturbation_cross_regime/
+Writes: data/aggregated/perturbation_cross_regime/
   - cross_switching_rates.csv   (stacked)
   - cross_switching_rates.png   (grouped bar: regimes × conditions)
   - cross_relaxation_curves.png (4 panels: one per regime)
@@ -197,7 +197,7 @@ def write_summary(sw: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "perturbation_cross_regime"
+    out_dir = data_dir / "aggregated" / "perturbation_cross_regime"
     ensure_dir(out_dir)
 
     sw = load_switching(data_dir)

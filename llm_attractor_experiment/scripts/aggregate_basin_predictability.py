@@ -3,7 +3,7 @@ Aggregate basin_predictability results across all four publication-scale
 experiments into a single cross-regime comparison plot + CSV + summary.
 
 Reads: data/{exp}/reports/basin_predictability/basin_predictability.csv
-Writes: data/basin_predictability_cross/
+Writes: data/aggregated/basin_predictability_cross/
   - cross_basin_predictability.csv  (stacked)
   - cross_basin_predictability.png  (one-panel overlay + per-obs grid)
   - cross_basin_predictability_summary.md
@@ -205,7 +205,7 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "basin_predictability_cross"
+    out_dir = data_dir / "aggregated" / "basin_predictability_cross"
     ensure_dir(out_dir)
 
     df = load_all(data_dir)

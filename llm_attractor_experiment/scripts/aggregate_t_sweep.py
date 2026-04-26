@@ -4,7 +4,7 @@ cross-temperature comparison plot + CSV + summary report.
 
 Reads: data/{exp}/reports/basin_predictability/basin_predictability.csv
        for T=0.3, 0.6, 0.8 (D1_pub_v2 anchor), 1.2.
-Writes: data/t_sweep_basin_predictability/
+Writes: data/aggregated/t_sweep_basin_predictability/
   - t_sweep_basin_predictability.csv (stacked, with T column)
   - t_sweep_basin_predictability.png (per-observable curves + T-summary panel)
   - t_sweep_summary.md
@@ -198,7 +198,7 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "t_sweep_basin_predictability"
+    out_dir = data_dir / "aggregated" / "t_sweep_basin_predictability"
     ensure_dir(out_dir)
 
     df = load_all(data_dir)

@@ -7,7 +7,7 @@ Reads:
   data/exp_perturb_D1_pilot/reports/perturbation/switching_summary.csv  (neutral @80)
   data/exp_perturb_O1_pilot/reports/perturbation/switching_summary.csv  (neutral @80)
 
-Writes: data/perturbation_dose_response/
+Writes: data/aggregated/perturbation_dose_response/
   - dose_response.csv
   - dose_response.png
   - dose_response_summary.md
@@ -154,7 +154,7 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "perturbation_dose_response"
+    out_dir = data_dir / "aggregated" / "perturbation_dose_response"
     ensure_dir(out_dir)
 
     df = load_rows(data_dir)

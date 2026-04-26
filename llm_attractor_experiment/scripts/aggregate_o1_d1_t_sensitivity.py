@@ -5,7 +5,7 @@ basin-predictability in O1 (contractive) vs D1 (stylistic multi-basin)?
 Reads: reduced-scope T-sweep basin_predictability CSVs for O1_Tsweep_T{03,06,08,12}
 and D1_Tsweep_T{03,06,12} + D1_pub_v2 (T=0.8 full scope).
 
-Writes: data/t_sensitivity_cross_regime/
+Writes: data/aggregated/t_sensitivity_cross_regime/
   - cross_t_sensitivity.csv
   - cross_t_sensitivity.png (side-by-side O1 vs D1)
   - cross_t_sensitivity_summary.md
@@ -162,7 +162,7 @@ def write_summary(o1: pd.DataFrame, d1: pd.DataFrame, out_path: Path) -> None:
 
 def main() -> int:
     data_dir = Path("data")
-    out_dir = data_dir / "t_sensitivity_cross_regime"
+    out_dir = data_dir / "aggregated" / "t_sensitivity_cross_regime"
     ensure_dir(out_dir)
 
     o1 = load_rows(data_dir, O1_EXPERIMENTS, "O1 contractive", "context_tail")

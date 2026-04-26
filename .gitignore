@@ -56,6 +56,9 @@ llm_attractor_experiment/data/**/*.gif
 # Local Claude/agent state
 .claude/
 
+# Junk drawer (historical planning briefs, third-party PDFs, etc.)
+junk/
+
 # Empty placeholder subdirs at data/ root (experiments live under data/exp_*)
 llm_attractor_experiment/data/reports/
 llm_attractor_experiment/data/raw/
