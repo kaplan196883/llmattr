@@ -258,16 +258,68 @@ Total token cost for synchronous embedding of the full repository:
 
 ### 4.4 Representation spaces
 
-For each observable's embedding matrix `Z ∈ R^{N×1536}` we compute:
+For each observable's embedding matrix `Z ∈ R^{N×1536}` we compute four
+projections, each fit jointly across the full point cloud (never
+per-run, never per-family) so coordinates are comparable:
 
-- `Z_PCA-2 ∈ R^{N×2}` — for plotting, density estimation, V landscapes
-- `Z_PCA-10 ∈ R^{N×10}` — for clustering and basin classification
-- `Z_PCA-50 ∈ R^{N×50}` — pre-reduction for t-SNE
-- `Z_t-SNE-2 ∈ R^{N×2}` — non-linear projection for visualization
-  (perplexity 30, cosine metric, init from PCA)
+#### 4.4.1 PCA-2 / PCA-10 / PCA-50
 
-PCA is fit *jointly* on all trajectories of a given experiment, never
-per-run, to ensure shared coordinates. t-SNE is similarly fit once.
+Linear projections via `sklearn.decomposition.PCA` with
+`random_state=42`:
+
+- `Z_PCA-2 ∈ R^{N×2}` — for density estimation, V landscape, and most
+  2D plots. Carries 10–15% of total variance for short-output observables
+  (`output`); higher (~25%) for longer-context observables.
+- `Z_PCA-10 ∈ R^{N×10}` — used for K-means clustering, basin
+  classification, basin-predictability regression, recurrence/dwell.
+  Captures 30–50% of variance and gives clusters that are both stable
+  under bootstrap and interpretable in the original embedding space.
+- `Z_PCA-50 ∈ R^{N×50}` — pre-reduction stage for t-SNE only. Captures
+  ~80% of variance and removes the high-dimensional noise that would
+  otherwise dominate cosine distances at the t-SNE step.
+
+#### 4.4.2 t-SNE
+
+We fit `sklearn.manifold.TSNE(n_components=2)` with the following
+parameters:
+
+```python
+TSNE(
+    n_components=2,
+    perplexity=30,                         # capped at (N-1)/4 for small N
+    pre_pca_dim=50,                        # see 4.4.1 above
+    metric="cosine",                        # matches embedding similarity
+    init="pca",                            # PCA-init for stability
+    learning_rate="auto",
+    random_state=42,
+)
+```
+
+The cosine metric is chosen because OpenAI's `text-embedding-3-small`
+is L2-normalized; cosine distance is the appropriate similarity in this
+space. We use `init="pca"` rather than the default random init so
+repeat runs give consistent projections; with `random_state=42` the
+output is fully deterministic.
+
+t-SNE is computed once per (experiment, observable). The fit time
+scales as `O(N log N)` and runs in seconds for N ≤ 60k embeddings; for
+larger experiments (the Phase 2 publication runs at N ≈ 108k embeddings
+per observable) t-SNE takes ~30 s.
+
+We do not interpret t-SNE distances as physical: they preserve local
+neighborhood structure but not global metric. Quantitative metrics
+(basin predictability, recurrence, etc.) are computed in PCA-10. t-SNE
+is used only for visualization.
+
+#### 4.4.3 Joint vs per-condition projection
+
+In the perturbation experiments, joint PCA across all four conditions
+is essential — each condition's PCA-2 cloud must live in shared
+coordinates so we can compare basins, geodesics, and switching events
+across conditions. The same applies to dialog experiments where each
+trajectory contributes both user-turn and agent-turn embeddings: PCA
+is fit on the union, then per-role observables are derived by filtering
+indices.
 
 ### 4.5 Metric battery
 
@@ -527,7 +579,137 @@ standardized set of static plots, defined in
 Plots are rendered at 200 DPI to PNG. Each experiment's `reports/plots/`
 folder ends up with 50–150 PNGs depending on the number of observables.
 
-### 4.9 Perturbation visualization toolkit
+### 4.9 Flow-field computation
+
+Most of the visualization battery (G/H/I plots, perturbation
+flow_skeleton, regime_plots E plot) shares a single bin-and-aggregate
+kernel that turns a trajectory ensemble into a spatially-resolved
+displacement vector field on the chosen 2D projection. We document it
+explicitly because the kernel is what licenses the streamline /
+divergence / V-landscape semantics that appear repeatedly below.
+
+#### 4.9.1 The displacement-field kernel
+
+Given a 2D projection `Z ∈ R^{N×2}` and trajectory metadata grouping
+points into `(family, ic, run)` groups, we build:
+
+```
+For each group g with sorted-by-step indices i_0 < i_1 < ... < i_{T-1}:
+    starts_g = Z[i_0:i_{T-1}]      shape (T-1, 2)
+    deltas_g = Z[i_1:i_T] - Z[i_0:i_{T-1}]   shape (T-1, 2)
+S = concat(starts_g for all g)     shape (M, 2)
+D = concat(deltas_g for all g)     shape (M, 2)
+```
+
+`(S, D)` is the empirical displacement-field dataset: `M` observed
+single-step transitions in the projection.
+
+We then discretize the projection bounds `[x_min - p, x_max + p]` ×
+`[y_min - p, y_max + p]` (with 5% padding) into a `grid_n × grid_n`
+grid (typically 26 for plots, 32–48 for animations). For each grid bin
+`(i, j)` we compute:
+
+```
+count[i, j] = number of (s, d) pairs with s falling into bin (i, j)
+sum_u[i, j] = sum of d_x over those pairs
+sum_v[i, j] = sum of d_y over those pairs
+U[i, j]     = sum_u[i, j] / count[i, j]   (NaN if count = 0)
+V[i, j]     = sum_v[i, j] / count[i, j]   (NaN if count = 0)
+```
+
+`(U, V)` is the per-bin **average displacement vector**. Bins with
+zero observed displacements get NaN, which `streamplot` interprets as
+"don't integrate through here." This gives an honest spatial map of
+how the system moves: dense bins have low-noise estimates, sparse bins
+are blanked.
+
+The kernel is implemented as three pure functions in
+`src/experiments/dynamics/_grid_utils.py`:
+
+- `make_grid_edges(bounds_pts, grid_n, pad_frac=0.05)` → mesh + edges
+- `bin_displacement_field(starts, deltas, x_edges, y_edges)` → (U, V)
+- `bin_density(pts, x_edges, y_edges)` → count grid
+
+These are the leaves of the import graph; every flow-field producer
+in the codebase composes them.
+
+#### 4.9.2 Density estimation
+
+Where the displacement field uses bin-mean averaging at moderate
+resolution (~26–48), the **density** field used for V landscapes and
+background heatmaps uses a higher-resolution Gaussian-smoothed
+histogram via `_smooth_density_grid` in
+`src/experiments/dynamics/field_plots.py`:
+
+```
+H = histogram2d(pts, bins=(x_edges, y_edges))    # raw counts, grid_n × grid_n
+H_smooth = scipy.ndimage.gaussian_filter(H, sigma=sigma_cells)
+```
+
+with `grid_n = 96` and `sigma = 1.5–2.0` cells. This smoother density
+estimate is what feeds into `V(x) = −log(H_smooth + ε)` for the
+effective-potential landscape.
+
+We use two grid resolutions on purpose: the displacement field needs
+*more* points per bin to average reliably, so it runs coarser; the
+density field needs spatial smoothness, so it runs finer plus a
+Gaussian post-filter.
+
+#### 4.9.3 Streamlines
+
+Streamlines are integral curves of the (U, V) field, computed by
+`matplotlib.pyplot.streamplot`. A streamline starting at point
+`x_0 = (x, y)` traces the path `x_{t+1} = x_t + (U(x_t), V(x_t))·dt`
+forward in projection space. They visualize the flow that an
+"average trajectory" would follow given the empirical (U, V).
+
+We use streamlines (not arrows) because they handle continuous fields
+naturally and integrate through arbitrary curvature. Streamline density
+is set to 1.6–2.0; arrowsize is small (0.9–1.2) so the density isn't
+visually dominated by arrowheads.
+
+#### 4.9.4 Divergence
+
+The divergence of the displacement field is
+
+```
+∇·v(x) = ∂U/∂x + ∂V/∂y
+```
+
+computed via `numpy.gradient` on the (U, V) grids. **Negative
+divergence = sink (attractor)**: more flow enters the bin than leaves;
+**positive divergence = source (repeller)**.
+
+For recursive LLM loops we expect the whole plane to be weakly negative
+on average (trajectories on the whole are not divergent), with strong
+local minima at the basin centers. The divergence plots
+(`I_divergence_by_condition.png`) make this quantitative — for the O3
+absorbing regime the divergence has a single deep minimum at the sink;
+for O2 the divergence has a saddle structure between the two cycle
+arms.
+
+#### 4.9.5 The G/H/I plot triple
+
+For each (experiment, projection ∈ {PCA-2, t-SNE-2}) we render three
+flow-field views to `data/<exp>/reports/perturbation/`:
+
+- **G — streamlines + density**: V (density) as the magma background;
+  white streamlines from (U, V) overlaid. This is the most legible
+  "where does the system flow" view.
+- **H — speed-colored streamlines (dark theme)**: streamlines colored
+  by local `|v| = sqrt(U² + V²)`, on a dark background. Slow regions
+  (basin interiors) appear cold; fast regions (transport between
+  basins) appear hot.
+- **I — divergence field**: heatmap of `∇·v` with a diverging colormap
+  (RdBu_r), shared color scale across all conditions of the same
+  experiment for direct comparison. Streamlines overlaid in thin black.
+
+For perturbation experiments the G/H/I are rendered per-condition
+(2×2 panels = 4 conditions); for non-perturbation experiments (Phase 2
+publication runs) they're rendered for the recursive regime alone,
+sometimes faceted by family.
+
+### 4.10 Perturbation visualization toolkit
 
 For perturbation experiments we additionally compute:
 
@@ -564,7 +746,7 @@ worker creating a fresh figure for one frame. Frames are stitched into
 MP4 via `imageio-ffmpeg` (libx264 codec, quality 8). Wall-time
 per animation: ~80s vs ~11 min single-threaded.
 
-### 4.9 Hardware and software
+### 4.11 Hardware and software
 
 All experiments run locally with API calls to OpenAI. CPU: 40 cores
 available for parallel rendering. Python 3.x with numpy, scipy,
