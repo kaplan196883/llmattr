@@ -222,19 +222,39 @@ Sampling temperature `T = 0.8` unless varied (Phase 2b T-sweep).
 
 All trajectories are embedded with `text-embedding-3-small` (OpenAI),
 producing 1536-dimensional vectors. We embed multiple *observables* per
-step:
+step — each captures a different facet of the trajectory state, and
+analyses are repeated per observable to expose representation-dependent
+findings:
 
-| observable | what it captures |
-|---|---|
-| `output` | the model's `Y_t` text alone |
-| `rolling_k3` | concatenation of the last 3 outputs |
-| `context_tail` | the last 4000 chars of the context window |
-| `last_user_turn`, `last_agent_turn` | dialog-only: most recent turn per role |
-| `rolling_user_k3`, `rolling_agent_k3` | dialog-only: rolling window per role |
-| `turn_pair` | dialog-only: most recent (user, agent) pair concatenated |
+| observable | source location | what it captures |
+|---|---|---|
+| `output` | `core/observables.py` | the model's `Y_t` text alone (no context) |
+| `rolling_k3` | `core/observables.py` | concatenation of the last 3 outputs |
+| `context_tail` | `core/observables.py` | the last 4000 chars of the running context |
+| `context_full` | `core/observables.py` | fixed-window 8000-char tail (longer-memory variant) |
+| `last_user_turn` | `experiments/dialog/observables.py` | dialog-only: most recent user/role-A utterance |
+| `last_agent_turn` | `experiments/dialog/observables.py` | dialog-only: most recent agent/role-B utterance |
+| `rolling_user_k3` | `experiments/dialog/observables.py` | dialog-only: rolling window of last 3 user turns |
+| `rolling_agent_k3` | `experiments/dialog/observables.py` | dialog-only: rolling window of last 3 agent turns |
+| `turn_pair` | `experiments/dialog/observables.py` | dialog-only: most recent (user, agent) exchange concatenated |
 
-Embeddings are batched and cached per observable. Total token cost for
-the full repository: ~$30 in embedding API calls.
+The role-specific observables (`last_user_turn`, `last_agent_turn`,
+`rolling_user_k3`, `rolling_agent_k3`, `turn_pair`) are essential for
+dialog analysis: many properties of the regime (basin score, recurrence)
+look very different when computed on the agent's responses alone vs the
+user's questions vs their concatenation. We compute every metric on
+every applicable observable and report inter-observable agreement as
+part of the evidence chain.
+
+Embeddings are batched and cached per observable. The codebase also
+includes (but does not currently use in publication runs) an OpenAI
+**Batch API** integration (`src/api/batch_jobs.py`) that supports
+asynchronous embedding at ~50% cost, plus an **OpenAI Evals** runner
+(`src/api/evals_runner.py`) gated behind `use_evals: false` in all
+configs. Both are infrastructure stubs available for future expansion.
+
+Total token cost for synchronous embedding of the full repository:
+~$30 in embedding API calls.
 
 ### 4.4 Representation spaces
 
@@ -299,10 +319,25 @@ N embeddings forming a covariance:
 ```
 
 The Lyapunov spectrum is `λ_k(t) = log σ_k(Σ_t) / 2`, where σ_k is the
-k-th singular value. The top exponent `λ_1` is interpreted as a finite-
-time Lyapunov exponent (FTLE).
+k-th singular value. The top exponent `λ_1` is interpreted as a
+finite-time Lyapunov exponent (FTLE).
 
-#### 4.5.6 Sharpness dimension
+We compute the spectrum at **two distinct time windows**:
+
+- **Early/transient** spectrum: averaged over `t ∈ [t_baseline=1, T/2]`,
+  capturing the initial divergence regime where the ensemble is still
+  dispersing from the seed.
+- **Late/settled** spectrum: averaged over `t ∈ [T/2, T]`, capturing
+  the on-attractor behavior after transients die out.
+
+The early-vs-late comparison distinguishes regimes where the system is
+contractive at long times but transiently divergent (e.g., O1) from
+regimes that are contractive throughout (e.g., O3 absorbing). The
+function `compute_lyapunov_spectrum` in
+`src/experiments/dynamics/lyapunov.py` returns both windows; the FTLE
+helper `ftle_from_spread` provides a scalar summary.
+
+#### 4.5.6 Sharpness dimension and effective rank
 
 ```
 SD = (Σ_k σ_k)² / Σ_k σ_k²
@@ -311,6 +346,82 @@ SD = (Σ_k σ_k)² / Σ_k σ_k²
 This is the *participation ratio* of the singular-value spectrum and
 gives an effective dimension of the ensemble at time t. Low SD ⇒ a few
 directions dominate (collapsed); high SD ⇒ spread.
+
+A complementary measure, **effective rank**, counts singular values
+above a threshold (default 0.01 of the leading singular value). Where
+SD weights all directions softly, effective rank gives a hard count of
+"active" directions. Both are computed in
+`src/experiments/dynamics/sharpness_dim.py`.
+
+#### 4.5.7 Periodicity
+
+To detect oscillatory regimes (O2-style 2-cycles, O4-style longer
+cycles), we compute lag-distance autocorrelation. For trajectory points
+`z_0, ..., z_{T-1}`:
+
+```
+mean_dist(k) = mean over (t, t+k) of ‖z_t − z_{t+k}‖_cos
+```
+
+The output statistics from `trajectory_periodicity` in
+`src/experiments/operators/periodicity.py`:
+
+- **`period_2_score`** = `mean_dist(1) − mean_dist(2)` — positive
+  values indicate a 2-cycle (lag-2 points are closer than lag-1 points)
+- **`period_3_score`** — analogous for 3-cycles
+- **`best_period`** — the lag k ∈ [1, T/2] minimizing `mean_dist(k)`
+- **`autocorr_distances`** — full vector of mean lag distances
+
+This is run on every trajectory and aggregated per (regime, family) for
+condition-vs-baseline tests.
+
+#### 4.5.8 Dispersion
+
+To distinguish contractive from exploratory dynamics we compute, in
+`src/experiments/operators/dispersion.py`:
+
+```
+initial_dispersion = mean pairwise distance over t ∈ [0, T/4]
+final_dispersion   = mean pairwise distance over t ∈ [3T/4, T]
+dispersion_growth  = (final - initial) / initial
+global_drift       = ‖centroid(t=T) − centroid(t=0)‖
+drift_monotonicity = correlation of centroid distance vs t
+```
+
+Negative `dispersion_growth` ⇒ the ensemble shrinks over time
+(contractive); positive ⇒ it spreads (divergent). High
+`drift_monotonicity` ⇒ the centroid moves monotonically in one
+direction (e.g., absorbing toward a sink); low ⇒ centroid drifts back
+and forth (oscillatory or stationary).
+
+#### 4.5.9 Three-axis hypothesis classifier
+
+We run a structured hypothesis test over each experiment by mapping the
+above metrics to three orthogonal hypotheses:
+
+- **H1a (convergence to a basin)**: signals are `basin_positive` and
+  `dwell_above_null`. 0–2 signals → strength {not_supported, weak,
+  moderate, strong}.
+- **H1b (recurrence / oscillation)**: signals are
+  `late_recurrence_above_null`, `period_2_score > threshold`, and
+  `best_period_majority > 1`. 0–3 signals.
+- **H1c (divergence / no-attractor)**: signals are
+  `dispersion_growing`, `drift_monotonically_outward`, and
+  `no_stable_basin`. 0–3 signals.
+
+The classifier is implemented in
+`src/experiments/operators/classifier.py` (`classify_three_axis`) and
+in `src/reports/summary.py` (`classify_two_axis` for legacy
+operator-only reports). Each experiment's `reports/report.md` carries
+the per-hypothesis classification with the underlying signal counts
+and the pre-registered thresholds.
+
+The classifier framework predates the four-regime taxonomy and is
+internally used to *justify* assigning a regime label: a config gets
+classified as O1 contractive when `H1a = strong` and `H1b = weak`,
+while O2 is `H1b = strong` driven by `period_2_score`. Every regime
+label in this paper has an underlying H1a/b/c signal-count justification
+in the corresponding experiment's report.
 
 #### 4.5.7 Basin predictability
 
@@ -337,32 +448,86 @@ from their paired control's.
 
 ### 4.6 Baselines
 
-Three null baselines are run alongside every experiment:
+Each baseline ablates a different mechanism so we can isolate which
+property of the loop is producing the observed attractor:
 
-- **`time_shuffled`**: post-hoc only — reshuffle (step) labels within
-  each trajectory and recompute metrics. Tests whether the metric
-  depends on temporal ordering or just on the marginal point cloud.
-- **`no_feedback`**: sample fresh outputs without conditioning on prior
-  context — ideal "iid baseline." Available for operator regimes only.
-- **`independent_regeneration`**: sample N independent continuations
-  from the same seed, no further recurrence. Available for operator
+- **`time_shuffled`** (post-hoc): reshuffle step labels within each
+  trajectory and recompute the dynamics metrics. If the metric is
+  unchanged, it depends only on the marginal point cloud and not on
+  temporal structure — i.e., the "trajectory" is effectively a bag of
+  embeddings, not a process. Implemented in
+  `src/analysis/robustness.py:time_shuffle_labels`.
+- **`no_feedback`** (`src/core/baselines.py:no_feedback_provider`):
+  sample each step's output from the *seed only*, ignoring the
+  accumulated context. This nulls the recurrence — the loop becomes N
+  independent samples conditioned on the seed. Operator regimes only.
+- **`independent_regeneration`**
+  (`src/core/baselines.py:independent_regeneration_provider`):
+  regenerate the full trajectory from scratch each iteration, with no
+  carryover. This nulls history-dependence completely: each step is
+  drawn from `P_θ(. | system_prompt + seed)` independently. Operator
   regimes only.
 
 A regime is *endogenous* only if its diagnostic statistic differs from
-all three baselines beyond bootstrap CIs. We run 1000-iteration
-bootstrap on every reported metric.
+all three baselines beyond bootstrap CIs. The effect size relative to
+each baseline is computed via Cohen's d in
+`src/analysis/robustness.py:effect_vs_baseline`, which returns
+`(mean_recursive − mean_baseline) / pooled_std`.
 
 ### 4.7 Statistical procedures
 
 - **95% confidence intervals** via 1000-iteration bootstrap on
-  trajectory-level quantities.
+  trajectory-level quantities (`src/analysis/bootstrap.py`).
+- **Cohen's d effect size** for recursive-vs-baseline magnitude
+  comparisons (`src/analysis/robustness.py:effect_vs_baseline`).
 - **Permutation tests** for between-condition differences (e.g.,
-  switching rate under adversarial vs control).
+  switching rate under adversarial vs control), via
+  `permutation_test_mean_diff` in `src/analysis/bootstrap.py`.
 - **5-fold CV** for basin predictability classifier accuracy.
 - **Wilson-style CI** on switching-rate proportions where bootstrap
-  would be unstable.
+  would be unstable (small denominators in dose-response cells).
+- **Significance gate**: a regime / condition signal counts only if its
+  diagnostic statistic is `≥ 2σ` above the baseline mean *and* its
+  Cohen's d ≥ 0.5 (medium effect). Both criteria must hold; CI alone
+  can pass with trivially small effects under sufficient N.
 
-### 4.8 Perturbation visualization toolkit
+### 4.8 Static visualization battery
+
+Beyond the perturbation toolkit (4.9), every experiment generates a
+standardized set of static plots, defined in
+`src/experiments/dynamics/regime_plots.py`,
+`src/experiments/dynamics/field_plots.py`,
+`src/experiments/dynamics/pub_tsne_plots_v2.py`, and
+`src/reports/plots.py`. Notable variants:
+
+- **A: joint t-SNE colored by regime / family / step** — global view of
+  where the regimes and the families live in the joint embedding.
+- **B: per-family grid** — one t-SNE panel per prompt family, sharing
+  coordinates, so cross-family heterogeneity is visible.
+- **C: single-IC trajectories** — five sample trajectories with explicit
+  step-coloring; for sanity checks and report figures.
+- **E: per-experiment flow field** (PCA-2 quiver) — averaged
+  per-step displacement field overlay on the density background.
+- **F: trajectory sample** — six sample trajectories with the time-
+  ordering visible.
+- **G/H/I: streamlines + density / speed-colored streamlines / divergence**
+  — three richer flow-field views from `dynamics/field_plots.py`.
+- **`plot_v2_by_step_parity`** and **`plot_v2_per_family_parity_grid`**
+  in `pub_tsne_plots_v2.py` — even/odd step stratification, used to
+  separate the two arms of an oscillatory 2-cycle visually.
+- **`plot_regime_map_by_family`** in `dynamics/partial_snapshot.py` —
+  family × IC heatmap colored by final-window cluster, useful for
+  detecting whether basins are family-dependent or shared.
+- **`plot_spread_timelines`** in `dynamics/regime_plots.py` —
+  ensemble-spread σ(t) curves per family, the visual analog of FTLE.
+- **`basin_entry_hist`**, **`basin_scores`**, **`cluster_occupancy`**,
+  **`dwell_dist`** in `src/reports/plots.py` — distributional plots of
+  the analysis primitives, one panel per observable.
+
+Plots are rendered at 200 DPI to PNG. Each experiment's `reports/plots/`
+folder ends up with 50–150 PNGs depending on the number of observables.
+
+### 4.9 Perturbation visualization toolkit
 
 For perturbation experiments we additionally compute:
 
@@ -448,6 +613,29 @@ Three regimes emerge clearly: **contractive** (O1, D1, D3), **oscillatory**
 (O2), **absorbing** (O3b). The replace-mode operators in dialog (D2-replace)
 also show oscillation but with weaker recurrence than O2, suggesting an
 intermediate regime.
+
+**Note on O3 vs O3b**: `exp_op_O3_summarize_negate` uses *append* mode
+(summary appended to context), which produces a weak collapse —
+trajectories drift toward a content-degraded sink but the basin is
+soft. `exp_op_O3b_summarize_negate_replace` uses *replace* mode, which
+produces the sharp absorbing regime characterized in REPORT4 as our
+canonical O3. The publication-scale verification uses the replace
+variant under the simpler name `exp_pub_O3_summarize_negate_replace`.
+
+**Note on O4**: `exp_op_O4_paraphrase_append` (paraphrase + append) is a
+2×2 cross of O1 and O2 — content-preserving paraphrase but accumulating
+context. It produces an intermediate regime that doesn't cleanly fit the
+four-regime taxonomy, with moderate recurrence, moderate sharpness, and
+no clean periodicity. It supports H2 (architecture × content
+factorization predicts behavior) and is documented as an interesting
+boundary case in REPORT4.
+
+**Note on D3 debate**: `exp_dialog_D3_debate_advocate_skeptic` uses two
+roles arguing different positions (advocate vs skeptic) on a topic. It
+shows medium-strength stylistic basins (each role has its own attractor)
+plus moderate recurrence between role-aligned positions. We didn't
+elevate it to the diagnostic taxonomy because its dynamics depend on
+specific topic choice in ways D1 doesn't.
 
 ### 5.3 Phase 2 — publication-scale verification
 
@@ -612,7 +800,36 @@ expert prose, 36% of D2 trajectories pull back toward the original
 specialization line. **D2 is a measurably distinct regime from D1**,
 and we identify it as the fifth member of the taxonomy.
 
-### 5.9 Holographic-bulk geometry
+### 5.9 Cross-experiment aggregation
+
+Six standalone aggregator scripts produce the cross-regime comparison
+artifacts that anchor the figures in this paper:
+
+- `scripts/aggregate_basin_predictability.py` — overlay the basin
+  predictability curves of the four diagnostic regimes onto a single
+  axis. Output: `data/aggregated/basin_predictability_cross/`.
+- `scripts/aggregate_t_sweep.py` — combine the D1 T-sweep CSVs.
+  Output: `data/aggregated/t_sweep_basin_predictability/`.
+- `scripts/aggregate_o1_d1_t_sensitivity.py` — side-by-side O1-vs-D1
+  basin-predictability-vs-T comparison. Output:
+  `data/aggregated/t_sensitivity_cross_regime/`.
+- `scripts/aggregate_perturbation_cross_regime.py` — switching rates +
+  relaxation curves across all 5 perturbation pilots (D1, O1, O2, O3, D2).
+  Output: `data/aggregated/perturbation_cross_regime/` including the
+  4×5 condition × regime grouped bar chart.
+- `scripts/aggregate_dose_response.py` — dose-response curves across
+  D1+O1 dose experiments, log-scale dose axis with 95% Wilson CI bars.
+  Output: `data/aggregated/perturbation_dose_response/`.
+- `scripts/aggregate_basin_hardening.py` — injection-time × switching
+  curves for D1 + O1, with the basin-hardening interpretation.
+  Output: `data/aggregated/perturbation_basin_hardening/`.
+
+Each script reads only the per-experiment CSV outputs and is fully
+deterministic — re-running them produces byte-identical figures. They
+are kept separate from the per-experiment pipeline to allow incremental
+re-aggregation as new experiments land.
+
+### 5.10 Holographic-bulk geometry
 
 For each of the four diagnostic perturbation pilots we computed:
 
