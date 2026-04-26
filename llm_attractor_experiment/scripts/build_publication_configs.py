@@ -58,6 +58,62 @@ ANALYSIS_BLOCK = {
 }
 
 
+# ---- shared operator-config skeleton -----------------------------------------
+# The 3 single-role operator builders (O1 continue, O2 paraphrase, O3 sum+negate)
+# differ only in experiment_id, system_prompt, loop_mode, and parallel_trajectories.
+# Everything else is shared via this helper.
+
+def _build_operator_config(
+    library: dict,
+    *,
+    experiment_id: str,
+    system_prompt: str,
+    loop_mode: str,
+    parallel_trajectories: int = 8,
+) -> dict:
+    return {
+        "experiment_id": experiment_id,
+        "generation_model": "gpt-4o-mini",
+        "embedding_model": "text-embedding-3-small",
+        "steps_per_run": 40,
+        "runs_per_condition": 3,
+        "initial_conditions_per_family": 30,
+        "max_output_tokens": 120,
+        "temperature": 0.8,
+        "top_p": 1.0,
+        "include_logprobs": False,
+        "clip_rule": "tail_chars",
+        "max_context_chars": 12000,
+        "loop_mode": loop_mode,
+        "rolling_window_k": 3,
+        "context_tail_chars": 4000,
+        "context_full_chars": 8000,
+        "observables": ["output", "rolling_k3", "context_tail"],
+        **ANALYSIS_BLOCK,
+        "baseline_modes": ["no_feedback", "time_shuffled"],
+        "batch_embeddings": False,
+        "use_evals": False,
+        "seed": 42,
+        "parallel_trajectories": parallel_trajectories,
+        "output_dir": "data",
+        "prompt_families": make_family_block(library, list(library.keys()), system_prompt),
+    }
+
+
+# ---- shared perturbation-pilot override block --------------------------------
+# Every perturbation-pilot builder (D1 pilot, O1/O2/O3 pilot, dose, inject_t*)
+# applies the same scope reduction and disables baselines. Apply these on top
+# of a fresh base config from one of the operator/dialog builders.
+
+def _apply_perturbation_pilot_overrides(cfg: dict, override_step: int = 15) -> None:
+    cfg["steps_per_run"] = 30
+    cfg["runs_per_condition"] = 2
+    cfg["initial_conditions_per_family"] = 5
+    cfg["parallel_trajectories"] = 12
+    cfg["baseline_modes"] = []
+    # caller fills in cfg["experiment_id"] and cfg["perturbation"]
+
+
 def make_family_block(library: dict, family_names: list[str], system_prompt: str) -> list[dict]:
     blocks = []
     for name in family_names:
@@ -83,72 +139,24 @@ def write_yaml(path: Path, header_comment: str, data: dict) -> None:
 
 
 def build_o1_continue(library: dict) -> dict:
-    system_prompt = "Continue the text naturally. Do not summarize or explain."
-    all_families = list(library.keys())
-    cfg = {
-        "experiment_id": "exp_pub_O1_continue",
-        "generation_model": "gpt-4o-mini",
-        "embedding_model": "text-embedding-3-small",
-        "steps_per_run": 40,
-        "runs_per_condition": 3,
-        "initial_conditions_per_family": 30,
-        "max_output_tokens": 120,
-        "temperature": 0.8,
-        "top_p": 1.0,
-        "include_logprobs": False,
-        "clip_rule": "tail_chars",
-        "max_context_chars": 12000,
-        "loop_mode": "append",
-        "rolling_window_k": 3,
-        "context_tail_chars": 4000,
-        "context_full_chars": 8000,
-        "observables": ["output", "rolling_k3", "context_tail"],
-        **ANALYSIS_BLOCK,
-        "baseline_modes": ["no_feedback", "time_shuffled"],
-        "batch_embeddings": False,
-        "use_evals": False,
-        "seed": 42,
-        "parallel_trajectories": 8,
-        "output_dir": "data",
-        "prompt_families": make_family_block(library, all_families, system_prompt),
-    }
-    return cfg
+    return _build_operator_config(
+        library,
+        experiment_id="exp_pub_O1_continue",
+        system_prompt="Continue the text naturally. Do not summarize or explain.",
+        loop_mode="append",
+    )
 
 
 # ---- O2 paraphrase/replace ---------------------------------------------------
 
 
 def build_o2_paraphrase_replace(library: dict) -> dict:
-    system_prompt = "Paraphrase the following text while preserving its meaning. Return only the paraphrase."
-    all_families = list(library.keys())
-    cfg = {
-        "experiment_id": "exp_pub_O2_paraphrase_replace",
-        "generation_model": "gpt-4o-mini",
-        "embedding_model": "text-embedding-3-small",
-        "steps_per_run": 40,
-        "runs_per_condition": 3,
-        "initial_conditions_per_family": 30,
-        "max_output_tokens": 120,
-        "temperature": 0.8,
-        "top_p": 1.0,
-        "include_logprobs": False,
-        "clip_rule": "tail_chars",
-        "max_context_chars": 12000,
-        "loop_mode": "replace",
-        "rolling_window_k": 3,
-        "context_tail_chars": 4000,
-        "context_full_chars": 8000,
-        "observables": ["output", "rolling_k3", "context_tail"],
-        **ANALYSIS_BLOCK,
-        "baseline_modes": ["no_feedback", "time_shuffled"],
-        "batch_embeddings": False,
-        "use_evals": False,
-        "seed": 42,
-        "parallel_trajectories": 8,
-        "output_dir": "data",
-        "prompt_families": make_family_block(library, all_families, system_prompt),
-    }
-    return cfg
+    return _build_operator_config(
+        library,
+        experiment_id="exp_pub_O2_paraphrase_replace",
+        system_prompt="Paraphrase the following text while preserving its meaning. Return only the paraphrase.",
+        loop_mode="replace",
+    )
 
 
 # ---- D1 dialog (curious user + helpful agent) --------------------------------
@@ -252,39 +260,16 @@ def build_o3_summarize_negate_replace(library: dict) -> dict:
     (summarize-then-negate with replace mode): tests whether the absorbing /
     highly-contractive regime reproduces at 15 × 30 × 3 × 40 resolution.
     """
-    system_prompt = (
-        "Summarize the preceding text in one sentence, then state the opposite "
-        "meaning in one sentence. Return both sentences."
+    return _build_operator_config(
+        library,
+        experiment_id="exp_pub_O3_summarize_negate_replace",
+        system_prompt=(
+            "Summarize the preceding text in one sentence, then state the opposite "
+            "meaning in one sentence. Return both sentences."
+        ),
+        loop_mode="replace",
+        parallel_trajectories=24,
     )
-    all_families = list(library.keys())
-    cfg = {
-        "experiment_id": "exp_pub_O3_summarize_negate_replace",
-        "generation_model": "gpt-4o-mini",
-        "embedding_model": "text-embedding-3-small",
-        "steps_per_run": 40,
-        "runs_per_condition": 3,
-        "initial_conditions_per_family": 30,
-        "max_output_tokens": 120,
-        "temperature": 0.8,
-        "top_p": 1.0,
-        "include_logprobs": False,
-        "clip_rule": "tail_chars",
-        "max_context_chars": 12000,
-        "loop_mode": "replace",
-        "rolling_window_k": 3,
-        "context_tail_chars": 4000,
-        "context_full_chars": 8000,
-        "observables": ["output", "rolling_k3", "context_tail"],
-        **ANALYSIS_BLOCK,
-        "baseline_modes": ["no_feedback", "time_shuffled"],
-        "batch_embeddings": False,
-        "use_evals": False,
-        "seed": 42,
-        "parallel_trajectories": 24,
-        "output_dir": "data",
-        "prompt_families": make_family_block(library, all_families, system_prompt),
-    }
-    return cfg
 
 
 # ---- Perturbation pilot ------------------------------------------------------
@@ -297,16 +282,10 @@ def build_d1_perturbation_pilot(library: dict) -> dict:
     = 200 perturbed trajectories × 30 steps × 2 turns ≈ 12,000 generations.
     """
     cfg = build_d1_dialog(library)
-    # 5 ICs per family
     for fam in cfg["prompt_families"]:
         fam["initial_conditions"] = fam["initial_conditions"][:5]
+    _apply_perturbation_pilot_overrides(cfg)
     cfg["experiment_id"] = "exp_perturb_D1_pilot"
-    cfg["temperature"] = 0.8
-    cfg["steps_per_run"] = 30
-    cfg["runs_per_condition"] = 2
-    cfg["initial_conditions_per_family"] = 5
-    cfg["parallel_trajectories"] = 12
-    cfg["baseline_modes"] = []  # irrelevant for perturbation pilot
     cfg["perturbation"] = {
         "enabled": True,
         "override_step": 15,
@@ -327,12 +306,8 @@ def build_operator_perturbation_pilot(
         for fam in cfg["prompt_families"]
         if fam["name"] in keep
     ]
+    _apply_perturbation_pilot_overrides(cfg)
     cfg["experiment_id"] = exp_id
-    cfg["steps_per_run"] = 30
-    cfg["runs_per_condition"] = 2
-    cfg["initial_conditions_per_family"] = 5
-    cfg["parallel_trajectories"] = 12
-    cfg["baseline_modes"] = []
     cfg["perturbation"] = {
         "enabled": True,
         "override_step": 15,
@@ -356,13 +331,8 @@ def build_d1_dose_response(library: dict) -> dict:
     cfg = build_d1_dialog(library)
     for fam in cfg["prompt_families"]:
         fam["initial_conditions"] = fam["initial_conditions"][:5]
+    _apply_perturbation_pilot_overrides(cfg)
     cfg["experiment_id"] = "exp_perturb_D1_dose"
-    cfg["temperature"] = 0.8
-    cfg["steps_per_run"] = 30
-    cfg["runs_per_condition"] = 2
-    cfg["initial_conditions_per_family"] = 5
-    cfg["parallel_trajectories"] = 12
-    cfg["baseline_modes"] = []
     cfg["perturbation"] = {
         "enabled": True,
         "override_step": 15,
@@ -381,12 +351,8 @@ def build_o1_dose_response(library: dict) -> dict:
         for fam in cfg["prompt_families"]
         if fam["name"] in keep
     ]
+    _apply_perturbation_pilot_overrides(cfg)
     cfg["experiment_id"] = "exp_perturb_O1_dose"
-    cfg["steps_per_run"] = 30
-    cfg["runs_per_condition"] = 2
-    cfg["initial_conditions_per_family"] = 5
-    cfg["parallel_trajectories"] = 12
-    cfg["baseline_modes"] = []
     cfg["perturbation"] = {
         "enabled": True,
         "override_step": 15,
