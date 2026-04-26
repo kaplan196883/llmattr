@@ -3,7 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.spatial.distance import cdist
+
+from src.analysis.distances import pairwise_distances
 
 
 @dataclass
@@ -13,14 +14,6 @@ class RecurrenceStats:
     avg_return_lag: float | None
     nearest_nonlocal_distance: float | None
     n_points: int
-
-
-def _pairwise(points: np.ndarray, metric: str) -> np.ndarray:
-    if metric == "cosine":
-        return cdist(points, points, metric="cosine")
-    if metric == "euclidean":
-        return cdist(points, points, metric="euclidean")
-    raise ValueError(f"unknown metric: {metric}")
 
 
 def recurrence_for_trajectory(
@@ -34,7 +27,7 @@ def recurrence_for_trajectory(
     if n < 2:
         return RecurrenceStats(0, 0.0, None, None, n)
 
-    D = _pairwise(points, metric)
+    D = pairwise_distances(points, metric)
     # mask out local lags
     idx = np.arange(n)
     lag = np.abs(idx[:, None] - idx[None, :])
@@ -77,7 +70,7 @@ def recurrence_matrix(
     n = len(points)
     if n == 0:
         return np.zeros((0, 0), dtype=np.int8)
-    D = _pairwise(points, metric)
+    D = pairwise_distances(points, metric)
     idx = np.arange(n)
     lag = np.abs(idx[:, None] - idx[None, :])
     mat = ((D < epsilon) & (lag > tau)).astype(np.int8)

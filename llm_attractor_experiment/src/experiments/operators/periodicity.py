@@ -11,7 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 import numpy as np
-from scipy.spatial.distance import pdist, squareform
+
+from src.analysis.distances import pairwise_distances
 
 
 @dataclass
@@ -23,10 +24,6 @@ class PeriodicityStats:
     autocorr_lags: list[int]       # list of lags examined
     autocorr_distances: list[float]  # mean pairwise distance per lag
     n_points: int
-
-
-def _pairwise_dist(points: np.ndarray, metric: str) -> np.ndarray:
-    return squareform(pdist(points, metric=metric))
 
 
 def trajectory_periodicity(
@@ -49,7 +46,7 @@ def trajectory_periodicity(
             autocorr_distances=[],
             n_points=n,
         )
-    D = _pairwise_dist(points, metric)
+    D = pairwise_distances(points, metric)
     if max_lag is None:
         max_lag = n // 2
 

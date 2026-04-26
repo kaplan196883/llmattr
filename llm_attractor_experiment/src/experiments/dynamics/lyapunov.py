@@ -40,6 +40,8 @@ from dataclasses import dataclass
 
 import numpy as np
 
+from src.analysis.distances import pairwise_mean_distance
+
 
 @dataclass
 class LyapunovSpectrum:
@@ -70,15 +72,6 @@ def _top_covariance_eigenvalues(points: np.ndarray, k: int) -> np.ndarray:
     s = np.linalg.svd(centered, full_matrices=False, compute_uv=False)
     eigs = (s**2) / max(1, len(points))  # descending already
     return eigs[:k]
-
-
-def _pairwise_mean_distance(points: np.ndarray) -> float:
-    if len(points) < 2:
-        return 0.0
-    diff = points[:, None, :] - points[None, :, :]
-    dists = np.linalg.norm(diff, axis=-1)
-    iu = np.triu_indices(len(points), k=1)
-    return float(dists[iu].mean())
 
 
 def compute_lyapunov_spectrum(
@@ -136,7 +129,7 @@ def compute_lyapunov_spectrum(
     lam_sorted = np.sort(lam)[::-1]
 
     spread = np.array(
-        [_pairwise_mean_distance(runs_by_step[:, t, :]) for t in range(T)]
+        [pairwise_mean_distance(runs_by_step[:, t, :]) for t in range(T)]
     )
 
     return LyapunovSpectrum(
