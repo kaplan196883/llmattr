@@ -23,6 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from scripts.lib_load import read_experiment_csv
 from src.utils.io import ensure_dir
 
 
@@ -43,10 +44,9 @@ def load_rows(data_dir: Path) -> pd.DataFrame:
         ("exp_perturb_O1_dose",              "O1 continue","neutral"),
         ("exp_perturb_O1_dose_adversarial",  "O1 continue","adversarial"),
     ]:
-        csv = data_dir / exp_id / "reports" / "perturbation" / "switching_summary.csv"
-        if not csv.exists():
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "perturbation", "switching_summary.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         df["regime_label"] = regime
         df["perturbation_type"] = ptype
         df["dose"] = df["condition"].apply(_parse_dose)

@@ -31,6 +31,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from scripts.lib_load import read_experiment_csv
 from src.utils.io import ensure_dir
 
 
@@ -48,10 +49,9 @@ SOURCES = [
 def load_rows(data_dir: Path) -> pd.DataFrame:
     rows = []
     for regime, step, exp_id, cond in SOURCES:
-        csv = data_dir / exp_id / "reports" / "perturbation" / "switching_summary.csv"
-        if not csv.exists():
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "perturbation", "switching_summary.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         match = df[df["condition"] == cond]
         if match.empty:
             continue

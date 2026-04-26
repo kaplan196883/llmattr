@@ -24,6 +24,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from scripts.lib_load import read_experiment_csv
 from src.utils.io import ensure_dir
 
 
@@ -43,11 +44,9 @@ COND_COLORS = {"control": "#888", "neutral": "#8b5cf6",
 def load_switching(data_dir: Path) -> pd.DataFrame:
     rows = []
     for exp_id, label, color, rtype in EXPERIMENTS:
-        csv = data_dir / exp_id / "reports" / "perturbation" / "switching_summary.csv"
-        if not csv.exists():
-            print(f"[warn] missing {csv}")
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "perturbation", "switching_summary.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         df["exp"] = exp_id
         df["label"] = label
         df["color"] = color
@@ -59,10 +58,9 @@ def load_switching(data_dir: Path) -> pd.DataFrame:
 def load_relaxation(data_dir: Path) -> dict[str, pd.DataFrame]:
     out = {}
     for exp_id, label, color, rtype in EXPERIMENTS:
-        csv = data_dir / exp_id / "reports" / "perturbation" / "relaxation_table.csv"
-        if not csv.exists():
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "perturbation", "relaxation_table.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         df["label"] = label
         out[exp_id] = df
     return out

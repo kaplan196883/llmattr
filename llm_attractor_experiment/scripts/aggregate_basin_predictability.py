@@ -22,6 +22,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+from scripts.lib_load import read_experiment_csv
 from src.utils.io import ensure_dir
 
 
@@ -44,11 +45,9 @@ CANONICAL_OBS = {
 def load_all(data_dir: Path) -> pd.DataFrame:
     rows = []
     for exp_id, label, color in EXPERIMENTS:
-        csv = data_dir / exp_id / "reports" / "basin_predictability" / "basin_predictability.csv"
-        if not csv.exists():
-            print(f"[warn] missing {csv}")
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "basin_predictability", "basin_predictability.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         df["experiment_id"] = exp_id
         df["label"] = label
         df["color"] = color

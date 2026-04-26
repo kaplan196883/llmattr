@@ -22,6 +22,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
+from scripts.lib_load import read_experiment_csv
 from src.utils.io import ensure_dir
 
 
@@ -43,11 +44,9 @@ D1_EXPERIMENTS = [
 def load_rows(data_dir: Path, experiments: list[tuple], regime_label: str, observable: str) -> pd.DataFrame:
     out_rows = []
     for exp_id, T in experiments:
-        csv = data_dir / exp_id / "reports" / "basin_predictability" / "basin_predictability.csv"
-        if not csv.exists():
-            print(f"[warn] missing {csv}")
+        df = read_experiment_csv(data_dir, exp_id, ("reports", "basin_predictability", "basin_predictability.csv"))
+        if df is None:
             continue
-        df = pd.read_csv(csv)
         sub = df[(df["observable"] == observable) & (df["regime"] == "recursive") & (df["n"] > 0)]
         if sub.empty:
             continue
