@@ -70,3 +70,35 @@ data/<experiment_id>/
 - baselines are mandatory
 
 See `configs/default.yaml` for the full set of tunable parameters.
+
+## Documentation
+
+- `docs/DATA_INDEX.md` — catalog of every experiment under `data/` (Phase 0–3)
+- `docs/REQ1_MAPPING.md` — original requirements traceability
+- `docs/reports/REPORT1.md` … `REPORT6.md` — narrative writeups, one per project stage:
+  - `REPORT1` — first run on `exp_default`, baseline classification
+  - `REPORT2` — long-horizon + clipping ablations
+  - `REPORT3` — dynamical-systems metrics (Lyapunov, sharpness)
+  - `REPORT4` — operator regime classification
+  - `REPORT5` — publication-scale verification of all four regimes
+  - `REPORT6` — perturbation experiments and basin-hijacking
+
+## Repository layout
+
+```
+llm_attractor_experiment/
+├── README.md, requirements.txt
+├── docs/                     # narrative writeups + data index
+├── src/                      # library code (analysis, api, core, experiments, utils)
+│   └── experiments/
+│       ├── dialog/           # D1/D2/D3 dialog runners
+│       ├── operators/        # O1–O4 operator runners
+│       ├── dynamics/         # post-hoc dynamical-systems analysis CLIs
+│       └── perturbation/     # perturbation runners + holographic-bulk plots
+├── scripts/                  # standalone aggregators + config builders
+├── configs/                  # entry-point configs + dialog/operators/perturbation/archive subdirs
+├── tests/                    # pytest suite
+└── data/                     # experiment artifacts (raw via LFS, derived gitignored)
+    ├── exp_*/                # per-experiment dirs (see docs/DATA_INDEX.md)
+    └── aggregated/           # cross-experiment outputs
+```
