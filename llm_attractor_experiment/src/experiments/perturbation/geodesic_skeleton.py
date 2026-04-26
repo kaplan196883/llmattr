@@ -31,7 +31,7 @@ import pandas as pd
 from scipy.ndimage import maximum_filter
 from sklearn.decomposition import PCA
 
-from src.experiments.dynamics.field_plots import _smooth_density_grid
+from src.experiments.dynamics.field_plots import _potential_grid, _smooth_density_grid  # noqa: F401  (re-export for flow_skeleton)
 from src.experiments.perturbation.flow_plots import _load
 from src.utils.io import ensure_dir
 from src.utils.logging import get_logger, setup_logging
@@ -44,19 +44,6 @@ COND_COLORS = {"control": "#4a90e2", "neutral": "#8b5cf6",
                "lorem": "#ff9800", "adversarial": "#d62728"}
 
 DPI = 220
-
-
-def _potential_grid(
-    pts: np.ndarray, xb: tuple[float, float], yb: tuple[float, float],
-    grid_n: int = 96, sigma_cells: float = 2.0, v_cap: float = 8.0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    X, Y, H = _smooth_density_grid(pts, xb, yb, grid_n=grid_n, sigma_cells=sigma_cells)
-    rho = H / max(H.sum(), 1.0)
-    eps = max(rho[rho > 0].min(), 1e-9) * 0.1 if (rho > 0).any() else 1e-9
-    V = -np.log(rho + eps)
-    V = V - V.min()
-    V = np.minimum(V, v_cap)
-    return X, Y, V
 
 
 def _find_basin_centers(V: np.ndarray, n_max: int = 4, neigh: int = 8) -> list[tuple[int, int]]:

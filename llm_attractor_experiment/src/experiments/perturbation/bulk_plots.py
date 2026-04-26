@@ -36,7 +36,7 @@ import pandas as pd
 from scipy.interpolate import RegularGridInterpolator
 from sklearn.decomposition import PCA
 
-from src.experiments.dynamics.field_plots import _smooth_density_grid
+from src.experiments.dynamics.field_plots import _potential_grid, _smooth_density_grid  # noqa: F401
 from src.experiments.perturbation.flow_plots import _load
 from src.utils.io import ensure_dir
 from src.utils.logging import get_logger, setup_logging
@@ -49,24 +49,6 @@ COND_COLORS = {"control": "#4a90e2", "neutral": "#8b5cf6",
                "lorem": "#ff9800", "adversarial": "#d62728"}
 
 DPI = 220
-
-
-def _potential_grid(
-    pts: np.ndarray,
-    xbounds: tuple[float, float],
-    ybounds: tuple[float, float],
-    grid_n: int = 64,
-    sigma_cells: float = 2.0,
-    v_cap: float = 6.0,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return (X, Y, V) where V = -log(ρ + ε), normalized so V_min=0, capped at v_cap."""
-    X, Y, H = _smooth_density_grid(pts, xbounds, ybounds, grid_n=grid_n, sigma_cells=sigma_cells)
-    rho = H / max(H.sum(), 1.0)
-    eps = max(rho[rho > 0].min(), 1e-9) * 0.1 if (rho > 0).any() else 1e-9
-    V = -np.log(rho + eps)
-    V = V - V.min()
-    V = np.minimum(V, v_cap)
-    return X, Y, V
 
 
 def _trajectory_height(traj_xy: np.ndarray, X: np.ndarray, Y: np.ndarray, V: np.ndarray) -> np.ndarray:
