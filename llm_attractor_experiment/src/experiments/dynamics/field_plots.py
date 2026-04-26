@@ -89,6 +89,11 @@ def _smooth_density_grid(
     return X_mesh, Y_mesh, H_smooth
 
 
+from src.experiments.dynamics._grid_utils import (  # noqa: F401  (re-exports)
+    bin_density, bin_displacement_field, make_grid_edges,
+)
+
+
 def _potential_grid(
     pts: np.ndarray,
     xbounds: tuple[float, float],

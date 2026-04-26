@@ -32,6 +32,9 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 from src.config import load_config
+from src.experiments.dynamics._grid_utils import (
+    bin_density, bin_displacement_field, make_grid_edges,
+)
 from src.experiments.dynamics.plots import DISPLAY, REGIME_COLOR, REGIME_LABEL
 from src.utils.io import ensure_dir, load_npy, read_parquet
 from src.utils.logging import get_logger
@@ -451,40 +454,10 @@ def _flow_field_for_experiment(
     S = np.concatenate(starts, axis=0)  # (M, 2)
     D = np.concatenate(deltas, axis=0)  # (M, 2)
 
-    # Build grid
-    x_min, x_max = Z[:, 0].min(), Z[:, 0].max()
-    y_min, y_max = Z[:, 1].min(), Z[:, 1].max()
-    x_pad = 0.05 * (x_max - x_min + 1e-9)
-    y_pad = 0.05 * (y_max - y_min + 1e-9)
-    x_edges = np.linspace(x_min - x_pad, x_max + x_pad, grid_n + 1)
-    y_edges = np.linspace(y_min - y_pad, y_max + y_pad, grid_n + 1)
-
-    # Bin starting points, sum deltas, count occupancy
-    ix = np.clip(np.digitize(S[:, 0], x_edges) - 1, 0, grid_n - 1)
-    iy = np.clip(np.digitize(S[:, 1], y_edges) - 1, 0, grid_n - 1)
-    count = np.zeros((grid_n, grid_n))
-    sum_u = np.zeros((grid_n, grid_n))
-    sum_v = np.zeros((grid_n, grid_n))
-    for xi, yi, du, dv in zip(ix, iy, D[:, 0], D[:, 1]):
-        count[yi, xi] += 1
-        sum_u[yi, xi] += du
-        sum_v[yi, xi] += dv
-    with np.errstate(invalid="ignore", divide="ignore"):
-        U = sum_u / np.where(count > 0, count, np.nan)
-        V = sum_v / np.where(count > 0, count, np.nan)
-
-    # Mesh centers for plotting
-    x_centers = 0.5 * (x_edges[:-1] + x_edges[1:])
-    y_centers = 0.5 * (y_edges[:-1] + y_edges[1:])
-    X, Y = np.meshgrid(x_centers, y_centers)
-
-    # Also count all points (not just starts) for density
-    density_ix = np.clip(np.digitize(Z[:, 0], x_edges) - 1, 0, grid_n - 1)
-    density_iy = np.clip(np.digitize(Z[:, 1], y_edges) - 1, 0, grid_n - 1)
-    density = np.zeros((grid_n, grid_n))
-    for xi, yi in zip(density_ix, density_iy):
-        density[yi, xi] += 1
-
+    X, Y, x_edges, y_edges = make_grid_edges(Z, grid_n)
+    U, V = bin_displacement_field(S, D, x_edges, y_edges)
+    density = bin_density(Z, x_edges, y_edges)
+    # The original returned (X, Y, U, V, density, Z); preserve that contract.
     return X, Y, U, V, density, Z
 
 
@@ -548,36 +521,9 @@ def _flow_field_tsne_for_experiment(
     S = np.concatenate(starts, axis=0)
     D = np.concatenate(deltas, axis=0)
 
-    x_min, x_max = Z[:, 0].min(), Z[:, 0].max()
-    y_min, y_max = Z[:, 1].min(), Z[:, 1].max()
-    x_pad = 0.05 * (x_max - x_min + 1e-9)
-    y_pad = 0.05 * (y_max - y_min + 1e-9)
-    x_edges = np.linspace(x_min - x_pad, x_max + x_pad, grid_n + 1)
-    y_edges = np.linspace(y_min - y_pad, y_max + y_pad, grid_n + 1)
-
-    ix = np.clip(np.digitize(S[:, 0], x_edges) - 1, 0, grid_n - 1)
-    iy = np.clip(np.digitize(S[:, 1], y_edges) - 1, 0, grid_n - 1)
-    count = np.zeros((grid_n, grid_n))
-    sum_u = np.zeros((grid_n, grid_n))
-    sum_v = np.zeros((grid_n, grid_n))
-    for xi, yi, du, dv in zip(ix, iy, D[:, 0], D[:, 1]):
-        count[yi, xi] += 1
-        sum_u[yi, xi] += du
-        sum_v[yi, xi] += dv
-    with np.errstate(invalid="ignore", divide="ignore"):
-        U = sum_u / np.where(count > 0, count, np.nan)
-        V = sum_v / np.where(count > 0, count, np.nan)
-
-    x_centers = 0.5 * (x_edges[:-1] + x_edges[1:])
-    y_centers = 0.5 * (y_edges[:-1] + y_edges[1:])
-    X_mesh, Y_mesh = np.meshgrid(x_centers, y_centers)
-
-    density_ix = np.clip(np.digitize(Z[:, 0], x_edges) - 1, 0, grid_n - 1)
-    density_iy = np.clip(np.digitize(Z[:, 1], y_edges) - 1, 0, grid_n - 1)
-    density = np.zeros((grid_n, grid_n))
-    for xi, yi in zip(density_ix, density_iy):
-        density[yi, xi] += 1
-
+    X_mesh, Y_mesh, x_edges, y_edges = make_grid_edges(Z, grid_n)
+    U, V = bin_displacement_field(S, D, x_edges, y_edges)
+    density = bin_density(Z, x_edges, y_edges)
     return X_mesh, Y_mesh, U, V, density, Z
 
 

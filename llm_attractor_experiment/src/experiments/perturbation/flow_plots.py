@@ -34,6 +34,9 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
+from src.experiments.dynamics._grid_utils import (
+    bin_density, bin_displacement_field, make_grid_edges,
+)
 from src.utils.io import ensure_dir, load_npy, read_parquet
 from src.utils.logging import get_logger, setup_logging
 
@@ -68,11 +71,13 @@ def _load(exp_dir: Path, observable: str, is_dialog: bool) -> tuple[np.ndarray, 
     return vecs, meta
 
 
-def _compute_flow_field(
-    Z: np.ndarray, meta: pd.DataFrame, grid_n: int = 26,
-    group_cols: tuple[str, ...] = ("regime", "prompt_family", "initial_condition_id", "run_id"),
-) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    """Bin (start, delta) onto grid_n x grid_n grid. Returns X, Y, U, V, density."""
+def _collect_starts_deltas(
+    Z: np.ndarray, meta: pd.DataFrame, group_cols: list[str],
+) -> tuple[np.ndarray, np.ndarray] | None:
+    """Group meta by `group_cols`, sort each by step, emit (start, delta) pairs.
+
+    Returns (S, D) of shape (M, 2) each, or None if no group has >=2 points.
+    """
     starts: list[np.ndarray] = []
     deltas: list[np.ndarray] = []
     for _, sub in meta.groupby(list(group_cols)):
@@ -84,39 +89,22 @@ def _compute_flow_field(
         starts.append(z_run[:-1])
         deltas.append(z_run[1:] - z_run[:-1])
     if not starts:
+        return None
+    return np.concatenate(starts, axis=0), np.concatenate(deltas, axis=0)
+
+
+def _compute_flow_field(
+    Z: np.ndarray, meta: pd.DataFrame, grid_n: int = 26,
+    group_cols: tuple[str, ...] = ("regime", "prompt_family", "initial_condition_id", "run_id"),
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """Bin (start, delta) onto grid_n x grid_n grid. Returns X, Y, U, V, density."""
+    sd = _collect_starts_deltas(Z, meta, list(group_cols))
+    if sd is None:
         return (np.zeros((grid_n, grid_n)),) * 5
-    S = np.concatenate(starts, axis=0)
-    D = np.concatenate(deltas, axis=0)
-
-    x_min, x_max = float(Z[:, 0].min()), float(Z[:, 0].max())
-    y_min, y_max = float(Z[:, 1].min()), float(Z[:, 1].max())
-    xpad = 0.05 * (x_max - x_min + 1e-9)
-    ypad = 0.05 * (y_max - y_min + 1e-9)
-    x_edges = np.linspace(x_min - xpad, x_max + xpad, grid_n + 1)
-    y_edges = np.linspace(y_min - ypad, y_max + ypad, grid_n + 1)
-
-    ix = np.clip(np.digitize(S[:, 0], x_edges) - 1, 0, grid_n - 1)
-    iy = np.clip(np.digitize(S[:, 1], y_edges) - 1, 0, grid_n - 1)
-    count = np.zeros((grid_n, grid_n))
-    sum_u = np.zeros((grid_n, grid_n))
-    sum_v = np.zeros((grid_n, grid_n))
-    for xi, yi, du, dv in zip(ix, iy, D[:, 0], D[:, 1]):
-        count[yi, xi] += 1
-        sum_u[yi, xi] += du
-        sum_v[yi, xi] += dv
-    with np.errstate(invalid="ignore", divide="ignore"):
-        U = sum_u / np.where(count > 0, count, np.nan)
-        V = sum_v / np.where(count > 0, count, np.nan)
-
-    x_c = 0.5 * (x_edges[:-1] + x_edges[1:])
-    y_c = 0.5 * (y_edges[:-1] + y_edges[1:])
-    X, Y = np.meshgrid(x_c, y_c)
-
-    density = np.zeros((grid_n, grid_n))
-    dix = np.clip(np.digitize(Z[:, 0], x_edges) - 1, 0, grid_n - 1)
-    diy = np.clip(np.digitize(Z[:, 1], y_edges) - 1, 0, grid_n - 1)
-    for xi, yi in zip(dix, diy):
-        density[yi, xi] += 1
+    S, D = sd
+    X, Y, x_edges, y_edges = make_grid_edges(Z, grid_n)
+    U, V = bin_displacement_field(S, D, x_edges, y_edges)
+    density = bin_density(Z, x_edges, y_edges)
     return X, Y, U, V, density
 
 

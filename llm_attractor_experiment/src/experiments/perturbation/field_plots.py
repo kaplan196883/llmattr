@@ -33,10 +33,15 @@ import pandas as pd
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
+from src.experiments.dynamics._grid_utils import (
+    bin_density, bin_displacement_field, make_grid_edges,
+)
 from src.experiments.dynamics.field_plots import (
     _clean_uv_for_streamplot, _smooth_density_grid,
 )
-from src.experiments.perturbation.flow_plots import _compute_flow_field, _load, _draw_injection_markers
+from src.experiments.perturbation.flow_plots import (
+    _collect_starts_deltas, _compute_flow_field, _draw_injection_markers, _load,
+)
 from src.utils.io import ensure_dir
 from src.utils.logging import get_logger, setup_logging
 
@@ -57,16 +62,8 @@ def _compute_per_condition_fields(
     """Return {condition: (X, Y, U, V, density, pts)} with shared grid bounds."""
     if conditions is None:
         conditions = CONDITIONS
-    # Global bounds
-    x_min, x_max = float(Z[:, 0].min()), float(Z[:, 0].max())
-    y_min, y_max = float(Z[:, 1].min()), float(Z[:, 1].max())
-    xpad = 0.05 * (x_max - x_min + 1e-9)
-    ypad = 0.05 * (y_max - y_min + 1e-9)
-    x_edges = np.linspace(x_min - xpad, x_max + xpad, grid_n + 1)
-    y_edges = np.linspace(y_min - ypad, y_max + ypad, grid_n + 1)
-    x_c = 0.5 * (x_edges[:-1] + x_edges[1:])
-    y_c = 0.5 * (y_edges[:-1] + y_edges[1:])
-    Xg, Yg = np.meshgrid(x_c, y_c)
+    # Shared grid across all conditions, derived from the full point cloud.
+    Xg, Yg, x_edges, y_edges = make_grid_edges(Z, grid_n)
 
     out = {}
     for cond in conditions:
@@ -76,41 +73,15 @@ def _compute_per_condition_fields(
             continue
         sub_Z = Z[idx]
         sub_meta = meta[idx].reset_index(drop=True)
-
-        starts, deltas = [], []
-        for _, sub in sub_meta.groupby(
-            ["prompt_family", "initial_condition_id", "run_id"]
-        ):
-            sub = sub.sort_values("step")
-            idx_local = sub.index.to_numpy()
-            z_run = sub_Z[idx_local]
-            if len(z_run) < 2:
-                continue
-            starts.append(z_run[:-1])
-            deltas.append(z_run[1:] - z_run[:-1])
-        if not starts:
+        sd = _collect_starts_deltas(
+            sub_Z, sub_meta, ["prompt_family", "initial_condition_id", "run_id"],
+        )
+        if sd is None:
             out[cond] = None
             continue
-        S = np.concatenate(starts, axis=0)
-        D = np.concatenate(deltas, axis=0)
-
-        ix = np.clip(np.digitize(S[:, 0], x_edges) - 1, 0, grid_n - 1)
-        iy = np.clip(np.digitize(S[:, 1], y_edges) - 1, 0, grid_n - 1)
-        count = np.zeros((grid_n, grid_n))
-        sum_u = np.zeros((grid_n, grid_n))
-        sum_v = np.zeros((grid_n, grid_n))
-        for xi, yi, du, dv in zip(ix, iy, D[:, 0], D[:, 1]):
-            count[yi, xi] += 1
-            sum_u[yi, xi] += du
-            sum_v[yi, xi] += dv
-        with np.errstate(invalid="ignore", divide="ignore"):
-            U = sum_u / np.where(count > 0, count, np.nan)
-            V = sum_v / np.where(count > 0, count, np.nan)
-        density = np.zeros((grid_n, grid_n))
-        dix = np.clip(np.digitize(sub_Z[:, 0], x_edges) - 1, 0, grid_n - 1)
-        diy = np.clip(np.digitize(sub_Z[:, 1], y_edges) - 1, 0, grid_n - 1)
-        for xi, yi in zip(dix, diy):
-            density[yi, xi] += 1
+        S, D = sd
+        U, V = bin_displacement_field(S, D, x_edges, y_edges)
+        density = bin_density(sub_Z, x_edges, y_edges)
         out[cond] = (Xg, Yg, U, V, density, sub_Z)
     return out
 
