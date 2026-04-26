@@ -1462,7 +1462,154 @@ llm_attractor_experiment/
 
 ---
 
-## 11. Acknowledgments
+## 11. Coverage of original specification
+
+The project began from a four-document brief (the originals are
+preserved in `/junk/req1.txt`, `req2.txt`, `req3.txt`, `reg4.txt` —
+gitignored) that pre-specified the architecture, API surfaces, metric
+battery, and reporting format. This section maps the brief's
+requirements to where they're implemented.
+
+### 11.1 Implementation phases (req1.txt 12-phase plan)
+
+| Phase | Requirement | Implementation |
+|---|---|---|
+| 1 | YAML config system, frozen snapshot per run | `src/config.py` + `data/<exp>/config.yaml` |
+| 2 | `ContextState` + `clip_context(text, max_len, rule)` with `tail_chars` | `src/core/context.py` |
+| 3 | OpenAI Responses API + Embeddings API integration | `src/api/{generator,embedder,openai_client}.py` |
+| 4 | Output / rolling-window / context-tail observables | `src/core/observables.py` (+ 5 dialog observables in `src/experiments/dialog/observables.py`) |
+| 5 | Embedding dataset creation, batched, cached | `embeddings/<obs>/{embeddings.npy, metadata.parquet}` per experiment |
+| 6 | Joint PCA-2/10/20, no per-trajectory fits | `src/analysis/pca.py` (we extended to PCA-50 for t-SNE pre-reduction) |
+| 7 | Recurrence with `‖z_t − z_s‖ < ε`, `|t − s| > τ` | `src/analysis/recurrence.py` |
+| 8 | Dwell with KMeans + DBSCAN clustering | `src/analysis/{clustering,dwell}.py` (KMeans default, DBSCAN supported) |
+| 9 | Basin convergence with perturbed ICs | `src/analysis/{basin,basin_entry}.py` (perturbation evolved to mid-trajectory injection — see 11.4) |
+| 10 | Three baselines (no_feedback, time_shuffled, independent_regeneration) | `src/core/baselines.py` |
+| 11 | Robustness across observables, spaces, seeds | `src/analysis/robustness.py` + cross-observable comparison in reports |
+| 12 | Markdown report with not_supported / weak / moderate / strong classification | `src/reports/summary.py` (`classify_two_axis`, `classify_three_axis`) |
+
+All 12 phases are implemented and exercised in the 84 unit + integration
+tests under `tests/`.
+
+### 11.2 OpenAI API surfaces (req2.txt)
+
+| Surface | Required | Implemented |
+|---|---|---|
+| Responses API (`client.responses.create`) | required for all generation | `src/api/generator.py:generate_step` ✓ |
+| Embeddings API (`client.embeddings.create`) | required for all observables | `src/api/embedder.py:embed_texts` ✓ |
+| Batch API (Files + Batches) | optional, for large async embed jobs | `src/api/batch_jobs.py` (functional but `batch_embeddings: false` in publication runs) |
+| Evals API | optional, orchestration only | `src/api/evals_runner.py` (gated by `use_evals: false`) |
+| `store=False` (no server-side chat state) | mandatory | enforced in `generator.py` |
+| Logprobs (`include=["message.output_text.logprobs"]`) | optional | enabled by `include_logprobs: true` in config; unused in publication analyses |
+
+### 11.3 H1a/H1b two-axis split (reg4.txt)
+
+The `exp_long_v2` brief introduced a critical methodological refinement:
+**don't classify "support for H1" with a single label** — split into
+two orthogonal hypotheses:
+
+- **H1a (convergence)**: trajectories converge into stable
+  basin-like regions
+- **H1b (recurrence)**: once inside the basin, trajectories revisit
+  neighborhoods more than expected under a temporal null
+
+We extended this to a **three-axis** classifier (H1a + H1b + H1c
+divergence) implemented in
+`src/experiments/operators/classifier.py:classify_three_axis`. Each
+axis gets an independent `not_supported / weak / moderate / strong`
+verdict, and the four-regime taxonomy emerges from the joint pattern:
+
+| regime | H1a | H1b | H1c |
+|---|---|---|---|
+| O1 contractive | strong | weak | weak |
+| O2 oscillatory | weak | strong | weak |
+| O3 absorbing | strong (singular) | weak | weak |
+| D1 multi-basin | strong (per-style) | weak | weak |
+
+This is the formal version of the "fixed-point vs orbiting attractors"
+distinction that reg4.txt §15 calls for.
+
+### 11.4 Methodological evolutions
+
+The implementation deviates from the original brief in three places.
+We document each to be honest about the divergence:
+
+#### 11.4.1 Perturbation: initial-condition → mid-trajectory injection
+
+req1.txt Phase 9 specifies basin score via *perturbed initial
+conditions* (suffix, paraphrase, neutral-sentence, seed-only). We ran
+this style at small N in REPORT1/2 but found it under-powered: the
+perturbation gets diluted in the recurrence and switching rates were
+near-zero or near-100% for any non-trivial seed change.
+
+REPORT6 evolves the perturbation to **mid-trajectory text injection**
+at a chosen step (5/15/25), with four conditions (control / neutral /
+lorem / adversarial). This produces the dose-response and basin-
+hardening curves that comprise the bulk of Phase 3 results. The
+original initial-condition framing is subsumed by `n_runs > 1` per IC
+producing run-to-run basin convergence statistics.
+
+#### 11.4.2 Temperature sweep: 4 levels instead of warm/cool pair
+
+reg4.txt §3 specifies four conditions: A (T=0.8 baseline), B (T=1.1
+warmer), C (T=0.4 cooler), D (memory stress with 4-6k clip). We ran:
+
+- T-sweep at T ∈ {0.3, 0.6, 0.8, 1.2} for both D1 and O1 — covers reg4's
+  warmer (1.2 ≈ 1.1) and cooler (0.3 ≈ 0.4) intent, with extra mid-T
+  resolution
+- Memory stress (Condition D, clip ∈ [4k, 6k]) — **not run**. This
+  remains an open ablation in our future-work list (see §8).
+
+The T-sweep produced the qualitative finding reg4.txt §15 anticipated:
+**O1 broadens with T (basin loosens)** while **D1 stays locked
+(stylistic basins are temperature-stable)**. We did not see warmer T
+"reveal hidden recurrence" — instead it monotonically reduced basin
+predictability, consistent with the contractive-regime interpretation.
+
+#### 11.4.3 Observable: rolling_k3 kept, rolling_k5 not added
+
+reg4.txt §5 recommended adding `rolling_k5` for finer in-basin recurrence.
+We did not add it — `rolling_k3` and `context_tail` together gave us
+sufficient signal for the four-regime classification. Adding `rolling_k5`
+would be a near-zero-cost extension if needed; the observable interface
+in `src/core/observables.py` is parameterized by `k`.
+
+### 11.5 Reports / classification format (req1.txt §12)
+
+The original brief specifies a report ending in
+`not_supported | weak | moderate | strong` for H1. We produce *two*
+report variants per experiment:
+
+- `reports/report.md` — single-axis legacy classifier
+  (`classify_two_axis` in `src/reports/summary.py`)
+- `reports/report_operators.md` — three-axis (H1a/b/c) classifier
+  (`classify_three_axis` in `src/experiments/operators/classifier.py`)
+
+Both carry the underlying signal counts so the verdict is auditable.
+
+### 11.6 What the original brief did NOT call for but we added
+
+- **Lyapunov spectrum + sharpness dimension** (REPORT3) from
+  Tuci et al. (2026); not in the original brief
+- **Periodicity metrics** (`period_2_score`, `best_period`) for
+  detecting the 2-cycle regime; not in the original brief
+- **Dispersion metrics** (`dispersion_growth`, `drift_monotonicity`)
+  for distinguishing contractive from divergent regimes
+- **Basin predictability** (5-fold CV logistic regression on PCA-10);
+  not in the original brief
+- **The perturbation visualization toolkit** (V landscape, Dijkstra
+  geodesics, marching-cubes iso-density, parallel 3D animations) —
+  novel to this work
+- **The drill-down dialog regime (D2)** — discovered during Phase 3
+  perturbation experiments
+- **Cross-experiment aggregator scripts** for T-sweep, dose-response,
+  basin hardening, perturbation cross-regime — built incrementally as
+  the experiment list grew
+
+Each addition is justified in the corresponding stage report.
+
+---
+
+## 12. Acknowledgments
 
 We acknowledge `gpt-4o-mini` and `text-embedding-3-small` (OpenAI),
 the open-source ecosystem (numpy, scipy, scikit-learn, scikit-image,
@@ -1477,7 +1624,7 @@ and the article structure.
 
 ---
 
-## 12. References
+## 13. References
 
 (To be expanded for formal submission.)
 
