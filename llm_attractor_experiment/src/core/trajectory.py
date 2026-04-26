@@ -106,3 +106,19 @@ def make_jsonl_sink(path: Path):
     def _sink(rec: dict) -> None:
         append_jsonl(path, [rec])
     return _sink
+
+
+def make_locked_jsonl_sink(path: Path):
+    """Thread-safe variant of make_jsonl_sink — wraps the sink in a Lock.
+
+    Returns a single callable suitable for handing to multiple worker threads
+    (e.g. via ThreadPoolExecutor). Creates and owns its own internal lock.
+    """
+    import threading
+    raw_sink = make_jsonl_sink(path)
+    lock = threading.Lock()
+
+    def _locked(rec: dict) -> None:
+        with lock:
+            raw_sink(rec)
+    return _locked

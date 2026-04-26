@@ -27,7 +27,8 @@ from src.api.openai_client import make_client
 from src.config import Config, PromptFamily, limit_initial_conditions, load_config, save_config_snapshot
 from src.core.baselines import independent_regeneration_provider, no_feedback_provider
 from src.core.trajectory import RunIds
-from src.experiments.operators.trajectory import make_jsonl_sink, run_trajectory_op
+from src.core.trajectory import make_locked_jsonl_sink
+from src.experiments.operators.trajectory import run_trajectory_op
 from src.main import cmd_analyze, cmd_embed, cmd_report, STEPS_FILE, MANIFEST_FILE, _prune_uncommitted_steps
 from src.utils.io import ensure_dir, read_json, write_json
 from src.utils.logging import get_logger, setup_logging
@@ -57,17 +58,11 @@ def cmd_run_op(cfg: Config) -> None:
     manifest_path = cfg.raw_dir / MANIFEST_FILE
     manifest = _load_manifest(manifest_path)
     _prune_uncommitted_steps(steps_path, manifest)
-    raw_sink = make_jsonl_sink(steps_path)
-
-    # Thread safety for concurrent trajectory workers:
-    # - sink_lock guards the JSONL append from the step sink
-    # - manifest_lock guards in-memory manifest updates AND its atomic write
-    sink_lock = threading.Lock()
+    # locked_sink wraps the JSONL writer with a Lock so concurrent worker
+    # threads can't interleave writes; manifest_lock is separate because it
+    # also covers in-memory mutations + atomic writeback.
+    locked_sink = make_locked_jsonl_sink(steps_path)
     manifest_lock = threading.Lock()
-
-    def locked_sink(rec: dict) -> None:
-        with sink_lock:
-            raw_sink(rec)
 
     planned = _plan_runs(cfg)
     log.info("planned %d trajectories", len(planned))

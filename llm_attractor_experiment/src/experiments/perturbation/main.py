@@ -31,7 +31,8 @@ from src.config import Config, PromptFamily, limit_initial_conditions, load_conf
 from src.core.trajectory import RunIds
 from src.experiments.dialog.main import _load_manifest, _roles_from_cfg, _loop_mode
 from src.experiments.dialog.main import cmd_embed_dialog, STEPS_FILE, MANIFEST_FILE
-from src.experiments.dialog.trajectory import Role, make_jsonl_sink
+from src.core.trajectory import make_locked_jsonl_sink
+from src.experiments.dialog.trajectory import Role
 from src.experiments.perturbation.corpora import (
     neutral_wiki, random_words, sample_adversarial_text,
 )
@@ -164,14 +165,8 @@ def cmd_run(cfg: Config) -> None:
     manifest_path = cfg.raw_dir / MANIFEST_FILE
     manifest = _load_manifest(manifest_path)
     _prune_uncommitted_steps(steps_path, manifest)
-    raw_sink = make_jsonl_sink(steps_path)
-
-    sink_lock = threading.Lock()
+    locked_sink = make_locked_jsonl_sink(steps_path)
     manifest_lock = threading.Lock()
-
-    def locked_sink(rec: dict) -> None:
-        with sink_lock:
-            raw_sink(rec)
 
     planned = _plan_runs(cfg, conditions)
     log.info("planned %d trajectories (%d conditions × %d base)", len(planned),
