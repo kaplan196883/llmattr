@@ -134,10 +134,16 @@ produce repetitive collapse. Holtzman et al. (2020) systematized the
 nucleus sampling. These works study collapse but not the broader regime
 structure; we treat collapse as one of four possible outcomes.
 
-The "Mode collapse in LLMs" line of work (Tuci et al., 2026,
-arXiv:2604.19740) defines an explicit Lyapunov spectrum for sampling-based
-text generation. Our `src/experiments/dynamics/lyapunov.py` adapts their
-framework. They study one operator family; we extend to four.
+Tuci et al. (2026, arXiv:2604.19740) study SGD-optimization dynamics on
+neural-net loss landscapes via random dynamical systems and introduce a
+"sharpness dimension" generalization bound at the edge of stability.
+Their setting (parameter space, Hessian-anchored, training dynamics)
+is structurally different from ours (embedding space, no gradients,
+inference-time recursion of a frozen LLM). We borrow only the
+*functional form* of their sharpness dimension (Definition 4.2) as a
+comparative diagnostic across regimes; the ensemble-spread Lyapunov
+machinery in `src/experiments/dynamics/lyapunov.py` is our own
+construction. See §4.5.6 for the explicit caveats.
 
 ### 2.3 Free-energy landscapes and holography
 
@@ -568,9 +574,14 @@ distribution of exit-return events distinguishes "tight basin" from
 
 #### 4.5.5 Lyapunov spectrum
 
-Adapted from Tuci et al. (2026) for sample-driven generation. For each
-(family, IC) pair we have N runs; at each step t the ensemble produces
-N embeddings forming a covariance:
+Sampling-based text generation has no smooth Jacobian (outputs are
+discrete samples), so we construct a finite-time Lyapunov spectrum
+from inter-run ensemble spread rather than from a one-step linearization.
+This is our analog of the parameter-space Lyapunov framework that Tuci
+et al. (2026) use for SGD; the construction here is independent and
+specific to inference-time recursion. For each (family, IC) pair we
+have N runs; at each step t the ensemble produces N embeddings forming
+a covariance:
 
 ```
 Σ_t = (1/(N−1)) · Σ_i (z_i^t − z̄^t)(z_i^t − z̄^t)ᵀ
@@ -2183,8 +2194,11 @@ Both carry the underlying signal counts so the verdict is auditable.
 
 ### 11.6 What the original brief did NOT call for but we added
 
-- **Lyapunov spectrum + sharpness dimension** (REPORT3) from
-  Tuci et al. (2026); not in the original brief
+- **Lyapunov spectrum** (REPORT3) — own construction, computed from
+  inter-run ensemble spread covariance; not in the original brief
+- **Sharpness dimension** (REPORT3) — functional form borrowed from
+  Tuci et al. (2026, Def. 4.2), applied to our ensemble-spread Lyapunov
+  spectrum; not in the original brief
 - **Periodicity metrics** (`period_2_score`, `best_period`) for
   detecting the 2-cycle regime; not in the original brief
 - **Dispersion metrics** (`dispersion_growth`, `drift_monotonicity`)
