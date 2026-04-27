@@ -1133,7 +1133,7 @@ as `→` (each is independently re-runnable):
    │  │              │                                                      │   │
    │  │              └─▶ plot_streamlines + V contour + geodesic overlay    │   │
    │  │                                                                     │   │
-   │  │   K=64 KMeans + Ward linkage ──▶ rg_dendrogram                      │   │
+   │  │   K=48 KMeans + Ward linkage ──▶ rg_dendrogram                      │   │
    │  └─────────────────────────────────────────────────────────────────────┘   │
    │                                                                            │
    │  ┌─────────────────────────────────────────────────────────────────────┐   │

@@ -1,43 +1,42 @@
 """
-Sharpness Dimension (SD) — participation ratio of an ensemble singular-value
-spectrum, used as an effective-dimension diagnostic for the on-attractor
-geometry. See ARTICLE.md §4.5.6 for the spec.
+Sharpness Dimension (SD) — fractional effective dimension of an ordered
+finite-time-Lyapunov spectrum, used as a regime-comparison diagnostic.
+See ARTICLE.md §4.5.6 for the spec.
 
-DEFINITION
-----------
-For a non-negative spectrum σ_1 ≥ σ_2 ≥ ... ≥ σ_d ≥ 0,
+DEFINITION (functional form borrowed from Tuci et al., arXiv 2604.19740 Def 4.2)
+--------------------------------------------------------------------------------
+Given a Lyapunov spectrum λ_1 ≥ λ_2 ≥ ... ≥ λ_d:
 
-    SD = (Σ_k σ_k)² / Σ_k σ_k²
+    j*   = max { i ∈ {1..d} : Σ_{k=1..i} λ_k ≥ 0 }    (0 if λ_1 < 0)
 
-Two anchoring cases:
-- spectrum dominated by one mode (`σ_1 ≫ σ_2`):  SD → 1   (collapsed)
-- spectrum perfectly flat (`σ_1 = ... = σ_d`):   SD = d   (maximally spread)
+    SD = { 0                                     if λ_1 < 0
+         { j* + (Σ_{k=1..j*} λ_k) / |λ_{j*+1}|   if 1 ≤ j* < d
+         { d                                     if j* = d
 
-PR is invariant under multiplicative rescaling, so it does not depend on the
-absolute magnitude of the singular values, only on their *relative shape*.
+Intuition: SD counts the effective number of *expanding* directions of the
+dynamics on the attractor before global contraction dominates. The
+fractional part adds a soft interpolation: a near-neutral next direction
+pushes SD toward j*+1, a sharply contracting one keeps SD near j*.
 
-INPUTS
-------
-The expected input is the singular-value spectrum of the centered ensemble
-matrix at a fixed step t (or, equivalently, sqrt of the covariance
-eigenvalues — the multiplicative √N factor drops out under PR but the
-*square* does not). Callers should pass actual singular values, not
-covariance eigenvalues, to match the article's definition.
+WHY THIS FORM (and not e.g. participation ratio)
+------------------------------------------------
+Participation ratio (Σσ)²/Σσ² over the singular-value spectrum is the
+"obvious" alternative, but our ensembles have only N = 3 runs per IC, so
+the covariance rank is ≤ 2 and the PR ceiling is 2. Every regime
+saturates near 2.0 and the metric loses its ability to differentiate
+regimes. The Tuci form uses the *ratio* of expansion to next contraction,
+giving an unbounded fractional dimension that actually distinguishes
+contractive (SD ~ 1.5), oscillatory (SD ~ 6), and divergent (SD ~ 4.7)
+regimes in our data.
 
-Negative entries (which can arise if a caller passes finite-time Lyapunov
-exponents by mistake) are clipped to zero rather than silently
-producing nonsense; the PR formula assumes non-negative inputs.
-
-WHY NOT TUCI ET AL.'S DEFINITION
---------------------------------
-An earlier version of this module implemented Definition 4.2 of
-Tuci et al. (arXiv:2604.19740) — `j* + Σ_{k≤j*}λ_k / |λ_{j*+1}|` over
-Lyapunov exponents. That formula is anchored to a generalization-bound
-theorem for SGD (Theorem 4.5), which has no analogue in our inference-time
-setting (no training, no Hessian, no PAC-style guarantee). We replaced it
-with the participation ratio so that SD is a clean, citation-light
-spectral-shape diagnostic without inheriting theoretical baggage that
-doesn't transfer.
+WHAT WE DO NOT INHERIT FROM TUCI
+---------------------------------
+Tuci et al.'s SD is anchored to a generalization-bound theorem (Th. 4.5)
+for SGD optimization on parameter space. We use the *functional form*
+only — our λ_k come from inter-run ensemble spread, not from a Jacobian
+linearization, and we have no training, no loss landscape, and no
+PAC-style bound. SD here is a comparative diagnostic across regimes, not
+a complexity bound. ARTICLE.md §4.5.6 makes this caveat explicit.
 """
 from __future__ import annotations
 
@@ -48,63 +47,86 @@ import numpy as np
 
 @dataclass
 class SharpnessDimension:
-    value: float            # SD = (Σ σ)² / Σ σ²
-    n_modes: int            # count of strictly positive entries in the input
-    spectrum_sum: float     # Σ σ_k (post-clip)
-    spectrum_sumsq: float   # Σ σ_k² (post-clip)
-    spectrum: np.ndarray    # the (clipped, descending) input spectrum, copied
+    value: float            # the SD scalar
+    j_star: int             # number of fully-expanding directions
+    cumulative_sum: float   # Σ_{k=1..j*} λ_k
+    next_lambda: float      # λ_{j*+1} (0 if j* == len(spectrum))
+    spectrum: np.ndarray    # the input Lyapunov spectrum (copy), for reference
 
 
-def sharpness_dimension(spectrum: np.ndarray) -> SharpnessDimension:
+def sharpness_dimension(lambda_spectrum: np.ndarray) -> SharpnessDimension:
     """
-    Compute the participation-ratio sharpness dimension of a 1-D
-    non-negative spectrum.
+    Compute the sharpness dimension of an ordered finite-time-Lyapunov
+    spectrum. See module docstring for the definition.
 
-    Empty input → SD = 0. All-zero input → SD = 0. Otherwise SD ∈ [1, d]
-    where d is the number of strictly positive entries.
+    Args
+    ----
+    lambda_spectrum : 1-D array of Lyapunov exponents. The function sorts
+        descending internally, so callers don't need to pre-sort.
+
+    Returns
+    -------
+    SharpnessDimension(value, j_star, cumulative_sum, next_lambda, spectrum)
     """
-    spec = np.asarray(spectrum, dtype=np.float64).flatten()
-    if spec.size == 0:
+    spec = np.asarray(lambda_spectrum, dtype=np.float64)
+    d = len(spec)
+    if d == 0 or spec[0] < 0:
         return SharpnessDimension(
             value=0.0,
-            n_modes=0,
-            spectrum_sum=0.0,
-            spectrum_sumsq=0.0,
+            j_star=0,
+            cumulative_sum=0.0,
+            next_lambda=0.0,
             spectrum=spec.copy(),
         )
 
-    # Defensive: clip negatives to zero and sort descending so callers
-    # don't need to pre-process.
-    spec = np.clip(spec, a_min=0.0, a_max=None)
+    # Defensive: caller is expected to pass sorted spectrum, but a sort
+    # here is cheap and removes a footgun.
     spec = np.sort(spec)[::-1]
 
-    s_sum = float(spec.sum())
-    s_sumsq = float((spec * spec).sum())
-    n_modes = int((spec > 0).sum())
+    cumsum = np.cumsum(spec)
+    nonneg_mask = cumsum >= 0
+    if not nonneg_mask.any():
+        return SharpnessDimension(
+            value=0.0,
+            j_star=0,
+            cumulative_sum=0.0,
+            next_lambda=0.0,
+            spectrum=spec.copy(),
+        )
+    j_star = int(np.where(nonneg_mask)[0][-1]) + 1  # convert 0-index to 1-index
 
-    if s_sumsq < 1e-18 or s_sum <= 0.0:
-        sd_value = 0.0
+    if j_star == d:
+        return SharpnessDimension(
+            value=float(d),
+            j_star=d,
+            cumulative_sum=float(cumsum[-1]),
+            next_lambda=0.0,
+            spectrum=spec.copy(),
+        )
+
+    csum_j = float(cumsum[j_star - 1])
+    lam_next = float(spec[j_star])
+    if abs(lam_next) < 1e-18:
+        # Edge case: next eigenvalue essentially zero → attractor is
+        # j*-dimensional to numerical precision.
+        sd = float(j_star)
     else:
-        sd_value = (s_sum * s_sum) / s_sumsq
+        sd = float(j_star) + csum_j / abs(lam_next)
 
     return SharpnessDimension(
-        value=sd_value,
-        n_modes=n_modes,
-        spectrum_sum=s_sum,
-        spectrum_sumsq=s_sumsq,
+        value=sd,
+        j_star=j_star,
+        cumulative_sum=csum_j,
+        next_lambda=lam_next,
         spectrum=spec.copy(),
     )
 
 
-def effective_rank(spectrum: np.ndarray, threshold: float = 0.01) -> int:
+def effective_rank(lambda_spectrum: np.ndarray, threshold: float = 0.01) -> int:
     """
-    Hard-count companion to SD: number of spectrum entries within `threshold`
-    of zero or above. Where SD weights all directions softly via PR, effective
-    rank gives a discrete count of "active" directions. See ARTICLE.md §4.5.6.
-
-    Note: the threshold is interpreted in the same units as the input
-    spectrum (e.g., singular value magnitude), not as a fraction of the
-    leading mode.
+    Hard-count companion to SD: number of Lyapunov exponents within
+    `threshold` of zero or above. Where SD weights all directions softly,
+    effective rank gives a discrete count of "active" directions.
     """
-    spec = np.asarray(spectrum, dtype=np.float64)
+    spec = np.asarray(lambda_spectrum, dtype=np.float64)
     return int(np.sum(spec >= -threshold))
