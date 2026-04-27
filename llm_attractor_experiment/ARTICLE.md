@@ -24,9 +24,10 @@ multi-basin under free dialog (D1) — plus a fifth regime,
 *structured-dialog drill-down* (D2), characterized by topical content
 gravity that resists cross-topic perturbations. Each regime has a
 distinct basin-predictability signature: replace-mode regimes (O2,
-O3) lock in by step 5 (acc ≈ 0.88–0.91), append-mode O1 climbs from
-0.74 to 0.80 over 40 steps, and dialog regime D1 climbs from 0.59 to
-0.75. A compact regime × diagnostic comparison appears in §5.0.
+O3) lock in by step 5 (acc ≈ 0.90–0.92), append-mode O1 climbs from
+0.77 to 0.85 over 40 steps, and dialog regime D1 climbs from 0.61
+(step 10) to 0.77 (final). A compact regime × diagnostic comparison
+appears in §5.0.
 
 Using a perturbation protocol that injects mid-trajectory text from four
 distinct sources (control, neutral Wikipedia, lorem random words,
@@ -596,19 +597,41 @@ helper `ftle_from_spread` provides a scalar summary.
 
 #### 4.5.6 Sharpness dimension and effective rank
 
+We use a Tuci-style fractional dimension over the ordered Lyapunov
+spectrum (functional form from Tuci et al., arXiv 2604.19740,
+Definition 4.2):
+
 ```
-SD = (Σ_k σ_k)² / Σ_k σ_k²
+j*  = max { i : Σ_{k≤i} λ_k ≥ 0 }      (0 if λ_1 < 0)
+
+SD  = j* + (Σ_{k≤j*} λ_k) / |λ_{j*+1}|
 ```
 
-This is the *participation ratio* of the singular-value spectrum and
-gives an effective dimension of the ensemble at time t. Low SD ⇒ a few
-directions dominate (collapsed); high SD ⇒ spread.
+with SD = 0 when the spectrum is everywhere negative and SD = d when
+the cumulative sum stays non-negative through the whole spectrum.
+SD counts the effective number of *expanding* directions before global
+contraction dominates: a near-neutral next eigenvalue lets SD float
+above j*, a sharply contracting one keeps SD close to j*.
 
-A complementary measure, **effective rank**, counts singular values
-above a threshold (default 0.01 of the leading singular value). Where
-SD weights all directions softly, effective rank gives a hard count of
-"active" directions. Both are computed in
-`src/experiments/dynamics/sharpness_dim.py`.
+We borrow only the functional form. Tuci et al. anchor SD to a
+generalization-bound theorem (their Theorem 4.5) for SGD on parameter
+space; that theorem requires Jacobian-derived `λ_k` and a training-
+data PAC framework, neither of which applies to inference-time
+recursion of a frozen LLM. We treat SD as a comparative diagnostic
+across regimes only.
+
+**N=3 rank ceiling.** With N=3 runs per IC, the ensemble covariance
+has rank ≤ 2, so the Lyapunov spectrum returned by
+`compute_lyapunov_spectrum` has length 2. SD is therefore bounded
+above by 2.0 in our experiments, and many trajectory cells saturate
+at the ceiling. The mean SD_late on `context_tail` does still
+differentiate regimes empirically (O1 1.70, O2 1.39, O3 1.45,
+D1 1.89; §5.0), but the magnitude differences are modest. A
+companion measure, **effective rank**, counts Lyapunov exponents
+above −0.01; it gives a discrete count rather than a fractional
+dimension and is reported alongside SD in `dynamics.csv`.
+
+Both are computed in `src/experiments/dynamics/sharpness_dim.py`.
 
 #### 4.5.7 Periodicity
 
@@ -1258,13 +1281,17 @@ each column is a diagnostic that distinguishes it from the others.
 All numbers are at publication scale (Phase 2) or perturbation pilot
 scope (Phase 3).
 
-| regime | nudge | content op. $f$ | basin pred. acc(k=5→final) | recurrence | sharpness dim | adversarial switch | dose 50% | T-stability |
+| regime | nudge | content op. $f$ | basin pred. acc(k=5→final) | recurrence | sharpness dim* | adversarial switch | dose 50% | T-stability |
 |---|---|---|---|---|---|---|---|---|
-| **O1** contractive | append | continue | 0.74 → 0.80 | low | low (~3.8) | 54% | ~150 tok | degrades smoothly |
-| **O2** oscillatory | replace | paraphrase | 0.88 → 0.90 | high (period-2) | medium (~6.2) | 94% | n/a (saturated) | (not measured) |
-| **O3** absorbing | replace | summarize+negate | 0.89 → 0.91 | trivial | very low (~1.5) | 96% | n/a (saturated) | (not measured) |
-| **D1** multi-basin | dialog (append) | curious + helpful | 0.59 → 0.75 | low (per-style) | medium (~4.7) | 60% | < 5 tokens | T-stable |
-| **D2** drill-down | dialog (append) | explorer drill-down | (not measured) | (not measured) | (not measured) | 64% | (not measured) | (not measured) |
+| **O1** contractive | append | continue | 0.77 → 0.85 | low | 1.70 | 54% | ~150 tok | degrades smoothly |
+| **O2** oscillatory | replace | paraphrase | 0.90 → 0.91 | high (period-2) | 1.39 | 94% | n/a (saturated) | (not measured) |
+| **O3** absorbing | replace | summarize+negate | 0.92 → 0.93 | trivial | 1.45 | 96% | n/a (saturated) | (not measured) |
+| **D1** multi-basin | dialog (append) | curious + helpful | n/a → 0.77 | low (per-style) | 1.89 | 60% | < 5 tokens | T-stable |
+| **D2** drill-down | dialog (append) | explorer drill-down | (not measured)** | (not measured) | (not measured)** | 64% | (not measured) | (not measured) |
+
+\* Sharpness dim is computed on a 2-element Lyapunov spectrum (rank ≤ N−1 = 2 for N=3 runs per IC), so values are bounded above by 2.0. Mean SD_late on `context_tail`. The *ordering* across regimes is informative, the absolute magnitudes are constrained by the rank ceiling. See §4.5.6.
+
+\*\* D2 was run at exploratory scale (N=1 run per IC), which is below the N≥2 minimum required for ensemble-spread Lyapunov computation. D2's basin-predictability acc at k=5 is 0.20 with n=25 and 11 classes (chance ≈ 0.09), well underpowered for the canonical k=5,10,20,final probes.
 
 Reading: the two **replace-mode** regimes (O2, O3) lock in early (acc
 already ≈0.9 by step 5) and are perturbation-transparent. The
@@ -1349,10 +1376,16 @@ at step k — gives a clean per-regime ordering:
 
 | experiment | regime | observable | acc(k=5) | acc(k=10) | acc(k=20) | acc(k=final) |
 |---|---|---|---:|---:|---:|---:|
-| `exp_pub_O1_continue` | contractive | rolling_k3 | 0.74 | 0.76 | 0.77 | 0.80 |
-| `exp_pub_O2_paraphrase_replace` | oscillatory | rolling_k3 | 0.88 | 0.89 | 0.90 | 0.90 |
-| `exp_pub_O3_summarize_negate_replace` | absorbing | rolling_k3 | 0.89 | 0.91 | 0.91 | 0.91 |
-| `exp_pub_D1_dialog_curious_helpful_v2` | multi-basin | context_tail | n/a | 0.59 | 0.64 | 0.75 |
+| `exp_pub_O1_continue` | contractive | context_tail | 0.77 | 0.80 | 0.81 | 0.85 |
+| `exp_pub_O2_paraphrase_replace` | oscillatory | context_tail | 0.90 | 0.90 | 0.91 | 0.91 |
+| `exp_pub_O3_summarize_negate_replace` | absorbing | context_tail | 0.92 | 0.92 | 0.92 | 0.93 |
+| `exp_pub_D1_dialog_curious_helpful_v2` | multi-basin | context_tail | n/a | 0.61 | 0.69 | 0.77 |
+
+The "final" cluster is the trajectory's majority cluster over the
+late window `t ≥ ⌈0.7T⌉` per §4.5.3. For T=40 this gives a 12-step
+late window; for the dialog regime D1 with role-restricted observables
+the latest predictor step is 26 (the last agent turn before the late
+window opens at step 28).
 
 (Numbers measured from
 `data/aggregated/basin_predictability_cross/cross_basin_predictability.csv`,
@@ -1369,8 +1402,8 @@ Three orderings emerge cleanly:
   basin-stable: knowing which arm of the cycle a trajectory is on at
   step 5 is enough to predict its terminal arm.
 - **O1 contractive** and **D1 multi-basin** are slower and have more
-  headroom: O1 climbs from 0.74 to 0.80, D1 from 0.59 (step 10) to
-  0.75 (final). The dialog regime in particular shows the *most* room
+  headroom: O1 climbs from 0.77 to 0.85, D1 from 0.61 (step 10) to
+  0.77 (final). The dialog regime in particular shows the *most* room
   for early-stage style-basin reorganization.
 
 The four regimes survive scale: their qualitative ordering on every
@@ -1592,9 +1625,9 @@ centroids:
 
 | regime | control | neutral | lorem | adversarial |
 |---|---:|---:|---:|---:|
-| O1 | 2.38 | 2.77 | 2.37 | 2.06 |
-| O2 | 2.31 | 2.32 | **1.66** | 1.90 |
-| O3 | 2.16 | 2.39 | **1.25** | 1.85 |
+| O1 | 2.38 | 2.27 | 2.37 | 2.06 |
+| O2 | 2.31 | 2.32 | **3.64** | 1.90 |
+| O3 | 2.16 | 2.39 | **3.25** | 1.85 |
 | D1 | 1.79 | 1.79 | 1.79 | 1.80 |
 
 Three patterns:
@@ -1603,14 +1636,20 @@ Three patterns:
    dialog cloud's coarse-graining diameter doesn't change with
    perturbation. Consistent with stylistic basins that are not
    reshaped by content injection.
-2. **O2/O3 lorem collapse the cloud** to merge distance 1.66/1.25
-   (vs control 2.31/2.16). Lorem perturbation under replace-mode
-   captures every trajectory into a single tight new basin.
-3. **O1 adversarial mildly compresses** (2.06 vs 2.38) and **O1
-   neutral mildly disperses** (2.77 vs 2.38) — in-distribution
-   perturbation pulls into a basin, out-of-distribution increases
-   spread. Both effects are small in absolute terms but consistent in
-   sign.
+2. **O2/O3 lorem expands the cloud** to merge distance 3.64/3.25
+   (vs control 2.31/2.16) — the largest signal in the matrix.
+   Lorem injection under replace-mode produces a *new* basin that sits
+   far from the original attractor, so the Ward linkage tree has to
+   span a wide gap to merge the lorem-population into the rest of the
+   embedding. Replace-mode trajectories are entirely captured by the
+   lorem text, but the basin they're captured into is a long way
+   off the original loop's manifold.
+3. **O1 adversarial mildly compresses** (2.06 vs 2.38) — in-distribution
+   adversarial text pulls into a tighter region. **O1 neutral and
+   lorem are both close to control** (2.27, 2.37 vs 2.38), consistent
+   with append-mode dilution: out-of-distribution perturbation gets
+   averaged into the accumulating context and barely shifts the
+   coarse-graining diameter.
 
 Each row of this 4×4 matrix is a quantitative attractor-fingerprint
 signature for the corresponding regime.
@@ -1840,10 +1879,20 @@ for t in range(T):
     lambda_t = np.log(sigmas) / 2.0  # (d_pca,)
 ```
 
-Sharpness dimension (participation ratio):
+Sharpness dimension (Tuci-style fractional dimension on the ordered
+Lyapunov spectrum; see §4.5.6):
 
 ```python
-SD_t = (sigmas.sum() ** 2) / (sigmas ** 2).sum()
+lam = np.sort(lambda_t)[::-1]
+cumsum = np.cumsum(lam)
+nonneg = np.where(cumsum >= 0)[0]
+if lam[0] < 0:
+    SD_t = 0.0
+elif len(nonneg) == len(lam):
+    SD_t = float(len(lam))             # full-d case
+else:
+    j_star = int(nonneg[-1]) + 1       # 1-indexed
+    SD_t = j_star + cumsum[j_star - 1] / abs(lam[j_star])
 ```
 
 Basin predictability:
@@ -2199,10 +2248,14 @@ al., 2023).
 - Sussillo, D., & Barak, O. (2013). *Opening the black box:
   low-dimensional dynamics in high-dimensional recurrent neural
   networks.* Neural Computation, 25(3), 626–649.
-- Tuci, E. et al. (2026). *Lyapunov analysis of recursive language
-  models.* arXiv:2604.19740.  *(Citation pending verification; the
-  finite-time-Lyapunov framework adopted in `src/experiments/dynamics/lyapunov.py`
-  is adapted from this preprint.)*
+- Tuci, M., Korkmaz, C., Şimşekli, U., Birdal, T. (2026).
+  *Generalization at the Edge of Stability.* arXiv:2604.19740.
+  We borrow only the *functional form* of their sharpness dimension
+  (Def. 4.2) as a comparative diagnostic over our ensemble-spread
+  Lyapunov spectrum. Their setting (SGD optimization on parameter
+  space, Hessian-anchored Edge-of-Stability) and their generalization
+  bound (Theorem 4.5) do not transfer to our inference-time recursive
+  setting; see §4.5.6 for the explicit caveat.
 
 ---
 
