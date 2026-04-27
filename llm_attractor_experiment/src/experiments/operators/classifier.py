@@ -2,6 +2,7 @@
 Three-axis classifier for operator experiments: H1a (convergence),
 H1b (recurrence/orbit), H1c (divergence). Each returns one of:
   not_supported / weak_support / moderate_support / strong_support.
+See ARTICLE.md §4.5.9 for the spec.
 
 Inputs: the metric dataframes produced by the enriched analyze phase
 (see src/experiments/operators/analyze_ext.py).

@@ -27,10 +27,14 @@ from src.utils.io import ensure_dir
 
 
 EXPERIMENTS = [
-    ("exp_pub_O1_continue",               "O1 contractive",          "#4a90e2"),
-    ("exp_pub_O2_paraphrase_replace",     "O2 oscillatory (2-cycle)", "#e24a4a"),
-    ("exp_pub_O3_summarize_negate_replace","O3 absorbing",            "#8b5cf6"),
-    ("exp_pub_D1_dialog_curious_helpful_v2","D1 stylistic multi-basin","#5fa85f"),
+    ("exp_pub_O1_continue",                 "O1 contractive",            "#4a90e2"),
+    ("exp_pub_O2_paraphrase_replace",       "O2 oscillatory (2-cycle)",  "#e24a4a"),
+    ("exp_pub_O3_summarize_negate_replace", "O3 absorbing",              "#8b5cf6"),
+    ("exp_pub_D1_dialog_curious_helpful_v2","D1 stylistic multi-basin",  "#5fa85f"),
+    # D2 = drill-down dialog (explorer/expert). Distinct from the historical
+    # "exp_dialog_D2_replace_curious_helpful" (a replace-mode D1 variant) —
+    # see docs/DATA_INDEX.md for the naming-collision note.
+    ("exp_D2_exploratory_drilldown",        "D2 drill-down dialog",      "#d4a017"),
 ]
 
 # Pick one "canonical" observable per experiment — the one with most information
@@ -39,6 +43,7 @@ CANONICAL_OBS = {
     "exp_pub_O2_paraphrase_replace":         "context_tail",
     "exp_pub_O3_summarize_negate_replace":   "context_tail",
     "exp_pub_D1_dialog_curious_helpful_v2":  "context_tail",
+    "exp_D2_exploratory_drilldown":          "context_tail",
 }
 
 

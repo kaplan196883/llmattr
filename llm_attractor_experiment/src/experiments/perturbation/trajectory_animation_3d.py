@@ -1,5 +1,6 @@
 """
 Animate trajectories in 3D PCA space (first 3 principal components).
+See ARTICLE.md §4.10 / §5.11 for the spec.
 
 Same multi-trajectory + perturbation-kick logic as the 2D version, lifted
 into 3D. Skips the V landscape and streamlines (those are inherently 2D);

@@ -1,5 +1,6 @@
 """
-Holographic-RG dendrogram visualization for perturbation experiments.
+Hierarchical-RG dendrogram visualization for perturbation experiments.
+See ARTICLE.md §4.11.6 / §5.10 for the spec.
 
 Per condition:
   1. K-means at k=64 on PCA-30 → 64 leaf "fine basins" with populations.
@@ -41,7 +42,8 @@ COND_COLORS = {"control": "#4a90e2", "neutral": "#8b5cf6",
                "lorem": "#ff9800", "adversarial": "#d62728"}
 
 DPI = 220
-N_LEAVES = 48
+# K=64 KMeans + Ward linkage per ARTICLE.md §4.11.6 / §5.10.
+N_LEAVES = 64
 PRE_PCA = 30
 
 

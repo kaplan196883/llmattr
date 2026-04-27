@@ -739,6 +739,18 @@ def cmd_analyze(cfg: Config) -> None:
     ev_path = cfg.metrics_dir / "explained_variance.json"
     write_json(ev_path, explained_variance)
 
+    # Three-axis classifier + report_operators.md (ARTICLE.md §4.5.9, §11.5).
+    # Disable via `analyze_ext_enabled: false` in the YAML for quick re-runs.
+    if bool(cfg.raw_dict.get("analyze_ext_enabled", True)):
+        try:
+            from src.experiments.operators.analyze_ext import run as _analyze_ext_run
+            _analyze_ext_run(cfg)
+        except Exception as exc:
+            log.warning(
+                "analyze_ext failed (non-fatal — main analyze succeeded): %s",
+                exc,
+            )
+
     log.info("analyze phase done. metrics in %s", cfg.metrics_dir)
 
 

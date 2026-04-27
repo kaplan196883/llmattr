@@ -1,5 +1,6 @@
 """
 Geodesic-skeleton visualization for perturbation experiments.
+See ARTICLE.md §4.10 / §5.10 for the spec.
 
 Build an effective potential V(x) = -log ρ(x) on a smoothed density grid
 (joint PCA-2). Identify basin centers as local density maxima. Compute

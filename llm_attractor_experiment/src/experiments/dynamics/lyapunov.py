@@ -1,7 +1,10 @@
 """
 Finite-Time Lyapunov Exponent (FTLE) and per-direction Lyapunov spectrum for
-recursive LLM loops — adapted from the RDS framework in Tuci et al.
-(arXiv 2604.19740) to our discrete, sampling-based setting.
+recursive LLM loops. See ARTICLE.md §4.5.5 for the spec. The functional form
+is adapted from the RDS framework in Tuci et al. (arXiv 2604.19740) to our
+discrete, sampling-based setting; we use the spectrum for diagnostic
+comparison only and do not inherit any of Tuci et al.'s generalization
+theorems.
 
 KEY ADAPTATION
 --------------

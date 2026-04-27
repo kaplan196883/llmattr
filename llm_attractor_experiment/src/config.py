@@ -163,6 +163,15 @@ def load_config(path: str | Path) -> Config:
     with path.open("r", encoding="utf-8") as f:
         raw = yaml.safe_load(f)
 
+    # ARTICLE.md §3.1: the YAML key `loop_mode` is the "nudge architecture"
+    # N_f in the state-generator-nudge formalism. Accept `nudge:` as an
+    # alias so configs that use the article's vocabulary work transparently.
+    # When both are present, `loop_mode` wins (frozen-config compatibility).
+    if "nudge" in raw and "loop_mode" not in raw:
+        raw["loop_mode"] = raw["nudge"]
+    elif "loop_mode" in raw and "nudge" not in raw:
+        raw["nudge"] = raw["loop_mode"]
+
     clustering_raw = raw.get("clustering", {}) or {}
     clustering = ClusteringConfig(
         method=clustering_raw.get("method", "dbscan"),

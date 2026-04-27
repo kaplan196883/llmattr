@@ -1,9 +1,13 @@
 """
 Isolated context-update module for the operator experiments.
 
-Adds a `loop_mode` parameter that the base src/core/context.py does not have.
-Kept separate so the original experiments (exp_default, exp_long, exp_noclip)
-can be rerun against the unmodified shared code.
+Implements the nudge N_f from ARTICLE.md §3.1 / §4.1 for the two
+non-dialog architectures. `loop_mode` is the YAML key for N_f
+(alias `nudge:` is also accepted, see src/config.py).
+
+Kept separate from src/core/context.py so the original experiments
+(exp_default, exp_long, exp_noclip) can be rerun against the unmodified
+shared code.
 """
 from __future__ import annotations
 
@@ -18,8 +22,13 @@ def update_context(
     loop_mode: str = "append",
 ) -> str:
     """
-    loop_mode='append'  → X_{t+1} = clip(X_t || Y_t)  (accumulate history)
-    loop_mode='replace' → X_{t+1} = clip(Y_t)         (total replacement — paraphrase loop)
+    Nudge N_f applied to (X_t, Y_t) to produce X_{t+1} (ARTICLE.md §3.1).
+
+    loop_mode='append'  → N_append:  X_{t+1} = clip(X_t || f(Y_t))
+    loop_mode='replace' → N_replace: X_{t+1} = clip(f(Y_t))
+
+    The content operator f is identity here (the operator prompt that
+    defines f is applied at generation time, not update time).
     """
     if loop_mode == "replace":
         return clip_context(output_text, max_chars, rule)

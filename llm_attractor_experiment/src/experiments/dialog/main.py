@@ -67,6 +67,10 @@ def _roles_from_cfg(cfg: Config) -> tuple[Role, Role, str]:
 
 
 def _loop_mode(cfg: Config) -> str:
+    """Return the nudge architecture N_f for the dialog runner
+    (ARTICLE.md §3.1). For dialog experiments the architectural family
+    is N_dialog regardless of whether sub-mode is `append` or `replace`,
+    but the per-turn context update still follows the loop_mode rule."""
     return str(cfg.raw_dict.get("loop_mode", "append"))
 
 
@@ -80,7 +84,9 @@ def cmd_run_dialog(cfg: Config) -> None:
     loop_mode = _loop_mode(cfg)
 
     log.info(
-        "dialog experiment: loop_mode=%s, initiator=%s, role_a=%s, role_b=%s",
+        "dialog experiment: loop_mode=%s (nudge N_dialog/%s), initiator=%s, "
+        "role_a=%s, role_b=%s",
+        loop_mode,
         loop_mode,
         initiator,
         role_a.name,

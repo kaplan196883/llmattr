@@ -38,6 +38,11 @@ log = get_logger(__name__)
 
 
 def _loop_mode(cfg: Config) -> str:
+    """Return the nudge architecture N_f (ARTICLE.md §3.1).
+
+    YAML keys `loop_mode` and `nudge` are aliases (resolved in load_config).
+    Returns one of: "append", "replace", or "dialog".
+    """
     return str(cfg.raw_dict.get("loop_mode", "append"))
 
 
@@ -48,7 +53,10 @@ def cmd_run_op(cfg: Config) -> None:
     set_global_seed(cfg.seed)
     client = make_client()
     loop_mode = _loop_mode(cfg)
-    log.info("operator experiment: loop_mode=%s, experiment_id=%s", loop_mode, cfg.experiment_id)
+    log.info(
+        "operator experiment: loop_mode=%s (nudge N_%s), experiment_id=%s",
+        loop_mode, loop_mode, cfg.experiment_id,
+    )
 
     ensure_dir(cfg.experiment_dir)
     save_config_snapshot(cfg, cfg.experiment_dir / "config.yaml")

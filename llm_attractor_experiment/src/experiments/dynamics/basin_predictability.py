@@ -1,5 +1,5 @@
 """
-Basin-predictability analysis.
+Basin-predictability analysis. See ARTICLE.md §4.5.3 / §5.3 for the spec.
 
 Question: given a trajectory's embedding at early step k, how accurately can
 we predict which K-means cluster it will occupy at late steps?
