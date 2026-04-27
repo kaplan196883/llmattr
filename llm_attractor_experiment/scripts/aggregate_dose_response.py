@@ -24,6 +24,7 @@ import numpy as np
 import pandas as pd
 
 from scripts.lib_load import read_experiment_csv
+from src.analysis.bootstrap import wilson_ci
 from src.utils.io import ensure_dir
 
 
@@ -67,12 +68,17 @@ def plot_dose_response(df: pd.DataFrame, out_path: Path) -> None:
         sub_dose = sub[sub["dose"].notna()].sort_values("dose").drop_duplicates(subset=["dose"])
         if sub_dose.empty:
             continue
-        n = sub_dose["n_total"].to_numpy().astype(float)
+        # Wilson 95% CI on each cell (ARTICLE.md §4.7).
+        cis = [
+            wilson_ci(int(k), int(N))
+            for k, N in zip(sub_dose["n_switched"], sub_dose["n_total"])
+        ]
         p = sub_dose["switch_rate"].to_numpy().astype(float)
-        se = np.sqrt(p * (1 - p) / np.clip(n, 1, None))
+        yerr_lo = np.array([p_i - ci.lo for p_i, ci in zip(p, cis)])
+        yerr_hi = np.array([ci.hi - p_i for p_i, ci in zip(p, cis)])
         ax.errorbar(
             sub_dose["dose"], sub_dose["switch_rate"],
-            yerr=1.96 * se,
+            yerr=np.stack([yerr_lo, yerr_hi]),
             marker=marker, lw=2.2, capsize=5, markersize=10, linestyle=ls,
             color=color, label=label,
         )
@@ -109,15 +115,25 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
     for (regime, ptype), sub in df.groupby(["regime_label", "perturbation_type"]):
         lines.append(f"## {regime} — {ptype} perturbation\n")
-        lines.append("| dose (tokens) | switched / total | rate |")
-        lines.append("|---|---|---|")
+        lines.append("| dose (tokens) | switched / total | rate | Wilson 95% CI |")
+        lines.append("|---|---|---|---|")
         ctrl = sub[sub["condition"] == "control"]
         if not ctrl.empty:
             c = ctrl.iloc[0]
-            lines.append(f"| control | {int(c['n_switched'])} / {int(c['n_total'])} | {c['switch_rate']*100:.0f}% |")
+            ci = wilson_ci(int(c["n_switched"]), int(c["n_total"]))
+            lines.append(
+                f"| control | {int(c['n_switched'])} / {int(c['n_total'])} | "
+                f"{c['switch_rate']*100:.0f}% | "
+                f"[{ci.lo*100:.0f}–{ci.hi*100:.0f}] |"
+            )
         dose_sub = sub[sub["dose"].notna()].sort_values("dose").drop_duplicates(subset=["dose"])
         for _, r in dose_sub.iterrows():
-            lines.append(f"| {int(r['dose'])} | {int(r['n_switched'])} / {int(r['n_total'])} | {r['switch_rate']*100:.0f}% |")
+            ci = wilson_ci(int(r["n_switched"]), int(r["n_total"]))
+            lines.append(
+                f"| {int(r['dose'])} | {int(r['n_switched'])} / {int(r['n_total'])} | "
+                f"{r['switch_rate']*100:.0f}% | "
+                f"[{ci.lo*100:.0f}–{ci.hi*100:.0f}] |"
+            )
         lines.append("")
 
     lines.append("## Three distinct dose-response regimes\n")

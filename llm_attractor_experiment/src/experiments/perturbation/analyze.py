@@ -29,6 +29,7 @@ import pandas as pd
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
 
+from src.analysis.bootstrap import wilson_ci
 from src.config import Config
 from src.utils.io import ensure_dir, read_jsonl
 from src.utils.logging import get_logger
@@ -198,18 +199,41 @@ def _plot_switching_rates(rel: pd.DataFrame, override_step: int, out_path: Path)
     summary = summary.set_index("condition").reindex(order).reset_index()
     summary = summary.dropna(subset=["switch_rate"])  # drop rows that didn't appear
 
+    # Wilson 95% CI per condition (ARTICLE.md §4.7).
+    ci_los, ci_his = [], []
+    for _, row in summary.iterrows():
+        ci = wilson_ci(int(row["n_switched"]), int(row["n_total"]), confidence=0.95)
+        ci_los.append(ci.lo)
+        ci_his.append(ci.hi)
+    summary["switch_rate_ci_lo"] = ci_los
+    summary["switch_rate_ci_hi"] = ci_his
+
     fig, ax = plt.subplots(figsize=(max(8, 1.5 * len(summary)), 5.5))
     bar_colors = [color_map.get(c, "#777") for c in summary["condition"]]
     bars = ax.bar(summary["condition"], summary["switch_rate"], color=bar_colors, alpha=0.85)
-    for b, (sw, total) in zip(bars, zip(summary["n_switched"], summary["n_total"])):
+    # Wilson CI error bars: asymmetric, so pass yerr as a 2xN array.
+    yerr_lo = (summary["switch_rate"] - summary["switch_rate_ci_lo"]).to_numpy()
+    yerr_hi = (summary["switch_rate_ci_hi"] - summary["switch_rate"]).to_numpy()
+    ax.errorbar(
+        summary["condition"], summary["switch_rate"],
+        yerr=np.stack([yerr_lo, yerr_hi]),
+        fmt="none", ecolor="#222", capsize=4, lw=1.2,
+    )
+    for b, (sw, total, lo, hi) in zip(
+        bars,
+        zip(summary["n_switched"], summary["n_total"],
+            summary["switch_rate_ci_lo"], summary["switch_rate_ci_hi"]),
+    ):
         pct = (sw / max(1, total)) * 100
-        ax.annotate(f"{pct:.0f}%\n({int(sw)}/{int(total)})",
-                    xy=(b.get_x() + b.get_width() / 2, b.get_height()),
-                    xytext=(0, 4), textcoords="offset points",
-                    ha="center", fontsize=10)
+        ax.annotate(
+            f"{pct:.0f}%\n({int(sw)}/{int(total)})\n[{lo*100:.0f}–{hi*100:.0f}]",
+            xy=(b.get_x() + b.get_width() / 2, b.get_height()),
+            xytext=(0, 4), textcoords="offset points",
+            ha="center", fontsize=9,
+        )
     ax.set_ylabel("fraction of trajectories switching basin")
-    ax.set_ylim(0, max(0.6, float(summary["switch_rate"].max()) * 1.3))
-    ax.set_title(f"Basin-switching rates by perturbation condition\n"
+    ax.set_ylim(0, max(0.6, float(summary["switch_rate_ci_hi"].max()) * 1.15))
+    ax.set_title(f"Basin-switching rates by perturbation condition (Wilson 95% CI)\n"
                  f"(switch = cluster at step {int(rel['step'].max())} ≠ control's cluster)")
     ax.grid(alpha=0.3, axis="y")
     fig.savefig(out_path, dpi=200, bbox_inches="tight")

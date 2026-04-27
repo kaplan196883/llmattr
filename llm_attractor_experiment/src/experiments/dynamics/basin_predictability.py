@@ -42,8 +42,10 @@ log = get_logger(__name__)
 
 
 EARLY_STEPS = [0, 1, 2, 3, 5, 10, 20, 30]
-# FINAL_WINDOW is now computed adaptively from data in analyze_observable:
-# use the last 5 steps of the trajectory.
+# FINAL_WINDOW is computed adaptively in analyze_observable from
+# cfg.basin.target_step_fraction (default 0.7, see ARTICLE.md §4.5.3).
+# The "post-t*" late window is [round(t* · T), T-1] inclusive.
+DEFAULT_LATE_WINDOW_FRACTION = 0.7
 
 
 def _load_pca_and_clusters(cfg, observable: str, role: str | None = None) -> pd.DataFrame:
@@ -136,20 +138,42 @@ def _predict_from_step(
     }
 
 
-def analyze_observable(cfg, observable: str, out_dir: Path, role: str | None = None) -> pd.DataFrame:
+def analyze_observable(
+    cfg,
+    observable: str,
+    out_dir: Path,
+    role: str | None = None,
+    late_window_fraction: float | None = None,
+) -> pd.DataFrame:
     log.info("=== %s ===", observable)
     df = _load_pca_and_clusters(cfg, observable, role=role)
     log.info("loaded %d points across %d regimes", len(df), df["regime"].nunique())
 
+    # ARTICLE.md §4.5.3: the late window for the "final cluster" majority
+    # vote starts at t* = round(target_step_fraction · T). When unset on the
+    # CLI, we read cfg.basin.target_step_fraction (default 0.7).
+    if late_window_fraction is None:
+        cfg_basin = getattr(cfg, "basin", None)
+        late_window_fraction = (
+            float(getattr(cfg_basin, "target_step_fraction", DEFAULT_LATE_WINDOW_FRACTION))
+            if cfg_basin is not None
+            else DEFAULT_LATE_WINDOW_FRACTION
+        )
     max_step = int(df["step"].max())
-    final_lo = max(0, max_step - 4)
+    T = max_step + 1  # zero-indexed → number of steps
+    final_lo = int(round(late_window_fraction * T))
+    final_lo = max(0, min(final_lo, max_step))
     final_hi = max_step
-    log.info("final window: steps %d..%d (max_step=%d)", final_lo, final_hi, max_step)
+    log.info(
+        "final window: steps %d..%d (max_step=%d, late_fraction=%.2f)",
+        final_lo, final_hi, max_step, late_window_fraction,
+    )
     final = _final_cluster_per_trajectory(df, final_lo, final_hi)
     log.info("computed final cluster for %d trajectories", len(final))
 
     rows = []
-    last_predictor_step = max(0, max_step - 5)
+    # Latest predictor step is the step right before the late window opens.
+    last_predictor_step = max(0, final_lo - 1)
     steps_to_probe = [s for s in EARLY_STEPS if s <= last_predictor_step] + [last_predictor_step]
     steps_to_probe = sorted(set(steps_to_probe))
     for regime in ["recursive", "no_feedback"]:
@@ -230,6 +254,14 @@ def main(argv: list[str] | None = None) -> int:
         "--role", default=None,
         help="For dialog experiments: role to restrict to (e.g., 'agent'). Auto-detected.",
     )
+    parser.add_argument(
+        "--late-window-fraction", type=float, default=None,
+        help=(
+            "Override cfg.basin.target_step_fraction for the 'final cluster' "
+            "late-window definition (per ARTICLE.md §4.5.3). Default: read "
+            "from cfg, falling back to 0.7."
+        ),
+    )
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
     setup_logging(args.log_level, None)
@@ -243,7 +275,11 @@ def main(argv: list[str] | None = None) -> int:
         obs = obs.strip()
         if not obs:
             continue
-        df = analyze_observable(cfg, obs, out_dir, role=args.role)
+        df = analyze_observable(
+            cfg, obs, out_dir,
+            role=args.role,
+            late_window_fraction=args.late_window_fraction,
+        )
         all_rows.append(df)
 
     if all_rows:

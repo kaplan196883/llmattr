@@ -32,6 +32,7 @@ import numpy as np
 import pandas as pd
 
 from scripts.lib_load import read_experiment_csv
+from src.analysis.bootstrap import wilson_ci
 from src.utils.io import ensure_dir
 
 
@@ -78,12 +79,17 @@ def plot_curve(df: pd.DataFrame, out_path: Path) -> None:
         sub = df[df["regime"] == regime].sort_values("inject_step")
         if sub.empty:
             continue
-        n = sub["n_total"].to_numpy().astype(float)
+        # Wilson 95% CI per cell (ARTICLE.md §4.7).
+        cis = [
+            wilson_ci(int(k), int(N))
+            for k, N in zip(sub["n_switched"], sub["n_total"])
+        ]
         p = sub["switch_rate"].to_numpy().astype(float)
-        se = np.sqrt(p * (1 - p) / np.clip(n, 1, None))
+        yerr_lo = np.array([p_i - ci.lo for p_i, ci in zip(p, cis)])
+        yerr_hi = np.array([ci.hi - p_i for p_i, ci in zip(p, cis)])
         ax.errorbar(
             sub["inject_step"], sub["switch_rate"],
-            yerr=1.96 * se,
+            yerr=np.stack([yerr_lo, yerr_hi]),
             marker=marker, lw=2.2, capsize=5, markersize=11, linestyle=ls,
             color=color, label=regime,
         )
@@ -122,12 +128,14 @@ def write_summary(df: pd.DataFrame, out_path: Path) -> None:
 
     for regime, sub in df.groupby("regime"):
         lines.append(f"## {regime}\n")
-        lines.append("| inject step | switched / total | rate |")
-        lines.append("|---|---|---|")
+        lines.append("| inject step | switched / total | rate | Wilson 95% CI |")
+        lines.append("|---|---|---|---|")
         for _, r in sub.sort_values("inject_step").iterrows():
+            ci = wilson_ci(int(r["n_switched"]), int(r["n_total"]))
             lines.append(
                 f"| t={int(r['inject_step'])} | {int(r['n_switched'])} / "
-                f"{int(r['n_total'])} | {r['switch_rate']*100:.0f}% |"
+                f"{int(r['n_total'])} | {r['switch_rate']*100:.0f}% | "
+                f"[{ci.lo*100:.0f}–{ci.hi*100:.0f}] |"
             )
         lines.append("")
 
