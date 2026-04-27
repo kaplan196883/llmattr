@@ -17,7 +17,9 @@ class ClusteringConfig:
 @dataclass
 class RecurrenceConfig:
     metric: str = "cosine"
-    epsilon: float = 0.25
+    # Defaults match the publication-config values (ARTICLE.md §4.5.1):
+    # cosine recurrence threshold ε = 0.15, lag exclusion τ = 3.
+    epsilon: float = 0.15
     tau: int = 3
 
 
@@ -181,7 +183,7 @@ def load_config(path: str | Path) -> Config:
     recurrence_raw = raw.get("recurrence", {}) or {}
     recurrence = RecurrenceConfig(
         metric=recurrence_raw.get("metric", "cosine"),
-        epsilon=float(recurrence_raw.get("epsilon", 0.25)),
+        epsilon=float(recurrence_raw.get("epsilon", 0.15)),
         tau=int(recurrence_raw.get("tau", 3)),
     )
     dwell_raw = raw.get("dwell", {}) or {}

@@ -49,6 +49,7 @@ def build_all_for_run(
       - 'rolling' | 'rolling_k3' — rolling window of size k (default 3 when unspecified)
       - 'rolling_k<N>'           — rolling window of size <N> for any int N
       - 'context_tail'           — last `tail_chars` of X_{t+1}
+      - 'context_full'           — last `full_chars` of X_{t+1} (long-memory variant)
     """
     out: dict[str, list[str]] = {}
     for name in observable_types:

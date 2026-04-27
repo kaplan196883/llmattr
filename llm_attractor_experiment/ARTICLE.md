@@ -322,6 +322,14 @@ user's questions vs their concatenation. We compute every metric on
 every applicable observable and report inter-observable agreement as
 part of the evidence chain.
 
+The names above use D1's role labels (user / agent). For dialogs
+configured with different role labels — D2 uses *explorer* / *expert* —
+the role-specific observables are named after the configured roles
+(`last_explorer_turn`, `rolling_expert_k3`, etc.). Role names are read
+from `cfg.dialog.role_a.name` / `cfg.dialog.role_b.name` at embed time;
+the observable wiring in `src/experiments/dialog/observables.py` accepts
+any role-name pair.
+
 Embeddings are batched and cached per observable. The codebase also
 includes (but does not currently use in publication runs) an OpenAI
 **Batch API** integration (`src/api/batch_jobs.py`) that supports
@@ -359,9 +367,14 @@ stable mapping under fixed model version, so the embedding cache is
 safe and `analyze` reruns on the same `embeddings.npy` are identical.
 
 Per-trajectory step we therefore obtain `K` independent vectors where
-`K = |observables|` — 4 for operator runs, 9 for dialog runs. These
-are stored in `K` separate `embeddings.npy` files (one per observable);
-each defines its own trajectory in 1536-d embedding space.
+`K = |observables|` — 3 for operator publication runs (output,
+rolling_k3, context_tail), 8 for dialog publication runs (the three
+generic plus last_<role-A>_turn, last_<role-B>_turn,
+rolling_<role-A>_k3, rolling_<role-B>_k3, turn_pair). Some pilot
+configs also enable `context_full`, bringing the counts to 4 / 9.
+These are stored in `K` separate `embeddings.npy` files (one per
+observable); each defines its own trajectory in 1536-d embedding
+space.
 
 #### 4.3.2 Token-budget analysis
 
@@ -457,7 +470,8 @@ To summarize the answer to a question that recurred during the project:
 
 - One observable string ⇒ one 1536-d vector. No chunking, no per-token
   output, no model-side internal sliding window we control.
-- One trajectory step ⇒ K vectors (K = 4 operator, 9 dialog), one per
+- One trajectory step ⇒ K vectors (K = 3 operator, 8 dialog at
+  publication scale; +1 each if `context_full` is enabled), one per
   observable, each from an independent API call.
 - One trajectory ⇒ `K × T` vectors total (T steps), arranged as K
   parallel polylines in 1536-d embedding space, each with its own
@@ -587,9 +601,19 @@ a covariance:
 Σ_t = (1/(N−1)) · Σ_i (z_i^t − z̄^t)(z_i^t − z̄^t)ᵀ
 ```
 
-The Lyapunov spectrum is `λ_k(t) = log σ_k(Σ_t) / 2`, where σ_k is the
-k-th singular value. The top exponent `λ_1` is interpreted as a
-finite-time Lyapunov exponent (FTLE).
+The k-th finite-time Lyapunov exponent is the log-amplitude growth
+rate of the k-th principal direction over the window
+`[t_baseline, T−1]`:
+
+```
+λ_k = (1 / [2·(T − 1 − t_baseline)]) · log( μ_k(T−1) / μ_k(t_baseline) )
+```
+
+where `μ_k(t)` is the k-th eigenvalue of `Σ_t`. The factor `1/2`
+converts variance growth to amplitude growth, and dividing by the
+window length gives a per-step rate (units: inverse step). The top
+exponent `λ_1` is interpreted as a finite-time Lyapunov exponent
+(FTLE).
 
 We compute the spectrum at **two distinct time windows**:
 
@@ -1027,7 +1051,7 @@ as `→` (each is independently re-runnable):
    ┌────────────────────────────────────────────────────────────────────────────┐
    │  PHASE 2 — OBSERVABLE CONSTRUCTION                                         │
    │                                                                            │
-   │           per JSONL row → 4 strings (operator) or 9 strings (dialog)       │
+   │           per JSONL row → 3 strings (operator pub) or 8 strings (dialog pub)│
    │                                                                            │
    │           ┌─────────────────────────────────────────────────────┐          │
    │           │ output         = Y_t                       (~120 tok)│         │
@@ -1039,7 +1063,8 @@ as `→` (each is independently re-runnable):
    │           │ turn_pair                          (dialog only)     │         │
    │           └─────────────────────────────────────────────────────┘          │
    │                              │  K parallel string streams                  │
-   │                              │  (K = 4 for operator, 9 for dialog)         │
+   │                              │  (K = 3 operator pub, 8 dialog pub;         │
+   │                              │   +1 each with optional context_full)       │
    └──────────────────────────────┼─────────────────────────────────────────────┘
                                   ▼
    ┌────────────────────────────────────────────────────────────────────────────┐
