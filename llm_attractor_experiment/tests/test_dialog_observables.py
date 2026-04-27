@@ -3,6 +3,7 @@ import pytest
 from src.experiments.dialog.observables import (
     build_dialog_observables,
     observable_last_agent_turn,
+    observable_last_role_turn,
     observable_last_user_turn,
     observable_rolling_role,
     observable_turn_pair,
@@ -88,3 +89,80 @@ def test_build_dialog_rejects_unknown_observable():
     steps = _dialog_steps()
     with pytest.raises(ValueError):
         build_dialog_observables(steps, ["banana"], k=3, tail_chars=100, full_chars=200)
+
+
+# --- D2-style configurable role names ---
+
+def _drilldown_steps(seed="SEED: q"):
+    # 6-step drill-down: explorer asks, expert answers, alternating, explorer first.
+    return [
+        {"role": "explorer", "output_text": "EX0", "step": 0},
+        {"role": "expert",   "output_text": "EP1", "step": 1},
+        {"role": "explorer", "output_text": "EX2", "step": 2},
+        {"role": "expert",   "output_text": "EP3", "step": 3},
+        {"role": "explorer", "output_text": "EX4", "step": 4},
+        {"role": "expert",   "output_text": "EP5", "step": 5},
+    ]
+
+
+def test_observable_last_role_turn_picks_named_role():
+    steps = _drilldown_steps()
+    assert observable_last_role_turn(steps, 0, "explorer") == "EX0"
+    assert observable_last_role_turn(steps, 1, "explorer") == "EX0"  # repeats while expert speaks
+    assert observable_last_role_turn(steps, 2, "explorer") == "EX2"
+    assert observable_last_role_turn(steps, 3, "expert") == "EP3"
+    assert observable_last_role_turn(steps, 0, "expert", fallback="SEED") == "SEED"
+
+
+def test_build_dialog_observables_accepts_explorer_expert_role_names():
+    steps = _drilldown_steps()
+    out = build_dialog_observables(
+        steps,
+        [
+            "output",
+            "last_explorer_turn",
+            "last_expert_turn",
+            "rolling_explorer_k3",
+            "rolling_expert_k2",
+            "turn_pair",
+        ],
+        role_a_name="explorer",
+        role_b_name="expert",
+        k=3,
+        tail_chars=100,
+        full_chars=200,
+        seed_utterance="SEED: q",
+    )
+    assert len(out["output"]) == 6
+    # Step 0 is explorer's first turn, expert hasn't spoken yet.
+    assert out["last_explorer_turn"][0] == "EX0"
+    assert out["last_expert_turn"][0] == "SEED: q"
+    # rolling_explorer_k3 at step 5 should contain all three explorer turns.
+    rolling_ex_5 = out["rolling_explorer_k3"][5]
+    assert "EX0" in rolling_ex_5 and "EX2" in rolling_ex_5 and "EX4" in rolling_ex_5
+    # Rolling-explorer must NOT contain expert turns.
+    assert "EP1" not in rolling_ex_5
+    assert "EP3" not in rolling_ex_5
+    assert "EP5" not in rolling_ex_5
+    # turn_pair uses the configured role names in the labels.
+    pair_5 = out["turn_pair"][5]
+    assert "[Explorer]: EX4" in pair_5
+    assert "[Expert]: EP5" in pair_5
+
+
+def test_build_dialog_observables_rejects_user_names_when_roles_are_explorer_expert():
+    steps = _drilldown_steps()
+    # `last_user_turn` is *not* a recognized observable when the dialog is
+    # configured with explorer/expert roles — it should raise rather than
+    # silently fall back to the seed (which is the bug C3 fixed).
+    with pytest.raises(ValueError):
+        build_dialog_observables(
+            steps,
+            ["last_user_turn"],
+            role_a_name="explorer",
+            role_b_name="expert",
+            k=3,
+            tail_chars=100,
+            full_chars=200,
+            seed_utterance="SEED: q",
+        )

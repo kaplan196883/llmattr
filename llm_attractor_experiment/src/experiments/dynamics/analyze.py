@@ -100,8 +100,15 @@ def analyze_experiment(cfg: Config, write_per_experiment_csv: bool = True) -> pd
             spec_late = compute_lyapunov_spectrum(
                 runs_by_step, t_baseline=t_base_late, spectrum_size=10
             )
-            sd = sharpness_dimension(spec.lambda_spectrum)
-            sd_late = sharpness_dimension(spec_late.lambda_spectrum)
+            # Sharpness dim = PR over the singular-value spectrum of the
+            # ensemble at a fixed step t. spec.singular_vals_first/last hold
+            # covariance eigenvalues μ_k = σ_k²/N; we take sqrt to recover
+            # σ_k. PR is invariant under multiplicative scaling, so the
+            # √N factor drops out and we don't need to divide by N.
+            sigma_first = np.sqrt(np.maximum(spec.singular_vals_first, 0.0))
+            sigma_last = np.sqrt(np.maximum(spec.singular_vals_last, 0.0))
+            sd = sharpness_dimension(sigma_first)       # SD at t = t_baseline (= 1, very early)
+            sd_late = sharpness_dimension(sigma_last)   # SD at t = T-1 (settled)
             rows.append(
                 {
                     "experiment_id": cfg.experiment_id,
@@ -117,8 +124,8 @@ def analyze_experiment(cfg: Config, write_per_experiment_csv: bool = True) -> pd
                     "lambda_3": float(spec.lambda_spectrum[2]) if len(spec.lambda_spectrum) > 2 else 0.0,
                     "ftle_scalar": ftle_from_spread(spec.spread_trajectory, t_baseline=1),
                     "sharpness_dim": sd.value,
-                    "j_star": sd.j_star,
-                    "cumulative_lambda": sd.cumulative_sum,
+                    "sd_n_modes": sd.n_modes,
+                    "sd_spectrum_sum": sd.spectrum_sum,
                     "effective_rank_01": effective_rank(spec.lambda_spectrum, threshold=0.01),
                     # late (settled) spectrum — scientifically meaningful
                     "t_baseline_late": t_base_late,

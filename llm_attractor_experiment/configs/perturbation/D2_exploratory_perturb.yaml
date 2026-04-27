@@ -24,10 +24,10 @@ observables:
 - output
 - rolling_k3
 - context_tail
-- last_user_turn
-- last_agent_turn
-- rolling_user_k3
-- rolling_agent_k3
+- last_explorer_turn
+- last_expert_turn
+- rolling_explorer_k3
+- rolling_expert_k3
 - turn_pair
 pca_dims: [2, 10, 20]
 clustering:

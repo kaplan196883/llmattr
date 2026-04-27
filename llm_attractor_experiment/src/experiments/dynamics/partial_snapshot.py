@@ -181,7 +181,11 @@ def run(cfg: Config, only_complete: bool) -> Path:
         t_base_late = max(1, T_ref // 2)
         spec_early = compute_lyapunov_spectrum(stack, t_baseline=1, spectrum_size=10)
         spec_late = compute_lyapunov_spectrum(stack, t_baseline=t_base_late, spectrum_size=10)
-        sd_late = sharpness_dimension(spec_late.lambda_spectrum)
+        # SD at t=T-1 = participation ratio over singular values of Σ_{T-1};
+        # spec_late.singular_vals_last holds covariance eigenvalues, so sqrt
+        # to recover singular values (PR is scale-invariant; the √N factor cancels).
+        sigma_last = np.sqrt(np.maximum(spec_late.singular_vals_last, 0.0))
+        sd_late = sharpness_dimension(sigma_last)
         rows.append(
             {
                 "prompt_family": fam,

@@ -218,10 +218,15 @@ def _execute_run(client, cfg, spec, sink, role_a, role_b, initiator, loop_mode) 
 def cmd_embed_dialog(cfg: Config) -> None:
     """
     Embed observables for a dialog experiment. Uses build_dialog_observables
-    so role-separated observables (last_user_turn, rolling_agent_k3, turn_pair, …)
-    are supported alongside the generic ones (output, rolling_k3, context_tail).
+    so role-separated observables (last_<role>_turn, rolling_<role>_k3,
+    turn_pair, …) are supported alongside the generic ones (output,
+    rolling_k3, context_tail). Role names come from cfg.dialog.role_a.name
+    and cfg.dialog.role_b.name, so D2 (`explorer`/`expert`) gets correct
+    role-specific observables.
     """
     client = make_client()
+    role_a, role_b, _ = _roles_from_cfg(cfg)
+
     steps_path = cfg.raw_dir / STEPS_FILE
     if not steps_path.exists():
         raise FileNotFoundError(f"no step log at {steps_path}; run `run` first")
@@ -244,20 +249,28 @@ def cmd_embed_dialog(cfg: Config) -> None:
             # Strip the role label that trajectory.py prepends.
             ctx = r.get("context_before", "")
             if ctx.startswith("["):
-                # remove "[User]: " prefix and trailing whitespace
+                # remove "[Role]: " prefix and trailing whitespace
                 bracket_end = ctx.find("]:")
                 if bracket_end != -1:
                     ctx = ctx[bracket_end + 2 :].strip()
             seed_by_ic[key] = ctx
 
     for obs_name in cfg.observables:
-        _embed_observable_dialog(client, cfg, df, obs_name, seed_by_ic)
+        _embed_observable_dialog(
+            client, cfg, df, obs_name, seed_by_ic, role_a.name, role_b.name
+        )
 
     log.info("embedding phase done")
 
 
 def _embed_observable_dialog(
-    client, cfg: Config, steps_df: pd.DataFrame, obs_name: str, seed_by_ic: dict
+    client,
+    cfg: Config,
+    steps_df: pd.DataFrame,
+    obs_name: str,
+    seed_by_ic: dict,
+    role_a_name: str,
+    role_b_name: str,
 ) -> None:
     group_cols = ["regime", "prompt_family", "initial_condition_id", "run_id"]
     steps_df = steps_df.sort_values(group_cols + ["step"]).reset_index(drop=True)
@@ -274,6 +287,8 @@ def _embed_observable_dialog(
         built = build_dialog_observables(
             sub_records,
             [obs_name],
+            role_a_name=role_a_name,
+            role_b_name=role_b_name,
             k=cfg.rolling_window_k,
             tail_chars=cfg.context_tail_chars,
             full_chars=cfg.context_full_chars,
