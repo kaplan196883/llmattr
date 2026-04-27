@@ -282,10 +282,21 @@ $P_\theta$ — e.g. "Continue the text" for $f = \text{continue}$,
 ### 4.2 Sampling
 
 Each experiment runs `N_traj = N_families × N_ICs × N_runs`
-trajectories. Defaults at publication scale: 5 families × 30 initial
-conditions × 3 runs = 450 trajectories per regime, run for 40 steps.
-Total embedding-space points per experiment: up to 1350 × 40 = 54,000
-(operator) or twice that for dialog (recording both turns).
+trajectories. Publication-scale defaults differ by experiment family:
+
+- **Operator runs (O1, O2, O3)**: 15 prompt families × 30 initial
+  conditions × 3 runs = **1,350 trajectories per regime**, run for
+  40 steps. Total points per experiment: 1,350 × 40 = 54,000.
+- **Dialog runs (D1)**: 5 dialog-suitable families × 30 initial
+  conditions × 3 runs = **450 trajectories**, 40 steps. Total points:
+  450 × 40 = 18,000 per role; both roles are embedded so the
+  effective per-experiment point count is 36,000.
+- **D2 (drill-down dialog)** is currently at exploratory scale only:
+  5 families × 5 ICs × 1 run = 25 trajectories, 50 steps. Below the
+  N≥2-runs minimum for ensemble-spread diagnostics (§5.0).
+
+In every case trajectories run for 40 steps unless explicitly noted
+(D2 uses 50; the T-sweep variants vary `steps_per_run`).
 
 Initial conditions are 5–30 short seed texts per "family" (philosophical
 prompts, practical-advice prompts, creative-writing prompts, reflective
