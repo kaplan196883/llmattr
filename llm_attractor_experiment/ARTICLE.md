@@ -256,6 +256,142 @@ configs. Both are infrastructure stubs available for future expansion.
 Total token cost for synchronous embedding of the full repository:
 ~$30 in embedding API calls.
 
+#### 4.3.1 Single-context embedding mechanics
+
+A subtle but important invariant: **for one observable string at one
+trajectory step, we obtain exactly one 1536-dimensional vector.** No
+chunking, no internal sliding window we manage, no per-token outputs.
+The `text-embedding-3-small` model handles internal attention over up
+to 8,191 input tokens and produces a single pooled representation
+which `embed_texts` writes to one row of the output matrix:
+
+```
+"Continue the text. The fox was quick..."  →  text-embedding-3-small  →  v ∈ R^1536
+```
+
+After the API returns, we **L2-normalize** each row defensively so all
+downstream cosine-similarity computations reduce to dot products and
+numerical drift from float32 round-trips does not accumulate:
+
+```
+norms = ||v||_2 + 1e-12
+v_norm = v / norms                          # ||v_norm||_2 = 1.0
+```
+
+The model is deterministic given the input — `hash(text) → vec` is a
+stable mapping under fixed model version, so the embedding cache is
+safe and `analyze` reruns on the same `embeddings.npy` are identical.
+
+Per-trajectory step we therefore obtain `K` independent vectors where
+`K = |observables|` — 4 for operator runs, 9 for dialog runs. These
+are stored in `K` separate `embeddings.npy` files (one per observable);
+each defines its own trajectory in 1536-d embedding space.
+
+#### 4.3.2 Token-budget analysis
+
+The 8,191-token API limit is held with a ~4× safety margin by
+construction:
+
+| layer | constraint | typical value | upper bound (tokens) |
+|---|---|---|---|
+| Per-step generation | `max_output_tokens` | 120 (operator), 160 (dialog) | ≤ 160 |
+| Running context cap | `max_context_chars` | 12,000 chars | ~3,000 |
+| `output` observable | the single Y_t | — | ≤ 160 |
+| `rolling_k3` | 3 × Y plus 2 separators | — | ~480 |
+| `context_tail` | `[-4000:]` slice | — | ~1,000 |
+| `context_full` | `[-8000:]` slice | — | ~2,000 |
+| `turn_pair` (dialog) | last user + last agent | — | ~320 |
+| `rolling_user_k3` / `rolling_agent_k3` | 3 turns of one role | — | ~480 |
+
+Conversion uses `cl100k_base`'s ~4 chars/token average for English
+prose; the bound holds even for code- or math-heavy text where the
+ratio shifts to ~3 chars/token.
+
+The running context `X_{t+1}` itself is **never embedded directly**.
+It is used to feed the generator but every observable applies a `[-N:]`
+tail-slice before the embedder sees the string. This slicing is the
+single rule that prevents append-mode context growth from blowing the
+embedder's token budget.
+
+#### 4.3.3 Sliding-window content in append mode
+
+In **append mode** the running context grows monotonically until it
+hits the 12,000-char clip ceiling, then stabilizes. Once
+`len(context_after) ≥ N`, the slice `context_after[-N:]` is **always
+exactly N chars** but its **content shifts forward by `len(Y_t)` chars
+each step** (~120 chars for operator runs):
+
+```
+Step t:    context_after has 9,500 chars. context_full = chars [1500 : 9500]
+Step t+1:  Y_{t+1} appends ~120 chars.   context_full = chars [1620 : 9620]
+```
+
+So between adjacent steps the slice has ~99% content overlap and ~1%
+fresh content. The resulting embeddings are **highly correlated, not
+identical**. Empirically:
+
+| observable | content overlap with previous step | adjacent-step cosine sim |
+|---|---|---|
+| `output` | 0% (Y_t is freshly generated each step) | ~0.5–0.8 |
+| `rolling_k3` | ~67% (2 of 3 outputs unchanged) | ~0.85–0.95 |
+| `context_tail` (4000 chars, append) | ~97% | ~0.95–0.98 |
+| `context_full` (8000 chars, append) | ~99% | ~0.97–0.99 |
+
+These different-overlap regimes give the trajectory **different motion
+speeds in embedding space** for different observables. `output` shows
+fast cycling motion (each step is a fresh generation); `context_full`
+shows slow integrated drift; `rolling_k3` is the compromise. This is
+exactly why we run every metric on every observable and require
+cross-observable agreement before accepting a regime label — a finding
+that holds only on `output` could be a per-step fluctuation; one that
+holds only on `context_full` could be a slow-drift artifact; one that
+holds on both is robust evidence.
+
+In **replace mode** (O2, O3) the running context is just the latest
+`Y_t` (~120 tokens), so all four content-based observables (`output`,
+`rolling_k3`, `context_tail`, `context_full`) collapse to the same
+short string and yield the same embedding. The `rolling_k3` observable
+remains distinct in replace mode because it concatenates outputs across
+multiple steps explicitly.
+
+#### 4.3.4 Adjacent-step similarity verification
+
+This is verifiable on any append-mode publication run:
+
+```python
+import numpy as np, pandas as pd
+v = np.load("data/exp_pub_O1_continue/embeddings/context_full/embeddings.npy")
+m = pd.read_parquet("data/exp_pub_O1_continue/embeddings/context_full/metadata.parquet")
+sub = m[(m.prompt_family=="philosophy") & (m.run_id=="run_000")].sort_values("step")
+idx = sub.index.values
+sims = [float(v[idx[i]] @ v[idx[i+1]]) for i in range(len(idx)-1)]
+np.median(sims)   # ≈ 0.97-0.99 for context_full in append mode
+```
+
+Truly identical embeddings across consecutive steps would only happen
+in degenerate cases: an absorbing fixed point where `Y_t` becomes
+constant, or empty-output steps. The first happens in O3 absorbing
+where `output` embedding becomes essentially constant past step ~10
+(driving the basin score to 1.0); we do not see the second in
+practice.
+
+#### 4.3.5 The "single context → single embedding" rule
+
+To summarize the answer to a question that recurred during the project:
+
+- One observable string ⇒ one 1536-d vector. No chunking, no per-token
+  output, no model-side internal sliding window we control.
+- One trajectory step ⇒ K vectors (K = 4 operator, 9 dialog), one per
+  observable, each from an independent API call.
+- One trajectory ⇒ `K × T` vectors total (T steps), arranged as K
+  parallel polylines in 1536-d embedding space, each with its own
+  PCA, t-SNE, clustering, and metric battery.
+
+The embedding step itself is the only place data crosses from
+free-form text into the deterministic numerical world; everything
+downstream is reproducible from the cached `embeddings.npy +
+metadata.parquet` pair.
+
 ### 4.4 Representation spaces
 
 For each observable's embedding matrix `Z ∈ R^{N×1536}` we compute four
@@ -746,7 +882,294 @@ worker creating a fresh figure for one frame. Frames are stitched into
 MP4 via `imageio-ffmpeg` (libx264 codec, quality 8). Wall-time
 per animation: ~80s vs ~11 min single-threaded.
 
-### 4.11 Hardware and software
+### 4.11 End-to-end pipeline diagram
+
+The full data flow from `gpt-4o-mini` generation through embeddings,
+projections, metrics, and figures, with persistence boundaries marked
+as `→` (each is independently re-runnable):
+
+```
+                              ┌──────────────────────┐
+                              │ config.yaml          │
+                              │ (model, T, top_p,    │
+                              │  steps, observables, │
+                              │  baselines, families)│
+                              └──────────┬───────────┘
+                                         │
+                                         ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 1 — GENERATION                                                      │
+   │                                                                            │
+   │   ┌──────────┐  X_t (string)   ┌────────────────────────┐                  │
+   │   │ context  │ ───────────────▶│ OpenAI Responses API   │                  │
+   │   │ X_t      │                 │ gpt-4o-mini            │                  │
+   │   │          │  Y_t (string)   │ T=0.8, max_tok=120-160 │                  │
+   │   │          │ ◀───────────────│ store=False            │                  │
+   │   └────┬─────┘                 └────────────────────────┘                  │
+   │        │                                                                   │
+   │        │  X_{t+1} = clip(X_t || Y_t, 12000 chars)         APPEND mode      │
+   │        │  X_{t+1} = clip(Y_t,        12000 chars)         REPLACE mode     │
+   │        │  X_{t+1} = X_t || format_turn(role, Y_t)         DIALOG mode      │
+   │        │                                                                   │
+   │        └─────▶ loop t = 0..T-1, persist each step ──┐                      │
+   │                                                      ▼                     │
+   │                                       ┌─────────────────────────────┐     │
+   │                                       │ raw/steps.jsonl             │     │
+   │                                       │  rows: (regime, family, ic, │     │
+   │                                       │  run, step, X_before, Y,    │     │
+   │                                       │  X_after, response_id, ...) │     │
+   │                                       └──────────────┬──────────────┘     │
+   └────────────────────────────────────────────────────── │ ───────────────────┘
+                                                           ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 2 — OBSERVABLE CONSTRUCTION                                         │
+   │                                                                            │
+   │           per JSONL row → 4 strings (operator) or 9 strings (dialog)       │
+   │                                                                            │
+   │           ┌─────────────────────────────────────────────────────┐          │
+   │           │ output         = Y_t                       (~120 tok)│         │
+   │           │ rolling_k3     = Y_{t-2}||SEP||Y_{t-1}||SEP||Y_t     │         │
+   │           │ context_tail   = X_after[-4000:]            (~1k tok)│         │
+   │           │ context_full   = X_after[-8000:]            (~2k tok)│         │
+   │           │ last_user_turn / last_agent_turn  (dialog only)      │         │
+   │           │ rolling_user_k3 / rolling_agent_k3 (dialog only)     │         │
+   │           │ turn_pair                          (dialog only)     │         │
+   │           └─────────────────────────────────────────────────────┘          │
+   │                              │  K parallel string streams                  │
+   │                              │  (K = 4 for operator, 9 for dialog)         │
+   └──────────────────────────────┼─────────────────────────────────────────────┘
+                                  ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 3 — EMBEDDING                                                       │
+   │                                                                            │
+   │   for each observable independently:                                       │
+   │                                                                            │
+   │      ┌──────────────────┐  batch of 128 strings ┌──────────────────┐       │
+   │      │ all_texts        │ ─────────────────────▶│ OpenAI Embeddings│       │
+   │      │ (N_traj×T strings│                       │ text-embedding-3 │       │
+   │      │  per observable) │  list[1536-d vector]  │ -small           │       │
+   │      │                  │ ◀─────────────────────│                  │       │
+   │      └──────────────────┘                       └──────────────────┘       │
+   │                              │                                             │
+   │                              ▼                                             │
+   │                       L2-normalize each row                                │
+   │                              │                                             │
+   │                              ▼                                             │
+   │      ┌─────────────────────────────────────────────┐                       │
+   │      │ embeddings/<obs>/embeddings.npy   (N, 1536) │                       │
+   │      │ embeddings/<obs>/metadata.parquet (N rows)  │                       │
+   │      │   regime, family, ic, run, step, role,      │                       │
+   │      │   text_len                                  │                       │
+   │      └────────────────────┬────────────────────────┘                       │
+   └──────────────────────────── │ ─────────────────────────────────────────────┘
+                                ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 4 — PROJECTION  (joint fit on all N points per observable)          │
+   │                                                                            │
+   │       embeddings.npy  (N, 1536) ──┬─▶ PCA(n=2)   ──▶ Z_PCA2  (N, 2)        │
+   │                                   │                                        │
+   │                                   ├─▶ PCA(n=10)  ──▶ Z_PCA10 (N, 10)       │
+   │                                   │                                        │
+   │                                   ├─▶ PCA(n=20)  ──▶ Z_PCA20 (N, 20)       │
+   │                                   │                                        │
+   │                                   └─▶ PCA(n=50) ──▶ TSNE(    ──▶ Z_TSNE    │
+   │                                       (preprocess) perp=30,     (N, 2)     │
+   │                                                    metric=cos,             │
+   │                                                    init=pca,               │
+   │                                                    seed=42)                │
+   │                                                                            │
+   │       all fits use random_state=42 → fully deterministic                   │
+   │                                                                            │
+   │       Z_PCA2  →  density / V landscape / 2D plotting                       │
+   │       Z_PCA10 →  K-means clustering, metrics, classifier                   │
+   │       Z_TSNE  →  visualization only (never used in metrics)                │
+   └─────────────────┬──────────────────────────────────────────────────────────┘
+                     │
+            ┌────────┴────────┬────────────────┬────────────────┐
+            ▼                 ▼                ▼                ▼
+   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+   │ CLUSTERING   │  │ TIME-SERIES  │  │ ENSEMBLE     │  │ PERTURBATION │
+   │ (per obs)    │  │ METRICS      │  │ DYNAMICS     │  │ ANALYSIS     │
+   │              │  │ (per traj)   │  │ (per fam,ic) │  │ (paired)     │
+   │ KMeans(k=12) │  │              │  │              │  │              │
+   │  on Z_PCA10  │  │ recurrence   │  │ Lyapunov     │  │ joint Z_PCA10│
+   │              │  │ dwell        │  │ spectrum     │  │ + KMeans k=12│
+   │ → cluster    │  │ basin        │  │ (early/late) │  │ → cluster_T  │
+   │   labels     │  │ basin_entry  │  │ sharpness_dim│  │   per cond   │
+   │   per step   │  │ late_recur.  │  │ effective    │  │ → switching  │
+   │              │  │ exit_return  │  │ rank         │  │   rate per   │
+   │              │  │ periodicity  │  │              │  │   condition  │
+   │              │  │ dispersion   │  │              │  │              │
+   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+          │                 │                 │                 │
+          └────────────┬────┴────────────┬────┴────────────┬────┘
+                       │                 │                 │
+                       ▼                 ▼                 ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 5 — STATISTICAL VALIDATION                                          │
+   │                                                                            │
+   │   1000-iter bootstrap CIs    Cohen's d vs baselines    permutation tests   │
+   │                                                                            │
+   │   baselines:  time_shuffled │ no_feedback │ independent_regeneration       │
+   │                                                                            │
+   │   significance gate:  metric ≥ baseline + 2σ  AND  Cohen's d ≥ 0.5         │
+   │                                                                            │
+   │                                  │                                         │
+   │                                  ▼                                         │
+   │   three-axis classifier (H1a convergence, H1b recurrence, H1c divergence)  │
+   │                                                                            │
+   │     ┌──────────────────────────────────────────────────────────────────┐   │
+   │     │ H1a strong + H1b weak  ⇒  contractive / multi-basin (O1, D1)     │   │
+   │     │ H1b strong (period-2) ⇒  oscillatory                  (O2)       │   │
+   │     │ H1a strong + sharpness ↓ ⇒ absorbing                  (O3)       │   │
+   │     │ H1c strong            ⇒  divergent / unsupported                 │   │
+   │     └──────────────────────────────────────────────────────────────────┘   │
+   └─────────────────────────────────┬──────────────────────────────────────────┘
+                                     ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 6 — VISUALIZATION & REPORTS                                         │
+   │                                                                            │
+   │  ┌─────────────────────┐      ┌─────────────────────┐                      │
+   │  │ STATIC PLOTS (2D)   │      │ FLOW FIELDS (2D)    │                      │
+   │  │                     │      │                     │                      │
+   │  │ A. joint t-SNE      │      │ make_grid_edges     │                      │
+   │  │    by regime/family/│      │ + bin_displacement  │                      │
+   │  │    step             │      │   field             │                      │
+   │  │ B. per-family grid  │      │ + bin_density       │                      │
+   │  │ C. single-IC trajs  │      │                     │                      │
+   │  │ E. quiver flow      │      │ → G: streamlines +  │                      │
+   │  │ F. trajectory sample│      │      density (magma)│                      │
+   │  │ basin_entry hist    │      │ → H: speed-colored  │                      │
+   │  │ basin_scores        │      │      streamlines    │                      │
+   │  │ cluster_occupancy   │      │      (dark theme)   │                      │
+   │  │ dwell_dist          │      │ → I: divergence ∇·v │                      │
+   │  │ step_parity         │      │      (RdBu_r)       │                      │
+   │  └─────────────────────┘      └─────────────────────┘                      │
+   │                                                                            │
+   │  ┌─────────────────────────────────────────────────────────────────────┐   │
+   │  │ HOLOGRAPHIC-BULK TOOLKIT (perturbation only)                        │   │
+   │  │                                                                     │   │
+   │  │   Z_PCA2 ──▶ smoothed density ρ̂(x)                                  │   │
+   │  │              │                                                      │   │
+   │  │              ▼                                                      │   │
+   │  │           V(x) = -log ρ̂(x)                                          │   │
+   │  │              │                                                      │   │
+   │  │              ├─▶ basin_centers = local minima of V                  │   │
+   │  │              │                                                      │   │
+   │  │              ├─▶ Dijkstra geodesics between basin pairs             │   │
+   │  │              │   → V*(i,j) barrier height = max V along path        │   │
+   │  │              │                                                      │   │
+   │  │              ├─▶ marching cubes @ 5 density iso-levels              │   │
+   │  │              │   → Poly3DCollection nested transparent shells       │   │
+   │  │              │                                                      │   │
+   │  │              └─▶ plot_streamlines + V contour + geodesic overlay    │   │
+   │  │                                                                     │   │
+   │  │   K=64 KMeans + Ward linkage ──▶ rg_dendrogram                      │   │
+   │  └─────────────────────────────────────────────────────────────────────┘   │
+   │                                                                            │
+   │  ┌─────────────────────────────────────────────────────────────────────┐   │
+   │  │ 3D ANIMATIONS (perturbation only)                                   │   │
+   │  │                                                                     │   │
+   │  │   Z_PCA3 + iso-shells + 50-trajectory walk + red kick beams         │   │
+   │  │              │                                                      │   │
+   │  │              ▼                                                      │   │
+   │  │   ProcessPoolExecutor (40 workers) → frame PNGs                     │   │
+   │  │              │                                                      │   │
+   │  │              ▼                                                      │   │
+   │  │   imageio-ffmpeg libx264 → animation3d_<cond>.mp4 (~10MB, 12s loop) │   │
+   │  └─────────────────────────────────────────────────────────────────────┘   │
+   │                                                                            │
+   │  ┌─────────────────────┐                                                   │
+   │  │ NARRATIVE REPORT    │                                                   │
+   │  │                     │                                                   │
+   │  │ reports/report.md   │ ◀── per-observable metric tables                  │
+   │  │                     │     bootstrap CIs                                 │
+   │  │ classification:     │     baseline comparisons                          │
+   │  │  not / weak /       │     H1a/H1b/H1c verdict                           │
+   │  │  moderate / strong  │     regime label                                  │
+   │  └─────────────────────┘                                                   │
+   └────────────────────────────────────────────────────────────────────────────┘
+                                     │
+                                     ▼
+   ┌────────────────────────────────────────────────────────────────────────────┐
+   │  PHASE 7 — CROSS-EXPERIMENT AGGREGATION                                    │
+   │                                                                            │
+   │   read each experiment's per-experiment CSVs (via scripts/lib_load)        │
+   │                                                                            │
+   │   ┌────────────────────────────────────────────────────────────────────┐   │
+   │   │ aggregate_perturbation_cross_regime  → 4×5 switching grouped bar   │   │
+   │   │ aggregate_dose_response              → log-x dose curves           │   │
+   │   │ aggregate_basin_hardening            → switch-vs-inject_step       │   │
+   │   │ aggregate_basin_predictability       → 4-regime accuracy overlay   │   │
+   │   │ aggregate_t_sweep                    → D1 T={0.3,0.6,0.8,1.2}      │   │
+   │   │ aggregate_o1_d1_t_sensitivity        → side-by-side T comparison   │   │
+   │   └────────────────────────────────────────────────────────────────────┘   │
+   │                                                                            │
+   │   → data/aggregated/<analysis>/{csv, png, summary.md}                      │
+   └────────────────────────────────────────────────────────────────────────────┘
+```
+
+#### 4.11.1 Shape annotations through the pipeline
+
+For one publication-scale operator experiment (1350 trajectories ×
+40 steps × 4 observables ≈ 216,000 vectors):
+
+```
+   raw/steps.jsonl                   ~54,000 rows  (1350 traj × 40 steps)
+        │
+        ▼  build_all_for_run × 4 observables
+   ~216,000 strings per experiment
+        │
+        ▼  embed_texts (batched 128, retry+backoff)
+   embeddings/<obs>/embeddings.npy   (54000, 1536)  float32, L2-normalized
+   embeddings/<obs>/metadata.parquet (54000 rows)
+        │
+        ▼  PCA(n=10).fit(joint) + KMeans(k=12)
+   PCA-10:    (54000, 10)
+   clusters:  (54000,)  ∈ {0..11}
+        │
+        ▼  per-trajectory metrics
+   recurrence.csv:  (1350 trajectories × N_metrics columns)
+   dwell.csv, basin.csv, basin_entry.csv, exit_return.csv,
+   late_recurrence.csv, periodicity.csv, dispersion.csv
+        │
+        ▼  per-(family, ic) ensemble dynamics
+   lyapunov_spectrum.csv:  (15 family-ic pairs × T steps × top-k λ)
+   sharpness_dim.csv:      (15 family-ic pairs × T steps)
+        │
+        ▼  bootstrap + permutation + Cohen's d
+   bootstrap_summary.csv, effect_sizes.csv
+        │
+        ▼  three-axis classifier
+   ThreeAxisDecision: {h1a, h1b, h1c} ∈ {not_supported, weak, moderate, strong}
+        │
+        ▼  reports/plots + reports/perturbation
+   ~70-150 PNG figures + (perturbation) 4-16 MP4 animations
+        │
+        ▼  cross-experiment
+   data/aggregated/*  (cross-regime, cross-T, cross-dose summaries)
+```
+
+#### 4.11.2 Persistence boundaries and rerun semantics
+
+The vertical `→` arrows in the diagram are persistence boundaries:
+each writes a deterministic intermediate to disk that downstream phases
+read back. This means any single phase can be rerun without redoing
+prior work:
+
+| boundary | data type | re-run trigger |
+|---|---|---|
+| `steps.jsonl` | one JSONL row per (regime, family, ic, run, step) | re-run only if the trajectory configuration or model version changes |
+| `embeddings.npy` + `metadata.parquet` | (N, 1536) float32 + N-row metadata | re-run only if observable definitions or the embedding model change |
+| `pca_*.csv`, `tsne.csv` | projected coordinates | re-run only if PCA/t-SNE parameters change (random_state=42 makes this deterministic) |
+| `metrics/*.csv` | per-trajectory and per-(family, ic) metrics | re-run on any metric definition change; cheap (~1 minute per experiment) |
+| `reports/*.png` and `*.mp4` | rendered figures | re-run on any plotting code change; gitignored (regenerable) |
+
+The LFS-tracked source of truth is `steps.jsonl`. Everything downstream
+is regenerable from that plus the code, with a documented re-run cost
+of ~$30 in OpenAI embedding API calls and ~2 hours of local compute.
+
+### 4.12 Hardware and software
 
 All experiments run locally with API calls to OpenAI. CPU: 40 cores
 available for parallel rendering. Python 3.x with numpy, scipy,
