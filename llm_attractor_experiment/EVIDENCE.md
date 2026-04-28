@@ -621,24 +621,70 @@ first authorship and have been corrected in this same revision:
 - **F-6**: §4.3.4 adjacent-step similarity — speculatively pointed at
   `tests/test_embeddings_adjacency.py`, which does not exist. Replaced
   with the actual evidence (PCA-2 and t-SNE step-colored plots).
+- **F-7 (NEW — discovered by CG-1 rerun)**: §5.10 V* table at
+  ARTICLE.md:1655–1658 disagrees with the recomputed values from the
+  current `geodesic_skeleton.py`. Specifically:
+
+  | regime | column | article | measured (`V_star_mean`) |
+  |---|---|---:|---:|
+  | O1 | control | 2.5 | **4.43** |
+  | O1 | neutral | 2.6 | 2.33 |
+  | O1 | lorem | 2.5 | 2.64 |
+  | O1 | adversarial | 2.2 | 2.21 ✓ |
+  | O2 | control | 2.7 | 2.83 ✓ |
+  | O2 | neutral | 2.5 | 3.55 |
+  | O2 | lorem | **0.55** | **5.57** |
+  | O2 | adversarial | 1.3 | 1.55 |
+  | O3 | control | 2.3 | 1.06 |
+  | O3 | neutral | 2.5 | 5.22 |
+  | O3 | lorem | **0.52** | **6.97** |
+  | O3 | adversarial | 1.4 | 2.21 |
+  | D1 | control | 1.2 | 1.32 ✓ |
+  | D1 | neutral | 1.0 | 1.08 ✓ |
+  | D1 | lorem | 0.8 | 0.84 ✓ |
+  | D1 | adversarial | 0.4 | 0.40 ✓ |
+
+  The most consequential mismatch is the **lorem** column for
+  replace-mode regimes: article reports 0.55 / 0.52 ("barriers
+  collapsed") but the measurement shows 5.57 / 6.97 (geodesics cross
+  high-V plateaus, with several hitting the V_max=8.0 floor where
+  ρ≈ε). The high V* is **internally consistent with the §5.10 RG
+  narrative** ("lorem expands the cloud to merge distance 3.64/3.25 …
+  produces a *new* basin that sits [far from control]") — a new far
+  basin means geodesics traverse low-density space, which gives high
+  V*, not low. So the article's RG and V* tables tell **opposite
+  stories**, and the new measurement supports the RG story.
+
+  D1 matches well because its basins are spatially compact (stylistic,
+  not content-bound) and inter-basin geodesics never traverse
+  zero-density regions; replace-mode regimes have wider lorem-induced
+  spread and do.
+
+  **Recommended fix**: update §5.10 V* table to the measured numbers
+  (above) and amend the surrounding interpretive paragraph at
+  ARTICLE.md:1665–1673 to say "V* > 5 under O2/O3 lorem" (high
+  geometric barrier consistent with a *new distant basin*) instead
+  of the current "V* < 0.5 — barriers are small". The interpretive
+  conclusion (replace-mode lorem creates a new basin attractor that
+  perturbed runs commit to) does not change; only the directional
+  language about V* needs flipping.
 
 ### Remaining caveats / known gaps
 
-- **CG-1**: §5.10 V* numeric values (2.5, 2.6, 2.5, 2.2, … in the table
-  at ARTICLE.md:1655–1658) are stated as "rough averages across the 6
-  inter-basin geodesics" and are read off the per-condition
-  `geodesic_skeleton_pca.png` annotations. There is no machine-readable
-  CSV holding these aggregated V* numbers — only the annotated PNG.
-  Reproducing the exact table cells requires re-running
-  `geodesic_skeleton.py` and reading the V* labels off the figure.
-  Recommended addition: dump per-condition V* into a sibling CSV in
-  `reports/perturbation/`.
-- **CG-2**: §5.10 RG dendrogram table (ARTICLE.md:1684–1689) cites
-  K=48-derived merge-distance values (3.64, 3.25, …); those values are
-  visible in the PNG titles (`max merge dist=…` per panel) but, as with
-  V*, are not written to a separate CSV. To reproduce strictly, recompute
-  via `rg_dendrogram.py` and read the per-panel `max_d` value from the
-  axis title.
+- **CG-1 (resolved as CSV emission; new discrepancy F-7)**: V* values
+  for §5.10 (ARTICLE.md:1655–1658) are now dumped to
+  `reports/perturbation/geodesic_barriers_pca.csv` (per-geodesic) and
+  `geodesic_barriers_summary.csv` (per-condition mean/min/max/n) by
+  `src/experiments/perturbation/geodesic_skeleton.py`. After rerunning
+  on all four perturbation pilots, **the D1 row matches the article
+  numerically (1.32 ≈ 1.2, 1.08 ≈ 1.0, 0.84 = 0.8, 0.40 = 0.4) but the
+  O1/O2/O3 rows disagree** — see finding **F-7** below.
+- **CG-2 (resolved)**: §5.10 RG dendrogram values are now dumped to
+  `reports/perturbation/rg_dendrogram_summary.csv` by
+  `src/experiments/perturbation/rg_dendrogram.py`. After rerunning on
+  all four perturbation pilots, **the values match the article
+  exactly** (O1 control 2.38, O2 lorem 3.64, O3 lorem 3.25, D1 all
+  ~1.79). The article's RG table is reproducible from this CSV.
 - **CG-3**: `data/exp_pub_D1_dialog_curious_helpful_v2/raw/` contains
   `steps.jsonl.bak` and `steps.jsonl.doubled` artifacts (visible in
   `git status`). These are leftover diagnostics from a duplicate-import

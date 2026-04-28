@@ -26,6 +26,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 from scipy.cluster.hierarchy import dendrogram, linkage
 from sklearn.cluster import KMeans
 from sklearn.decomposition import PCA
@@ -64,7 +65,12 @@ def _build_linkage(X: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     return Z, centroids, pops
 
 
-def _draw_panel(ax, Z, pops, cond):
+def _draw_panel(ax, Z, pops, cond) -> dict:
+    """Render one condition panel and return a summary record.
+
+    Record fields: {condition, n_leaves, total_points, max_merge_distance,
+    mean_merge_distance, median_merge_distance}.
+    """
     color = COND_COLORS.get(cond, "#5fa85f")
     n = len(pops)
     # Width labels: pop counts
@@ -79,7 +85,8 @@ def _draw_panel(ax, Z, pops, cond):
     )
 
     # Annotate the linkage scale at the root
-    max_d = float(Z[:, 2].max())
+    merge_d = Z[:, 2]
+    max_d = float(merge_d.max())
     ax.set_xlim(0, max_d * 1.05)
     ax.set_xlabel("Ward linkage distance (RG scale)", fontsize=9)
     ax.set_ylabel("fine cluster (label = population)", fontsize=9)
@@ -88,6 +95,14 @@ def _draw_panel(ax, Z, pops, cond):
                  fontsize=11, color=color)
     ax.tick_params(labelsize=7)
     ax.grid(axis="x", alpha=0.25)
+    return {
+        "condition": cond,
+        "n_leaves": int(n),
+        "total_points": int(pops.sum()),
+        "max_merge_distance": max_d,
+        "mean_merge_distance": float(merge_d.mean()),
+        "median_merge_distance": float(np.median(merge_d)),
+    }
 
 
 def render_dendrogram_for_pilot(
@@ -117,6 +132,7 @@ def render_dendrogram_for_pilot(
         n_rows = (n + n_cols - 1) // n_cols
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(9 * n_cols, 7 * n_rows),
                              squeeze=False)
+    summary_rows: list[dict] = []
     for ax, cond in zip(axes.flat, conditions):
         sub_idx = (meta["regime"] == cond).values
         if sub_idx.sum() < 50:
@@ -124,7 +140,8 @@ def render_dendrogram_for_pilot(
             continue
         Xc = X_high[sub_idx]
         Z_link, centroids, pops = _build_linkage(Xc)
-        _draw_panel(ax, Z_link, pops, cond)
+        rec = _draw_panel(ax, Z_link, pops, cond)
+        summary_rows.append(rec)
     for ax in axes.flat[n:]:
         ax.set_visible(False)
 
@@ -139,6 +156,15 @@ def render_dendrogram_for_pilot(
     fig.savefig(p, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
     log.info("wrote %s", p)
+
+    # Per-condition summary CSV (companion to the PNG; see ARTICLE.md §5.10).
+    summary_csv = out_dir / "rg_dendrogram_summary.csv"
+    summary_df = pd.DataFrame(summary_rows, columns=[
+        "condition", "n_leaves", "total_points",
+        "max_merge_distance", "mean_merge_distance", "median_merge_distance",
+    ])
+    summary_df.to_csv(summary_csv, index=False)
+    log.info("wrote %s (%d rows)", summary_csv, len(summary_df))
 
 
 def main(argv: list[str] | None = None) -> int:

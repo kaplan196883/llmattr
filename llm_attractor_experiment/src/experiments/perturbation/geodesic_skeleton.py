@@ -111,7 +111,12 @@ def _grid_dijkstra(
 
 def _draw_panel(
     ax, X, Y, V, pts, cond: str, n_basins: int = 4,
-):
+) -> list[dict]:
+    """Render one condition panel and return per-geodesic barrier records.
+
+    Each record: {condition, basin_i, basin_j, basin_i_x, basin_i_y,
+    basin_j_x, basin_j_y, V_star, n_basins}.
+    """
     color = COND_COLORS.get(cond, "#5fa85f")
     cs = ax.contourf(X, Y, V, levels=20, cmap="magma_r", alpha=0.85)
     ax.contour(X, Y, V, levels=10, colors="white", linewidths=0.4, alpha=0.5)
@@ -120,7 +125,7 @@ def _draw_panel(
     centers = _find_basin_centers(V, n_max=n_basins)
     if not centers:
         ax.set_title(f"{cond} (no basins found)", fontsize=11)
-        return
+        return []
 
     # Plot basin centers
     for (r, c) in centers:
@@ -128,9 +133,10 @@ def _draw_panel(
                    edgecolors="white", linewidths=1.0, zorder=10)
 
     # Compute pairwise geodesics for the top n basins
-    barriers = []
-    for i in range(len(centers)):
-        for j in range(i + 1, len(centers)):
+    records: list[dict] = []
+    n_centers = len(centers)
+    for i in range(n_centers):
+        for j in range(i + 1, n_centers):
             path = _grid_dijkstra(V, centers[i], centers[j])
             if not path:
                 continue
@@ -138,7 +144,19 @@ def _draw_panel(
             ys = np.array([Y[r, c] for r, c in path])
             v_path = np.array([V[r, c] for r, c in path])
             v_max = float(v_path.max())
-            barriers.append((i, j, v_max))
+            ri, ci = centers[i]
+            rj, cj = centers[j]
+            records.append({
+                "condition": cond,
+                "basin_i": i,
+                "basin_j": j,
+                "basin_i_x": float(X[ri, ci]),
+                "basin_i_y": float(Y[ri, ci]),
+                "basin_j_x": float(X[rj, cj]),
+                "basin_j_y": float(Y[rj, cj]),
+                "V_star": v_max,
+                "n_basins": n_centers,
+            })
             ax.plot(xs, ys, color=color, lw=1.3, alpha=0.85, zorder=8)
             mid = len(path) // 2
             ax.annotate(
@@ -151,11 +169,12 @@ def _draw_panel(
                 zorder=12,
             )
 
-    ax.set_title(f"{cond}  ({len(centers)} basins, "
-                 f"{len(barriers)} geodesics)",
+    ax.set_title(f"{cond}  ({n_centers} basins, "
+                 f"{len(records)} geodesics)",
                  fontsize=11, color=color)
     ax.set_xlabel("PCA-1")
     ax.set_ylabel("PCA-2")
+    return records
 
 
 def render_geodesic_for_pilot(
@@ -190,6 +209,7 @@ def render_geodesic_for_pilot(
         n_rows = (n + n_cols - 1) // n_cols
     fig, axes = plt.subplots(n_rows, n_cols, figsize=(8 * n_cols, 6.5 * n_rows),
                              sharex=True, sharey=True, squeeze=False)
+    all_records: list[dict] = []
     for ax, cond in zip(axes.flat, conditions):
         sub_idx = (meta["regime"] == cond).values
         if sub_idx.sum() < 30:
@@ -197,7 +217,8 @@ def render_geodesic_for_pilot(
             continue
         pts = Z[sub_idx]
         X, Y, V = _potential_grid(pts, xb, yb, grid_n=grid_n)
-        _draw_panel(ax, X, Y, V, pts, cond, n_basins=n_basins)
+        recs = _draw_panel(ax, X, Y, V, pts, cond, n_basins=n_basins)
+        all_records.extend(recs)
         ax.set_xlim(xb); ax.set_ylim(yb)
         ax.grid(alpha=0.15)
     for ax in axes.flat[n:]:
@@ -213,6 +234,38 @@ def render_geodesic_for_pilot(
     fig.savefig(p, dpi=DPI, bbox_inches="tight")
     plt.close(fig)
     log.info("wrote %s", p)
+
+    # Per-geodesic barriers CSV (companion to the PNG; see ARTICLE.md §5.10).
+    barriers_csv = out_dir / "geodesic_barriers_pca.csv"
+    barriers_df = pd.DataFrame(all_records, columns=[
+        "condition", "basin_i", "basin_j",
+        "basin_i_x", "basin_i_y", "basin_j_x", "basin_j_y",
+        "V_star", "n_basins",
+    ])
+    barriers_df.to_csv(barriers_csv, index=False)
+    log.info("wrote %s (%d rows)", barriers_csv, len(barriers_df))
+
+    # Per-condition summary (mean / min / max V* across geodesics).
+    summary_csv = out_dir / "geodesic_barriers_summary.csv"
+    if len(barriers_df):
+        summary = (
+            barriers_df.groupby("condition")
+            .agg(
+                n_basins=("n_basins", "first"),
+                n_geodesics=("V_star", "size"),
+                V_star_mean=("V_star", "mean"),
+                V_star_min=("V_star", "min"),
+                V_star_max=("V_star", "max"),
+            )
+            .reset_index()
+        )
+    else:
+        summary = pd.DataFrame(columns=[
+            "condition", "n_basins", "n_geodesics",
+            "V_star_mean", "V_star_min", "V_star_max",
+        ])
+    summary.to_csv(summary_csv, index=False)
+    log.info("wrote %s (%d rows)", summary_csv, len(summary))
 
 
 def main(argv: list[str] | None = None) -> int:
