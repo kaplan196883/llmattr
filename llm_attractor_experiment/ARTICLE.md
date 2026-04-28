@@ -5,65 +5,52 @@
 
 ## Abstract
 
-When a language model is iterated on its own output through a
-context-update **nudge** — append, replace, or role-alternating
-dialog — the resulting trajectory lives in one of a small number of
-attractor regimes. Recent work has classified such regimes
-qualitatively (arXiv:2512.10350 *Dynamics of Agentic Loops*;
-arXiv:2510.21258 *Correlation Dimension of Auto-Regressive LLMs*),
-but has not asked **how hard** it is to nudge a trajectory across a
-regime boundary, nor provided a measurable unit for that difficulty.
+Large language models run in recursive loops do not wander arbitrarily
+through text space. Under repeated self-conditioning, they enter a
+small number of reproducible attractor regimes whose form depends not
+only on the model, but on how generated text is fed back into context.
+Recent work has classified such regimes qualitatively
+(arXiv:2512.10350, arXiv:2510.21258, arXiv:2510.24797), but has not
+asked the next question: **what does it cost to push a trajectory out
+of an attractor?**
 
-We do both. We introduce a **theoretical framework** that separates
-the language model (generator) from the context-update operator
-(nudge), making nudges first-class objects of study. Within that
-framework we define the **barrier height** of an attractor against a
-perturbation as the *token-cost* of injected text required for 50%
-trajectory switching — a model-agnostic, interpretable unit for
-comparing regimes.
+We answer this with a state–generator–nudge framework that treats the
+language model and the context-update rule as distinct objects. In this
+framework, a **nudge** is the operator that maps the current context
+and the model output into the next context; append, replace, and
+role-structured dialog are three concrete nudge families. We define
+the **barrier height** of an attractor as the token-cost of injected
+text required for 50% trajectory switching — an interpretable
+operational unit for comparing recursive regimes.
 
-Across 37 experiments on `gpt-4o-mini` (50–1350 trajectories per
-configuration, embedded with `text-embedding-3-small` at 1536-dim),
-a four-condition perturbation protocol (control, neutral Wikipedia,
-lorem random words, adversarial in-distribution text from another
-basin) with three sweep dimensions (regime, dose, injection time)
-gives:
+Across 37 experiments on `gpt-4o-mini`, with 50–1350 trajectories per
+configuration embedded using `text-embedding-3-small`, we identify
+five regimes: an append-mode contractive basin (O1), a replace-mode
+oscillatory 2-cycle (O2), a replace-mode absorbing regime induced by
+summarize-and-negate (O3), a stylistic multi-basin dialog regime (D1),
+and a drill-down dialog regime with topical content gravity (D2,
+exploratory-scale). Their barrier signatures differ sharply. O1
+requires about 150 tokens of in-distribution adversarial text for 50%
+switching, while out-of-distribution perturbations saturate near a
+24% drift floor. Replace-mode O2 and O3 are nearly
+perturbation-transparent, with 94–96% switching at tested doses.
+Dialog regimes occupy intermediate scales, with switching behavior
+determined more by conversational structure than by perturbation
+magnitude alone.
 
-- **Append-mode contractive regime**: ~150 tokens of in-distribution
-  adversarial text for 50% switching; out-of-distribution text
-  saturates at the irreducible drift floor of ~24%. The barrier is
-  *finite* against in-basin perturbations and *effectively infinite*
-  against out-of-basin perturbations.
-- **Replace-mode operators** (paraphrase, summarize+negate):
-  essentially perturbation-transparent — 94–96% switching at any dose
-  ≥ 80 tokens. The barrier is ~0.
-- **Dialog regimes** occupy intermediate scales (60% free dialog,
-  64% drill-down) determined by conversational structure rather than
-  perturbation magnitude.
-
-We **triangulate** these *behavioral* barriers against *geometric*
-barrier estimates from the empirical potential landscape V(x) =
-−log ρ(x) on PCA-2, computing Dijkstra geodesics between density-peak
-basins (with their maximum-V along the path as a barrier estimate).
-The two estimates agree.
-
-Building on the three-regime taxonomy of recent work (contractive,
-oscillatory, exploratory), we contribute (1) two additional regimes —
-stylistic-multi-basin dialog (D1) and drill-down dialog (D2,
-characterized by content gravity) — distinguished by their barrier
-signatures rather than their dispersion alone; (2) a fully
-reproducible pipeline with raw trajectories LFS-tracked, 99 unit
-tests, and **103/103 cell-verified numeric claims** (`RESULTS.md`).
-Each regime has a distinct basin-predictability signature:
-replace-mode regimes (O2, O3) lock in by step 5 (acc ≈ 0.90–0.92),
-append-mode O1 climbs from 0.77 to 0.85 over 40 steps, and dialog
-regime D1 climbs from 0.61 (step 10) to 0.77 (final). A compact
-regime × diagnostic comparison appears in §5.0.
+We then compare these **behavioral** barriers to **geometric** barrier
+estimates derived from the empirical potential landscape
+$V(x) = -\log \rho(x)$ on PCA-2, using Dijkstra geodesics between
+density-peak basins. The two estimates agree in ordinal structure.
+Together, these results show that recursive LLM regimes are not
+defined only by contraction, oscillation, or collapse, but also by
+their **resistance to nudging**.
 
 The full pipeline regenerates from raw trajectories
 (`steps.jsonl`, LFS-tracked) using a documented `embed → analyze →
 report` chain. All code, configs, raw data, and reports are publicly
-available (https://github.com/kaplan196883/llmattr).
+available (https://github.com/kaplan196883/llmattr); 103/103 numeric
+claims are cell-verified against the published CSVs (`RESULTS.md`).
 
 ---
 
@@ -71,123 +58,122 @@ available (https://github.com/kaplan196883/llmattr).
 
 ### 1.1 Phenomenon
 
-When a language model's output is fed back as part of its next prompt
-and the cycle is repeated for many steps, what emerges? Practitioners
-have noted at least three qualitatively distinct outcomes anecdotally:
-
-1. *Topical lock-in.* The model returns to the same theme regardless of
-   surface-level variation.
-2. *Paraphrase oscillation.* The model alternates between two phrasings
-   of the same content.
-3. *Collapse.* The model converges to a degenerate output (a single
-   word, a fixed phrase, gibberish).
-
-These observations have been documented in two ways. *Anecdotally* —
-Twitter threads, blog posts, the occasional appendix figure in
-capability papers. And, recently, *empirically* — arXiv:2512.10350
-classifies recursive LLM trajectories into three regimes
-(contractive, oscillatory, exploratory) using local/global drift and
-dispersion; arXiv:2510.21258 quantifies degeneration as a collapse
-from higher-dimensional trajectories to a low-dimensional attractor;
+When a language model is fed its own output through repeated context
+updates, the resulting trajectory often settles into recognizable
+dynamical patterns. Practitioners have long observed topical lock-in,
+paraphrase cycling, and degenerate collapse, but only recently have
+these behaviors been studied as properties of recursive LLM dynamics
+rather than as isolated prompt artifacts. arXiv:2512.10350
+(*Dynamics of Agentic Loops*) classifies recursive LLM trajectories
+into three regimes — contractive, oscillatory, and exploratory —
+using drift, dispersion, and cluster-persistence metrics.
+arXiv:2510.21258 quantifies degeneration as a collapse from a
+higher-dimensional trajectory into a low-dimensional attractor.
 arXiv:2510.24797 reports that recursive self-referential dialogues
 across frontier models converge on a stable "spiritual-bliss"
-attractor. Each of these establishes that *attractor regimes exist*
-and that *prompt design selects them*. None addresses the next
-question: **what does it cost, in tokens of injected text, to nudge
-a trajectory across an attractor boundary?** That is the question
-this paper answers.
+attractor.
+
+That line of work establishes an important fact: **attractor-like
+regimes exist in recursive LLM loops**. But it leaves open a more
+practical and more theoretical question. Once a trajectory has
+entered such a regime, **how hard is it to move it somewhere else?**
+More concretely: how much text must be injected, and what kind of
+text must it be, to push a recursive trajectory across an attractor
+boundary?
+
+This paper treats that question as the central problem. Rather than
+asking only whether regimes exist, we ask whether they possess
+measurable **barriers**. Our answer is yes: recursive LLM regimes
+differ not just in shape, but in the **token-cost required to
+dislodge them**.
 
 ### 1.2 Question
 
-Are these observations symptoms of a few mechanistically distinct
-regimes, or are they all manifestations of one phenomenon?
+We study recursive LLM loops as bounded stochastic dynamical systems
+and ask three related questions.
 
-If they are distinct, the natural follow-up questions are:
+First, can append, replace, and dialog loops be understood within a
+single formal framework that separates the language model from the
+context-update rule? Second, do different loop architectures induce
+measurably different attractor regimes? Third, can the stability of
+those regimes be quantified by a common operational unit: the amount
+of injected text required to switch trajectories from one basin to
+another?
 
-- Can we **classify** any append/replace/dialog configuration into a
-  regime using a small number of measurements?
-- Do regimes have **measurable barriers** — quantitative thresholds
-  separating one attractor from another?
-- Does the regime depend on the **content function** (continue,
-  paraphrase, summarize, dialog) or the **architecture**
-  (append vs replace) or both?
+These questions turn an informal observation — "the loop gets stuck"
+— into a quantitative program. If attractors are real features of
+recursive LLM dynamics, then they should not only be detectable in
+representation space, but should also exhibit measurable resistance
+to perturbation.
 
 ### 1.3 Contributions
 
-This paper presents:
+This paper makes five contributions.
 
-1. **A theoretical framework for nudge-induced attractor dynamics**.
-   The state-generator-nudge formalism (§3.1) separates the LLM
-   (generator) from the context-update operator (nudge), making the
-   nudge a first-class object of study rather than an implementation
-   detail. Within the framework we define the **perturbation barrier
-   height** of a regime as the *token-cost* of injected text required
-   for 50% trajectory switching — a model-agnostic, interpretable
-   unit for comparing regimes. The framework predicts qualitatively
-   distinct barrier signatures for append, replace, and dialog
-   nudges, which our measurements verify quantitatively.
+**First**, we introduce a **state–generator–nudge formalism** for
+recursive LLM loops. In this formulation, the generator produces text
+conditioned on the current context, while the **nudge** is the
+context-update operator that maps the current context and output
+into the next state. This makes append, replace, and role-structured
+dialog first-class objects of analysis rather than implementation
+details. Within the framework we prove a finite-time access bound for
+replace-mode loops (§3.1.2 Lemma 1 + Corollaries) and state a
+conjecture for append-mode (§3.1.3 Conjecture 1) that the data
+empirically supports.
 
-2. **Token-quantified barrier heights** between LLM attractor regimes
-   via a four-condition perturbation protocol (control, neutral,
-   lorem, adversarial) with three sweep dimensions (regime, dose,
-   injection time). Append-mode contractive regime: ~150 tokens for
-   50% switching against in-distribution adversarial text;
-   out-of-distribution text saturates at ~24%. Replace-mode operators:
-   essentially zero barrier (94–96% switching at any dose). Dialog
-   regimes: 60–64% switching at matched relaxation horizons,
-   intermediate between append and replace. **This is the paper's
-   headline empirical contribution.**
+**Second**, we define the **barrier height** of a regime
+operationally as the token-cost of injected text required for 50%
+trajectory switching. This yields a common unit for comparing
+attractor stability across recursive architectures. An
+information-theoretic reading (§3.1.4) connects the token-cost to a
+model-agnostic surprisal-based quantity in nats.
 
-3. **Geometric/behavioral barrier triangulation**. The empirical
-   potential landscape V(x) = −log ρ(x) on PCA-2, with Dijkstra
-   geodesics between density-peak basins, gives a *geometric* barrier
-   estimate that agrees with the *behavioral* perturbation-derived
-   dose threshold — a cross-check between two independent measurement
-   regimes that validates the framework's prediction that nudge
-   barriers are well-defined geometric quantities, not artefacts of
-   any specific perturbation type.
+**Third**, we measure these barriers across 37 experiments on
+`gpt-4o-mini`. Append-mode continuation exhibits a finite
+in-distribution barrier of about 150 tokens, while neutral or lorem
+perturbations fail to overcome the regime beyond a drift floor near
+24%. Replace-mode paraphrase and summarize-and-negate are nearly
+barrier-free at tested doses, while dialog regimes occupy
+intermediate scales. **This barrier profile is the paper's main
+empirical result.**
 
-4. **A finer-grained regime taxonomy** that builds on prior 3-regime
-   classifications (contractive, oscillatory, exploratory): we
-   distinguish a contractive append-mode basin (O1), an oscillatory
-   replace-mode 2-cycle (O2), a near-singular absorbing state from
-   summarize-then-negate (O3), a stylistic multi-basin dialog regime
-   (D1), and a *structured-dialog drill-down* regime (D2, discovered
-   through perturbation work, characterized by topical content
-   gravity that resists cross-topic perturbations). The two dialog
-   regimes (D1, D2) are novel relative to prior work on agentic
-   loops, distinguished by their barrier signatures rather than by
-   dispersion alone.
+**Fourth**, we show that behavioral perturbation barriers agree with
+geometric barriers estimated from the empirical potential landscape
+$V(x) = -\log \rho(x)$ on PCA-2. This triangulates the perturbation
+results against an independent representation-space construction.
 
-5. **An empirical potential landscape visualization toolkit**
-   combining V(x) = −log ρ(x) effective free-energy on PCA-2,
-   Dijkstra geodesics through V, volumetric iso-density rendering of
-   the basin geometry, and parallel-rendered animations of 50
-   trajectories at once. The geometric barriers obtained from V agree
-   with the perturbation-derived dose thresholds.
+**Fifth**, we refine the emerging taxonomy of recursive LLM dynamics.
+In addition to the now-familiar contractive, oscillatory, and
+absorbing patterns, we identify two dialog regimes — stylistic
+multi-basin dialog (D1) and drill-down dialog (D2) — whose
+distinguishing signature is not dispersion alone, but their barrier
+structure under perturbation. We demonstrate explicitly (§5.12) that
+bulk diagnostics under-determine the O1/D1 boundary; the perturbation
+protocol is the load-bearing tool that resolves the full taxonomy.
 
-6. **A fully reproducible pipeline** with raw trajectories
-   LFS-tracked, 99 unit tests, a documented `embed → analyze →
-   report` workflow, and a cell-by-cell verification (`RESULTS.md`)
-   showing **all 103 numeric claims in §5 reproduce from the cited
-   CSVs** (100.0% pass), backed by an artifact-presence matrix
-   (`COVERAGE.csv`) showing all 37 experiments at 100% of their
-   applicable artifacts.
+The full pipeline is reproducible: raw trajectories LFS-tracked, 99
+unit tests, every numeric claim in §5 verified cell-by-cell against
+the cited CSV (`RESULTS.md`, 103/103 cells), and every experiment's
+artifact presence audited (`COVERAGE.csv`, 37/37 at 100%).
 
 ---
 
 ## 2. Background and related work
 
-### 2.1 Attractor analysis on neural representations
+### 2.1 Attractors in neural dynamics
 
-The dynamical-systems treatment of recurrent neural networks goes back to
-Hopfield (1982) and has been thoroughly developed for trained RNNs and
-LSTMs (Sussillo & Barak, 2013; Maheswaranathan et al., 2019). Standard
-diagnostics — fixed-point analysis, Jacobian linearizations, Lyapunov
-spectra — assume a smooth dynamical system. Sample-driven autoregressive
-text generation does not have a smooth Jacobian; we substitute
-statistical analogs (ensemble Lyapunov exponents from spread covariance,
-empirical-density-derived effective potential V(x) = −log ρ(x)).
+Attractor analysis has long been central to the study of recurrent
+neural systems. In classical recurrent networks, one studies fixed
+points, cycles, and low-dimensional manifolds through tools such as
+Jacobian linearization, Lyapunov spectra, and effective dimensionality
+(Hopfield, 1982; Sussillo & Barak, 2013; Maheswaranathan et al., 2019).
+Those tools assume a smooth state-update map. Recursive language-model
+loops are different: they evolve through sampled text rather than
+through a differentiable latent recurrence. For that reason, we work
+with empirical analogs of classical dynamical diagnostics —
+recurrence, dwell structure, ensemble-spread Lyapunov exponents,
+effective dimension, and density-derived potential landscapes — rather
+than with exact local linearizations.
 
 ### 2.2 Attractor observations in language models
 
@@ -218,27 +204,31 @@ top-k sampling in GPT-2 can produce repetitive collapse. Holtzman et
 al. (2020) systematized "degeneration" failure modes (repetition,
 blandness) and motivated nucleus sampling.
 
-**This paper builds on the dynamical-systems framing of the agentic-
-loops literature and asks the next question**: what does it *cost* to
-move a trajectory across an attractor boundary? The qualitative
-classifications above tell us regimes *exist*; we measure how
-*stable* they are, in tokens of injected perturbation. We also
-identify two regimes the agentic-loops three-regime classification
-misses: **stylistic-multi-basin dialog** (D1, where trajectories
-settle into different attractors based on conversational voice but
-do not cross between them within a single trajectory) and
-**drill-down dialog** (D2, characterized by content gravity that
-resists topic-switching), both distinguished from O1/O2/O3 by their
-barrier signatures rather than by their dispersion alone.
+### 2.3 What this paper adds
 
-For a side-by-side comparison with the closest prior work:
+Relative to prior regime-classification work, this paper makes three
+specific advances.
+
+First, it separates the recursive loop into **state**, **generator**,
+and **nudge**. This makes it possible to distinguish effects of the
+language model itself from effects of the context-update architecture.
+Second, it introduces a measurable notion of **barrier height**: the
+amount of injected text required to produce a specified switching
+probability across basins. Third, it shows that barrier structure
+refines the standard regime taxonomy. In addition to contractive,
+oscillatory, and absorbing behavior, we identify two dialog-specific
+regimes — stylistic multi-basin dialog (D1) and drill-down dialog
+(D2) — whose distinguishing feature is not dispersion alone, but
+their perturbation signature.
+
+A concise comparison with the closest prior work:
 
 | dimension | arXiv:2512.10350 | this paper |
 |---|---|---|
 | regime taxonomy | 3 (contractive, oscillatory, exploratory) | 5 (+ D1 stylistic-multi-basin, + D2 drill-down dialog) |
 | diagnostic metrics | local drift, global drift, dispersion, cluster persistence | + recurrence rate, sharpness dim, basin predictability acc(k), V\* geodesic-derived geometric barriers, RG dendrogram coarse-graining |
 | barrier-height measurement | not measured | **token-quantified** via 4-condition perturbation protocol (control / neutral / lorem / adversarial) × 3 sweep dimensions (regime / dose / injection-time) |
-| theoretical framework | discrete dynamical system in semantic space (informal) | state–generator–nudge formalism (§3.1) defining perturbation barrier height as the token-cost for 50% trajectory switching — a model-agnostic, interpretable unit |
+| theoretical framework | discrete dynamical system in semantic space (informal) | state–generator–nudge formalism (§3.1) with formal access bound (Lemma 1) and append-mode accumulation conjecture (Conjecture 1) |
 | geometric/behavioral triangulation | n/a | **mean V\* across 6 inter-basin geodesics agrees with perturbation-derived dose thresholds** (§5.10) |
 | reproducibility | code link only | 103/103 cell-verified numeric claims (`RESULTS.md`); 37/37 experiments at 100% applicable artifact coverage (`COVERAGE.csv`); raw trajectories LFS-tracked |
 | trajectory scope | not specified | 50–1,350 trajectories per configuration across 37 experiments |
@@ -261,7 +251,7 @@ ensemble-spread Lyapunov machinery in
 `src/experiments/dynamics/lyapunov.py` is our own construction. See
 §4.5.6 for the explicit caveats.
 
-### 2.3 Free-energy landscapes from empirical density
+### 2.4 Effective potential and geometric barriers
 
 The use of V(x) = −log ρ(x) as an empirical *effective potential* is
 standard in chemical-physics free-energy analysis and reaction-rate
@@ -279,12 +269,19 @@ is descriptive rather than theoretical. It converts the empirical
 density into shapes a human reader can navigate, without assuming
 any particular generative model of ρ.
 
-### 2.4 Dialog dynamics
+### 2.5 Dialog as a distinct dynamical setting
 
-Multi-turn LLM dialog has been studied for capability and alignment
-purposes (Park et al., 2023, "Generative Agents") but not, to our
-knowledge, with embedding-space attractor analysis. Our D1 (free
-dialog) and D2 (drill-down) regimes appear novel.
+Most prior work on recursive LLM dynamics focuses on single-stream
+operators such as continuation, paraphrase, or negation. Multi-turn
+LLM dialog has been studied for capability and alignment purposes
+(Park et al., 2023, "Generative Agents") but not, to our knowledge,
+with embedding-space attractor analysis. Multi-turn dialog introduces
+a different architecture: generated text is not merely appended or
+replaced, but inserted into a role-structured conversational state.
+This turns dialog into a distinct family of nudges. In our experiments,
+dialog does not simply reproduce the operator regimes. Instead, it
+generates its own attractor structure, including stylistic
+multi-basin behavior (D1) and topic-anchored drill-down dynamics (D2).
 
 ---
 
@@ -352,55 +349,216 @@ how much text you have to insert to re-aim the trajectory) and that
 **varies with the nudge**, but not arbitrarily. The next proposition
 establishes the structural difference between append and replace nudges.
 
-#### 3.1.2 Proposition 1 (replace-mode barriers are bounded by one generation)
+#### 3.1.2 Replace-mode access bound (Lemma 1 + Corollaries)
 
-**Proposition.** Let $\mathcal{N}_f$ be a *replace-mode* nudge —
-i.e., $\mathcal{N}_f(X_t, Y_t) = g(Y_t)$ for some deterministic
-function $g: \mathcal{Y} \to \mathcal{C}$ that depends only on the
-current generation $Y_t$, not on $X_t$. Let $B_1, B_2 \subset \mathcal{C}$
-be two basin sets, and suppose there exists some $X^\star \in B_1$
-with positive transition mass into $B_2$:
+We begin with replace mode, in which the previous context is discarded
+after each generation step. In this regime, the next state depends
+only on the newly generated text, not on an accumulated context
+history. This permits a clean finite-time access bound.
+
+**Lemma 1 (replace-mode access bound).** Let $(X_t)_{t\ge 0}$ be a
+recursive loop with replace-mode nudge
 
 $$
-\Pr\bigl[Y \in g^{-1}(B_2) \mid X^\star\bigr] = p > 0.
+X_{t+1} = g(Y_t), \qquad Y_t \sim P_\theta(\cdot \mid X_t; f),
 $$
 
-Then $\mathrm{B}(B_1 \to B_2) \leq \kappa$, where $\kappa$ is the
-expected token-length of a single generation under $P_\theta(\cdot \mid X^\star)$.
-In particular, replace-mode barriers do **not** scale with trajectory
-length or context size — they are bounded by **one typical generation
-length** ($\kappa \approx 80$–$120$ tokens at our `max_output_tokens=120`).
+where $g : \mathcal{Y} \to \mathcal{C}$ is measurable. Let
+$B_1, B_2 \subset \mathcal{C}$ be basin sets. Assume that after
+perturbation injection at time $t_{\mathrm{inj}}$, there exist
+constants $q_0 \in (0, 1]$, $r_0 \in (0, 1]$, and $\kappa > 0$ such that:
 
-**Proof sketch.** In replace mode, $X_{t+1} = g(Y_t)$ depends on
-$Y_t$ alone. There is therefore no path-dependence between $X_t$ and
-$X_{t+1}$ except through the single generation step. To move the
-trajectory from $B_1$ to $B_2$ it suffices that *one* generation
-$Y_t$ — of expected length $\kappa$ tokens — fall into $g^{-1}(B_2)$.
-By assumption this event has probability $p > 0$, so the barrier is
-at most the cost of soliciting that single generation, which is at
-most $\kappa$ tokens (the typical generation length). $\square$
+1. **Uniform one-step access to $B_2$:**
+
+$$
+\Pr\bigl[g(Y_t) \in B_2 \mid X_t = x\bigr] \ge q_0
+\qquad\text{for all } x \in B_1.
+$$
+
+2. **Persistence after entry:**
+
+$$
+\Pr\bigl[X_T \in B_2 \mid X_{t+1} = z\bigr] \ge r_0
+\qquad\text{for all } z \in B_2.
+$$
+
+3. **Bounded generation cost:**
+
+$$
+\mathbb{E}\bigl[|Y_t| \mid X_t = x\bigr] \le \kappa
+\qquad\text{for all } x \in B_1 \cup B_2.
+$$
+
+Then after $m$ post-injection replace steps,
+
+$$
+\Pr(X_T \in B_2) \;\ge\; 1 - (1 - q_0 r_0)^m.
+$$
+
+**Proof.** Fix a trajectory with $X_{t_{\mathrm{inj}}} \in B_1$. For
+$j \ge 1$, define the event
+
+$$
+E_j \;:=\; \{\,X_{t_{\mathrm{inj}}+j} \in B_2 \text{ and } X_T \in B_2\,\}.
+$$
+
+By assumption (1), conditional on any state in $B_1$, one replace
+step lands in $B_2$ with probability at least $q_0$. By assumption
+(2), conditional on such an entry, terminal membership in $B_2$ occurs
+with probability at least $r_0$. Hence
+
+$$
+\Pr(E_j \mid X_{t_{\mathrm{inj}}+j-1} \in B_1) \;\ge\; q_0 r_0.
+$$
+
+Now consider the event that none of the first $m$ replace steps
+yields terminally successful entry into $B_2$. Conditional on failure
+up to step $j-1$, the probability of failure again at step $j$ is at
+most $1 - q_0 r_0$. Therefore
+
+$$
+\Pr\!\Bigl(\,\bigcap_{j=1}^{m} E_j^c\,\Bigr) \;\le\; (1 - q_0 r_0)^m,
+$$
+
+so
+
+$$
+\Pr\!\Bigl(\,\bigcup_{j=1}^{m} E_j\,\Bigr) \;\ge\; 1 - (1 - q_0 r_0)^m.
+$$
+
+Since $\bigcup_{j=1}^{m} E_j \subseteq \{X_T \in B_2\}$, it follows
+that $\Pr(X_T \in B_2) \ge 1 - (1 - q_0 r_0)^m$. $\square$
+
+**Corollary 1 (replace-mode barrier bound).** Under the assumptions
+of Lemma 1, the perturbation barrier defined in §3.1.1 satisfies
+
+$$
+\mathrm{B}(B_1 \to B_2)
+\;\le\;
+\kappa \,\Bigl\lceil \frac{\log(1/2)}{\log(1 - q_0 r_0)} \Bigr\rceil .
+$$
+
+**Proof.** By Lemma 1, after $m$ replace steps the terminal switching
+probability is at least $1 - (1 - q_0 r_0)^m$. To reach $50\%$
+switching it is sufficient that $1 - (1 - q_0 r_0)^m \ge \tfrac{1}{2}$,
+equivalently
+
+$$
+m \;\ge\; \frac{\log(1/2)}{\log(1 - q_0 r_0)} .
+$$
+
+Thus $m^\star = \lceil \log(1/2) / \log(1 - q_0 r_0) \rceil$ replace
+steps suffice. Since each replace step has expected token cost at most
+$\kappa$, the total expected token budget required for $50\%$
+switching is bounded above by $\kappa \, m^\star$. $\square$
+
+**Corollary 2 (one-generation special case).** If, in addition,
+$q_0 r_0 \ge \tfrac{1}{2}$, then
+
+$$
+\mathrm{B}(B_1 \to B_2) \;\le\; \kappa.
+$$
+
+**Proof.** If $q_0 r_0 \ge \tfrac{1}{2}$, then a single replace step
+already yields terminal switching probability at least $1/2$. The
+barrier is therefore at most the expected cost of one generation. $\square$
+
+Lemma 1 and its corollaries formalize the central structural property
+of replace mode: because the next state depends only on the newly
+generated text, access to a competing basin is governed by one-step
+transition probability and post-entry persistence, rather than by
+long-horizon accumulation of prior context. **In particular, the
+replace-mode barrier is bounded by a constant multiple of a typical
+generation length and does not scale with accumulated context size.**
 
 **Empirical verification.** §5.5 reports 94–96% switching for O2
 (replace-mode paraphrase) and O3 (replace-mode summarize-then-negate)
 at every dose tested, including the smallest probed (80 tokens of
-any perturbation type). The proposition predicts barriers $\leq \kappa
-\approx 80$ tokens; we measure barriers $\leq 80$ tokens. The
-proposition does **not** predict the same for append-mode (where the
-context accumulates) — and indeed §5.5 reports a finite ~150-token
-barrier for O1 against in-distribution adversarial text. The
-prediction therefore *separates* the regimes from a single
-mechanistic distinction in $\mathcal{N}_f$.
+any perturbation type). Corollary 2 predicts $\mathrm{B} \le \kappa
+\approx 80$–$120$ tokens whenever the access × persistence product
+$q_0 r_0 \ge \tfrac{1}{2}$; we measure barriers $\le 80$ tokens (the
+smallest dose probed), consistent with the bound. The lemma does
+*not* extend to append-mode by the same argument; that case is
+addressed below as a conjecture motivated by the same data.
 
-A symmetric analog for append mode is harder to prove cleanly: the
-context-accumulation makes the barrier depend on the relative
-"weight" of injected vs in-basin text under the generator's
-attention. The empirical result (~150 tokens for O1 against
-in-distribution adversarial text, $\geq 400$ tokens against
-out-of-distribution text per §5.6) is consistent with a barrier
-that scales as the **logarithm of the basin's effective volume**
-in some embedding space — a conjecture we leave open.
+#### 3.1.3 Append-mode accumulation barrier (Conjecture 1)
 
-#### 3.1.3 Tokens vs nats: a model-agnostic reading of barrier height
+Append mode differs from replace mode in one crucial respect: the
+previous context is retained,
+
+$$
+X_{t+1} = \operatorname{clip}(X_t \Vert Y_t),
+\qquad Y_t \sim P_\theta(\cdot \mid X_t; f).
+$$
+
+A perturbation injected into an append-mode loop therefore does not
+overwrite the current state in one step. Instead, it is incorporated
+into an already-formed bounded context and must compete with the
+incumbent basin for representational dominance inside the clipping
+window. This suggests that append-mode barriers should depend not on
+one-step access alone, but on the cumulative amount of
+**basin-relevant counter-context** that survives inside the effective
+state.
+
+**Conjecture 1 (append-mode accumulation barrier).** Let
+$B_1, B_2 \subset \mathcal{C}$ be basin sets for an append-mode
+recursive loop $X_{t+1} = \operatorname{clip}(X_t \Vert Y_t)$. Then
+there exists a basin-dependent threshold
+$\tau^\star_{B_1 \to B_2}$ such that:
+
+1. **Subcritical regime:** if $\tau < \tau^\star_{B_1 \to B_2}$, then
+   $\Pr(X_T \in B_2)$ remains near the drift floor.
+2. **Threshold regime:** if $\tau \gtrsim \tau^\star_{B_1 \to B_2}$,
+   switching probability rises rapidly.
+3. **Content dependence:** $\tau^\star_{B_1 \to B_2}$ is substantially
+   smaller for in-distribution perturbations than for out-of-distribution
+   perturbations.
+
+Equivalently, append-mode barrier height is governed by the
+accumulation of semantically legible counter-context within the
+bounded context window, rather than by one-step state overwrite.
+
+A closely related formulation is in terms of **effective context
+share**. Let $\alpha_\tau(X_t)$ denote the fraction of the clipped
+context occupied by injected perturbation text after a budget of
+$\tau$ tokens. Then there exists a monotone increasing function
+$\Psi_{B_1 \to B_2} : [0, 1] \to [0, 1]$ such that
+
+$$
+\Pr\bigl(X_T \in B_2 \mid X_{t_{\mathrm{inj}}} \in B_1, \tau\bigr)
+\;\le\;
+\Psi_{B_1 \to B_2}\bigl(\alpha_\tau(X_{t_{\mathrm{inj}}})\bigr),
+$$
+
+with rapid growth occurring near a basin-dependent threshold
+$\alpha^\star_{B_1 \to B_2}$.
+
+The O1 dose-response measurements in §5.6 are consistent with this
+conjecture. Neutral and lorem perturbations remain near the
+irreducible drift floor across the tested range, whereas
+in-distribution adversarial perturbations exhibit a finite threshold
+near 150 tokens for 50% switching. This is precisely the qualitative
+pattern expected if append-mode barriers are controlled by the
+accumulation of basin-relevant counter-context rather than by
+one-step access alone.
+
+A geometric refinement of the same idea is that append-mode token
+barriers should scale with the saddle height in representation space.
+Let $V(x) = -\log \rho(x)$ be the empirical potential (§2.3,
+§5.10) and let $V^\star(B_1, B_2)$ denote the saddle height along a
+minimum-cost path between $B_1$ and $B_2$. One may conjecture that
+
+$$
+\mathrm{B}(B_1 \to B_2) \;\approx\; c_f \, V^\star(B_1, B_2),
+$$
+
+up to representation-dependent rescaling and perturbation-type
+effects. We do not prove this here; rather, we treat it as a
+geometric hypothesis motivated by the empirical agreement between
+behavioral switching thresholds and $V^\star$-based barrier ordering
+documented in §5.10.
+
+#### 3.1.4 Tokens vs nats: a model-agnostic reading of barrier height
 
 A natural objection to reporting barrier heights in tokens: *tokens
 of which tokenizer?* A perturbation that costs 150 tokens of
@@ -2230,206 +2388,370 @@ directory.)
 
 ## 6. Discussion
 
-### 6.1 Architecture × content interaction
+### 6.1 Regimes are properties of nudges, not prompts alone
 
-The taxonomy decomposes into a 2×2:
+The central lesson of these experiments is that recursive LLM regimes
+are determined jointly by the generator and the context-update rule.
+In our framework, the model samples
+$Y_t \sim P_\theta(\cdot \mid X_t; f)$ while the nudge $\mathcal{N}_f$
+determines how that output is written back into the next state. The
+observed taxonomy is therefore not merely a taxonomy of prompts or
+tasks; it is a taxonomy of **generator–nudge systems**.
+
+Viewed this way, the empirical pattern is remarkably regular. The
+taxonomy decomposes into a 2×2 over the operator regimes plus an
+orthogonal dialog axis:
 
 |  | append (preserve) | replace (overwrite) |
 |---|---|---|
 | **content-preserving** (continue, paraphrase) | O1 contractive basin | O2 oscillatory 2-cycle |
-| **content-degrading** (summarize+negate) | weak collapse (O3a, REPORT2) | O3 absorbing |
-
-Plus the orthogonal dialog axis:
+| **content-degrading** (summarize+negate) | weak collapse (small N) | O3 absorbing |
 
 |  | dialog architecture |
 |---|---|
 | **free** (curious user / helpful agent) | D1 stylistic multi-basin |
 | **structured** (explorer drill-down / expert) | D2 content-anchored multi-basin |
 
-This factorization predicts that any new operator can be slotted into the
-matrix by knowing only its update rule and content function. We have not
-formally tested this prediction (e.g., there's no D3-replace experiment
-at publication scale), but the eight pilots covered enough of the
-matrix to give us reasonable confidence.
+Content-preserving operators under append mode produce contractive
+behavior; content-preserving operators under replace mode produce
+oscillation; content-degrading operators under replace mode produce
+absorbing collapse. Dialog adds a second architectural axis because
+role structure changes how text is accumulated and reinterpreted
+across steps. D1 and D2 are therefore not exceptions to the operator
+taxonomy, but evidence that dialog should be treated as a distinct
+nudge family rather than as a special case of append.
 
-### 6.2 Why does append-mode resist while replace-mode capitulates?
+This interpretation is stronger than a descriptive regime table. It
+suggests that a new recursive loop can be located by knowing two
+things: what semantic transformation it asks the model to perform,
+and how that transformation is written back into state. The
+experiments do not yet prove that this factorization is exhaustive,
+but they show that it is already predictive across the operator
+families studied here.
 
-Mechanistic story: in append mode the perturbation text becomes a
-fraction of an accumulating context. After step 15 of a 30-step
-trajectory, the perturbation contributes ~1/15 of the context window's
-tokens. The model continues "from where the context now points," and
-that's mostly the original trajectory unless the perturbation is
-in-distribution and large enough to shift the local probability mass.
+### 6.2 Why append resists and replace yields
 
-In replace mode the perturbation *becomes* the entire next state. The
-trajectory continues from the perturbation, and the original prefix has
-no further influence. This is why replace-mode operators show ~100%
-switching for any non-trivial perturbation.
+The sharpest mechanistic contrast in the paper is between append and
+replace. In append mode, a perturbation is injected into an
+already-accumulating state. It therefore competes with prior
+trajectory mass rather than replacing it. Unless the perturbation is
+semantically aligned with an alternative basin, it is diluted by the
+existing context and tends to wash out. This is exactly what the
+perturbation results show for O1: neutral and lorem injections remain
+near the drift floor, while in-distribution adversarial text
+accumulates enough basin-relevant evidence to move the trajectory
+with nontrivial probability.
 
-Dialog's intermediate position follows: each turn is appended (so
-content accumulates), but the per-turn weight of new content is high
-relative to the rolling-window observable (last user turn, last agent
-turn). The basin is stylistic — what gets reset by perturbation is the
-style channel, not the content channel.
+In replace mode, by contrast, the perturbation effectively becomes
+the next state. The prior trajectory is discarded after one step, so
+the system has almost no memory barrier. This is why O2 and O3 are
+nearly transparent to perturbation: once the next state is rewritten,
+the subsequent loop evolves from the injected text rather than from
+the original basin. **Lemma 1 (§3.1.2) formalizes this asymmetry by
+showing that replace-mode barriers are bounded by roughly one
+generation length.** The measurements support exactly that prediction.
 
-### 6.3 D2 as a sharpened D1
+The dialog regimes sit between these extremes. They accumulate
+content as append systems do, but new turns have unusually high local
+influence because role-structured observables emphasize recent turns.
+This makes dialog less rigid than append-mode continuation, but more
+path-dependent than replace-mode overwrite. The result is an
+intermediate barrier scale whose interpretation depends on whether
+the dialog stabilizes **style** or **topic**.
 
-D2's 64% adversarial switching at 25-step relaxation, vs free dialog's
-78% at step-15 injection (D1 pilot, see §5.5), comes from drill-down's
-content gravity. The Explorer-Expert pair has an explicit instruction to drill
-deeper into a single concept from the previous turn. Once the
-trajectory is two or three drill-down steps deep ("photosynthesis →
-Calvin cycle → RuBisCO → enzyme kinetics") the conversational momentum
-has narrowed to a sub-tree, and adversarial injection of unrelated
-expert prose can be partially rejected by the next drill-down asking
-for more about the *original* sub-topic.
+### 6.3 D1 and D2 reveal two kinds of dialog attractor
 
-This is the first regime we've identified where **the dialog structure
-itself imposes content gravity**, separate from any per-turn content
-preservation. It opens up the question: are there other dialog
-structures (debate, role-play, multi-party brainstorm) that select
-different content-vs-style attractor balances?
+The contrast between D1 and D2 is important because it shows that
+"dialog" is not a single regime. D1 behaves like a stylistic
+multi-basin system: trajectories settle into stable conversational
+modes, and perturbations act mainly on those style channels. D2
+behaves differently. Its Explorer–Expert drill-down structure creates
+what is best described as **content gravity**: once the exchange has
+narrowed into a deeper subtopic, adversarial injections are only
+partially successful because the next turn is explicitly constrained
+to continue drilling into the established semantic branch.
 
-### 6.4 The empirical potential landscape as visualization
+This distinction matters theoretically. D1 shows that conversational
+structure can stabilize a trajectory without tightly binding its
+content. D2 shows that conversational structure can do more: it can
+impose topic-preserving momentum even when each turn is freshly
+generated. That is the first evidence in this project that a nudge
+architecture can encode a form of semantic inertia beyond simple
+append-mode accumulation.
 
-V(x) = −log ρ(x) is not an honest physical free energy — it's a
-post-hoc summary of the trajectory ensemble's marginal density. Using
-it as a "potential" with geodesics through it is a *visualization
-choice*, not a derived dynamical statement. We make this clear in the
-code comments and the documentation.
+The broader implication is that dialog architectures should be
+studied as a space of nudge designs. Free chat, drill-down, debate,
+role-play, and multi-party deliberation may occupy different points
+on a style-versus-content stability continuum. D2 is therefore best
+understood not merely as another measured regime, but as evidence
+that dialog structure can itself be a control parameter of attractor
+geometry.
 
-That said, the Dijkstra V\* values agreeing with the perturbation
-dose-response thresholds is more than coincidence. Both measures are
-asking "how hard is it to move from one density peak to another," via
-different operationalizations. The agreement (roughly: V\* in [1, 3]
-for O1 ≈ 150-token-equivalent dose; V\* < 0.7 for O2/O3 lorem ≈
-saturated switching) suggests that the geometric framing captures real
-structural information about the embedding-space dynamics.
+### 6.4 Barrier height is the missing dimension of regime analysis
 
-### 6.5 What this means practically
+Classifying recursive loops only by contraction, oscillation, or
+collapse is not enough. Those diagnostics describe the **shape** of
+a regime, but not its **stability under intervention**. Barrier
+height adds this missing dimension. Once measured in tokens, it
+gives an operational answer to a practical question: how much
+semantically relevant text does it take to redirect a recursive
+loop?
 
-#### Decision tree for LLM-loop architects
+This is why the perturbation protocol is the paper's real headline
+contribution. Without it, O1 and D1 look closer than they truly are
+(see §5.12, where bulk-diagnostic clustering cannot resolve them),
+and D1 and D2 are not sharply separable at all. Bulk diagnostics
+recover broad classes; perturbation barriers reveal how strongly
+those classes are held in place. **In that sense, the full five-way
+taxonomy is not produced by geometry alone or by perturbation alone,
+but by the combination of the two.**
+
+The information-theoretic reading in §3.1.4 helps explain why the
+barrier story is richer than a raw token count. Out-of-distribution
+perturbations can be long without being effective because they carry
+little basin-relevant information. In-distribution adversarial
+perturbations are effective not because they are surprising, but
+because they are semantically legible to the model as evidence for a
+competing continuation. Barrier height is therefore best understood
+as a measure of **how much meaningful counter-context must be
+written into the loop before the dynamics re-aim**.
+
+### 6.5 Why the geometric picture matters
+
+The empirical potential landscape $V(x) = -\log \rho(x)$ should not
+be mistaken for a literal physical free energy. It is a descriptive
+summary of the density of trajectories in a reduced representation
+space. But the fact that geodesic barrier estimates derived from $V$
+align with behavioral switching thresholds is still significant. It
+suggests that the perturbation results are not only artifacts of one
+intervention protocol; they are reflecting genuine large-scale
+geometry in the embedding-space dynamics.
+
+This geometric agreement is especially useful because the two
+measurements are independent in spirit. Behavioral barriers are
+measured by *actively* kicking trajectories and observing switching.
+Geometric barriers are measured *passively* from the density
+landscape and shortest paths between basins. Agreement between them
+does not prove a mechanistic potential model of LLM inference, but
+it does strengthen the interpretation of barrier height as a real
+structural property of the recursive loop.
+
+### 6.6 Practical implications
+
+For practitioners, the results suggest that recursive-loop design is
+partly a problem of **nudge engineering**:
 
 | if you want… | choose… | barrier signature you'll see |
 |---|---|---|
 | **a stable trajectory** that holds the user's seed thought | append-mode + content-preserving operator (O1) | finite barrier (~150 tokens of in-distribution adversarial); effectively-infinite barrier against out-of-distribution noise |
 | **fast lock-in to a topic** (don't care which one) | replace-mode (O2 paraphrase or O3 summarize+negate) | locks in by step 5; capitulates to *any* perturbation ≥ 80 tokens |
 | **stylistic stability across resets** | dialog framework (D1) | stylistic basin survives temperature changes (acc(k=10) range 0.57–0.61 over T ∈ {0.3..1.2}) |
-| **content gravity that resists topic-switching** | structured drill-down dialog (D2) | 64% adversarial switching rate, but D2's basin geometry resists *cross-topic* perturbations specifically |
+| **content gravity that resists topic-switching** | structured drill-down dialog (D2) | 64% adversarial switching rate; basin geometry resists *cross-topic* perturbations specifically |
 | **collapse** (degenerate output) | replace-mode summarize+negate (O3) | convergence within ~10 steps; sharpness-dim ≈ 0; trivially low effective rank |
 
-#### A concrete robustness probe
+More broadly, the perturbation-barrier protocol can be read as a
+generic robustness probe. It measures not just whether a system can
+be perturbed, but how much context budget an adversary or operator
+must spend to move the system from one regime to another. That makes
+it relevant not only for recursive-loop science, but also for
+**jailbreak resistance**, **persona stability**, and **in-context
+attack evaluation**. The 4-condition protocol's neutral and lorem
+conditions provide the right baseline: a robustness claim is
+meaningful only relative to the irreducible drift floor (~24% for
+O1) that the model exhibits under benign perturbation.
 
-The token-quantified perturbation barrier protocol (§5.5) is a
-*generic robustness probe*: rather than checking whether a model
-produces some specific behavior under one specific test prompt,
-it asks **how many tokens of injected text it takes to move the
-model out of its current attractor**. The same machinery measures:
+### 6.7 Interpretation
 
-- **jailbreak resistance** (how much adversarial in-distribution text
-  is needed to push a constrained-persona trajectory out of compliance);
-- **persona stability** (how many tokens of contradicting persona-text
-  are needed to switch the trajectory to a different style basin —
-  related to activation-steering work but measured behaviorally
-  rather than mechanistically);
-- **in-context-attack resistance** (the protocol's adversarial
-  condition is exactly an in-context attack; the dose-response
-  curve is the attack-success-vs-attack-budget curve).
-
-The 4-condition protocol's *neutral* and *lorem* conditions provide
-the right baseline: a robustness claim is meaningful only relative
-to the irreducible drift floor (~24% for O1) that the model exhibits
-under benign perturbation.
-
-#### A research vocabulary
-
-For ML researchers studying LLM loops: the five-regime taxonomy with
-measured barriers should serve as a *vocabulary* for describing what
-your particular setup is doing. The pipeline
-(`embed → analyze → report`) takes ~30 minutes per new experiment to
-produce all the diagnostic plots.
+The main conceptual conclusion of the paper is therefore simple.
+Recursive LLM behavior is shaped not only by the generator $P_\theta$,
+but by the nudge that writes generated text back into state. Different
+nudges induce different attractor geometries, and those geometries
+are measurable not only by their trajectory statistics, but by the
+amount of injected text required to cross their basin boundaries.
+**In that sense, barrier height is the operational bridge between a
+formal theory of recursive dynamics and the practical problem of
+controlling LLM loops.**
 
 ---
 
 ## 7. Limitations
 
-### 7.1 Single model
+### 7.1 Scope of model coverage
 
-All experiments use `gpt-4o-mini`. The taxonomy may reproduce on other
-models (GPT-4, Claude, Llama, Mistral), but we have not tested. We
-expect the qualitative regimes to be robust because the content-vs-
-architecture factorization argument is model-agnostic, but the specific
-dose thresholds and basin geometries will vary.
+All experiments in this paper use a single generator, `gpt-4o-mini`.
+The main qualitative claims — especially the separation between
+append, replace, and dialog regimes — may generalize because they
+follow from the generator–nudge factorization rather than from any
+one model family. But the present study does not establish cross-model
+universality. Barrier heights, basin geometry, and even the exact
+number of identifiable regimes may vary across models with different
+decoding behavior, alignment tuning, or tokenizer structure. A
+within-vendor cross-generation pilot on `gpt-4.1-nano` is in progress
+and reported in §11; cross-vendor replication remains future work.
 
-### 7.2 Single embedding family
+### 7.2 Dependence on representation choice
 
-`text-embedding-3-small`. We did spot-check that the qualitative regime
-structure survives PCA dimensionality changes (PCA-2, -10, -50) and
-projection into t-SNE-2, but we have not tested a different embedding
-model.
+Our results are observed through one embedding family,
+`text-embedding-3-small`, together with PCA and t-SNE projections. We
+do check robustness across observables and across several projection
+spaces, and §5.13 reports an explicit embedding-space invariance
+ablation against `text-embedding-3-large` (within-vendor scale-up)
+and `all-mpnet-base-v2` (cross-architecture, sentence-transformers).
+The attractor-like structure appears robust within the tested
+representation models, but absolute geometric barrier estimates derived
+from $V(x) = -\log \rho(x)$ should be interpreted as descriptive
+measurements internal to a specific embedding pipeline, not as
+representation-free constants.
 
-### 7.3 Bounded context
+### 7.3 Bounded-memory regime only
 
-All loops use a 12,000-character context cap with tail-clipping. The
-contractive regime in particular may differ under no-clip conditions
-(see REPORT2's `exp_noclip` ablation, which suggests the basin
-deepens — recurrence drops further — when clipping is removed). We did
-not run no-clip ablations across all four regimes.
+All loops are run under a 12,000-character context cap with tail
+clipping. This is a natural bounded-memory setting for recursive LLM
+loops, but it is still only one memory regime. The append-mode
+contractive basin in particular appears sensitive to clipping: a
+no-clip pilot suggests that removing clipping deepens the basin and
+reduces recurrence. We therefore treat the reported append-mode
+barriers as properties of a bounded-memory recurrence, not of append
+mode in the abstract.
 
-### 7.4 English-only and short-context
+### 7.4 Language and length constraints
 
-All seed texts and system prompts are in English. Trajectory steps are
-short (~120-160 tokens output). We have not tested whether the regimes
-hold for other languages or for long-form generation (essay-length
-outputs at each step).
+All prompts, seeds, and generated trajectories are English-only, and
+each step produces relatively short outputs (~120–160 tokens). We do
+not yet know whether the same taxonomy persists under multilingual
+settings, code-heavy trajectories, or long-form generation in which
+each recursive step adds substantially more text. These regimes could
+alter both the geometry of the embedded trajectories and the
+effective token-cost of perturbation.
 
-### 7.5 Static system prompts
+### 7.5 Static prompting
 
-We do not vary the system prompt mid-trajectory. The contractive basin
-of O1 might break under prompt drift; we have not tested.
+The experiments hold system prompts fixed throughout a trajectory.
+This isolates the recursive dynamics cleanly, but it also excludes
+an important class of systems in which high-level instructions drift,
+refresh, or are rewritten online. A contractive basin under static
+prompting may weaken or fragment under prompt drift, and a
+replace-mode regime may become more structured if anchored by
+repeated meta-instructions. Those possibilities remain open.
 
-### 7.6 The empirical potential landscape as descriptive, not theoretical
+### 7.6 Geometric barriers are descriptive
 
-Treating V(x) = −log ρ(x) as an effective potential is a useful
-visualization but not a derived physical statement. The Dijkstra V\*
-"barrier height" depends on the kernel-density-estimation bandwidth,
-the PCA-2 projection, and the grid resolution. Different choices give
-different absolute V\* numbers; only the relative ordering across
-conditions and regimes is robust.
+The empirical potential landscape $V(x) = -\log \rho(x)$ is a useful
+summary of trajectory density, not a derived physical free energy.
+Likewise, the Dijkstra barrier $V^\star$ depends on the
+kernel-density estimator, the PCA-2 reduction, and the grid
+discretization. For that reason, we interpret the geometric barriers
+primarily through their **relative ordering** across conditions and
+regimes, not through their absolute magnitudes. The agreement between
+geometric and behavioral barriers is therefore evidence of structural
+consistency, not proof of an underlying thermodynamic law.
 
-### 7.7 Sample size for D2
+### 7.7 D2 is still exploratory
 
-The drill-down dialog regime was tested with only 25 trajectories at
-50 steps each. The 64% adversarial switching rate has wide bootstrap CIs
-(±10 percentage points). Replication at publication scale is needed
-before strong claims about drill-down as a distinct regime.
+Among the five reported regimes, D2 is the least mature empirically.
+It was tested at much smaller scale than O1–O3 and D1 (25
+trajectories at 50 steps; 64% adversarial switching rate with
+±10-pct-pt bootstrap CI). The current results strongly suggest that
+drill-down dialog induces a distinct form of topic-anchored content
+gravity, but publication-scale replication is still needed before D2
+should be treated as equally established.
+
+### 7.8 Tokens are operational, not ultimate
+
+Our headline barrier unit is tokens, because token-cost is directly
+measurable and practically meaningful. But tokens are only an
+operational approximation to a deeper information quantity. As
+discussed in §3.1.4, the model-agnostic object is closer to a barrier
+in surprisal or nats. Because the current 37-experiment battery does
+not store logprobs, we cannot yet report that quantity directly. The
+token barriers in this paper should therefore be read as the most
+interpretable first-order estimate of a deeper information barrier.
 
 ---
 
 ## 8. Future work
 
-1. **Cross-model replication.** Run the same diagnostic perturbation
-   pilot on Claude, Llama, and Mistral models to verify the taxonomy
-   transfers.
-2. **Long-context regime.** What happens when each step generates
-   essay-length output (~1000 tokens)? Does the contractive basin
-   tighten, broaden, or fragment?
-3. **Mixed-mode operators.** What attractor structure emerges from
-   "append-then-summarize" or "replace-after-paraphrase"? The 2×2
-   factorization suggests interpolation between regimes is possible.
-4. **Drill-down at publication scale.** 5 families × 30 ICs × 3 runs
-   × 50 steps to confirm D2's content gravity at full resolution.
-5. **Dialog topology beyond drill-down.** Debate, brainstorm, role-play,
-   adversarial-questioner. We expect each to select a distinct
-   regime from the dialog architecture × content-rule matrix.
-6. **Perturbation as a scientific tool.** Use the dose-response
-   methodology to characterize the basin structure of any deployed
-   LLM agent (chatbot, autonomous worker). A diagnostic perturbation
-   battery could be added to capability evaluation.
-7. **Connection to refusal training.** Do safety-trained models have
-   different attractor structure than base models? Specifically, does
-   alignment training create new basins (refusal modes) that perturbation
-   tests can detect?
+The natural next step is to turn the present framework from a
+single-model demonstration into a comparative science of recursive
+LLM dynamics.
+
+### 8.1 Cross-model replication
+
+The first priority is replication across model families. The most
+important question is not whether the exact barrier heights transfer
+numerically, but whether the **ordering** of append, replace, and
+dialog regimes survives across generators with different alignment
+and tokenization properties. A replicated ordering would strongly
+support the claim that regime structure is a property of the
+generator–nudge system rather than of one model alone. Within-vendor
+scale-down to `gpt-4.1-nano` is in progress; cross-vendor replication
+on Claude Haiku and on a non-OpenAI generator is the natural Tier-3
+extension.
+
+### 8.2 Barrier height in nats
+
+A second priority is to move from token barriers to information
+barriers. Future experiments should capture generation logprobs
+(`Config.include_logprobs=True` is already supported by the pipeline)
+so that perturbation cost can be reported not only in tokens, but
+also in conditional surprisal. That would let us estimate barrier
+height in nats directly and test more rigorously the proposed link
+(§3.1.4) between behavioral switching thresholds and geometric
+quantities such as $V^\star$.
+
+### 8.3 Larger memory and longer outputs
+
+The present experiments study short recursive steps in a
+bounded-memory setting. A natural extension is to increase both the
+per-step output length and the context budget. Longer recursive
+writes may deepen some basins, fragment others, or create new
+multi-scale regimes in which short-horizon and long-horizon
+stability diverge. This is particularly important for append mode,
+where memory capacity is part of the mechanism.
+
+### 8.4 Mixed and hybrid nudges
+
+The current taxonomy studies clean nudge families: append, replace,
+and role-structured dialog. Real systems often mix them. Hybrid
+operators such as append-then-summarize, paraphrase-then-append, or
+periodic memory compression may interpolate between the regimes
+found here or create new ones altogether. These are especially
+interesting because they turn nudge design into a controllable
+engineering space rather than a fixed experimental condition.
+
+### 8.5 Publication-scale D2 and broader dialog topologies
+
+D2 should be replicated at publication scale (5 families × 30 ICs ×
+3 runs × 50 steps) before being fully incorporated into the stable
+taxonomy. More broadly, the dialog results suggest that dialog
+architecture itself is a rich nudge design space. Drill-down,
+debate, role-play, brainstorming, adversarial questioning, and
+multi-party deliberation may each induce different balances between
+style stability and content gravity. Extending the framework to
+those dialog topologies is likely to produce a more complete map of
+conversational attractor regimes.
+
+### 8.6 Perturbation as a general evaluation tool
+
+The perturbation protocol developed here is useful beyond
+recursive-loop taxonomy. It provides a generic way to measure the
+stability of an LLM behavior under controlled contextual kicks. That
+makes it a candidate tool for studying persona persistence, jailbreak
+resistance, agent redirection, and other in-context robustness
+questions. In that broader setting, barrier height would serve not
+only as a descriptive statistic, but as a practical robustness
+metric.
+
+### 8.7 Safety and alignment basins
+
+One particularly important application is safety training. If
+alignment or refusal tuning creates new attractor basins, then
+perturbation-barrier methods should be able to detect them. This
+suggests a concrete program: compare base and safety-tuned models
+under the same recursive nudge families and test whether alignment
+changes barrier height, basin count, or the geometry of switching.
+That would connect attractor analysis directly to current questions
+in alignment and model control.
 
 ---
 
