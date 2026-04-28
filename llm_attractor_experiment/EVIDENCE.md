@@ -79,6 +79,9 @@ implemented** rather than measured.
 
 Every metric below is written to a per-experiment CSV by
 `src/main.py::cmd_analyze` (or the dynamics-extension scripts).
+**Per-experiment presence** of each metric is in the corresponding
+`has_*` column of `COVERAGE.csv`; under current state every applicable
+cell is `1` (no missing data).
 
 | Metric | Code | CSV (per experiment) | Plot (per experiment) |
 |---|---|---|---|
@@ -154,7 +157,7 @@ Every metric below is written to a per-experiment CSV by
 | Claim | Evidence |
 |---|---|
 | Python deps | `requirements.txt` |
-| 84 pytest tests | `tests/` (run with `PYTHONPATH=. python -m pytest tests/ -q`) |
+| 94 pytest tests | `tests/` (run with `PYTHONPATH=. python -m pytest tests/ -q`) |
 
 ---
 
@@ -163,7 +166,8 @@ Every metric below is written to a per-experiment CSV by
 For each phase, the **canonical data dirs** below contain the
 `{stdpaths}` skeleton (raw / embeddings / metrics / reports). When a
 specific number from the article is cited, the column and CSV are
-named.
+named. **Per-experiment artifact presence is in `COVERAGE.csv`** —
+each phase below has 100% of its applicable artifacts populated.
 
 ### 5.0 Master comparison table (regimes at a glance)
 
@@ -462,9 +466,21 @@ Every command in §10.4 is implemented:
 
 ### 10.5 Per-experiment catalog
 
-`docs/DATA_INDEX.md` lists all 37 experiments with phase, regime,
-scope, purpose. Each row resolves to a `data/<exp>/` dir documented
-above.
+Two complementary catalogs:
+
+- **`docs/DATA_INDEX.md`** — narrative catalog of the 37 experiments
+  organized by phase, with descriptions of each experiment's purpose,
+  scope, and supersession relationships.
+- **`COVERAGE.csv`** — machine-readable matrix (37 rows × 60 cols)
+  showing which analytical artifacts every experiment carries, plus
+  metadata (phase, regime, nudge_mode, temperature, n_trajectories)
+  and three summary columns (`n_applicable_artifacts`,
+  `n_present_artifacts`, `coverage_pct`). All 37 experiments are at
+  100% of their applicable artifacts. See "Coverage matrix" section
+  below for cell semantics + applicability rules. Regenerate with
+  `python -m scripts.build_coverage`.
+
+Each row in either resolves to a `data/<exp>/` dir documented above.
 
 ### 10.6 Stage reports
 
@@ -476,7 +492,7 @@ specific experiments it analyzed; cross-reference back to §5 phases.
 
 ```bash
 PYTHONPATH=. python -m pytest tests/ -q
-# 84 passed in ~12s
+# 94 passed in ~12s
 ```
 
 Key test files: `tests/test_dynamics.py` (Lyapunov + sharpness),
@@ -547,28 +563,92 @@ coverage** of their applicable artifacts (mean = 100.0%, median =
 is either filled (1 / positive count) or marked N/A by structural
 design. Regenerate with `python -m scripts.build_coverage`.
 
-**What was filled to reach 100%**:
+### Coverage profile by phase × artifact category
 
-- Ran `dynamics.analyze --all` to populate `metrics/dynamics.csv`
-  across all eligible experiments (skipped only D2 N=1 runs).
-- Ran `analyze_ext` on 24 experiments to populate `periodicity.csv`,
-  `dispersion.csv`, and `report_operators.md`.
-- Ran the standard `cmd_analyze` on the 13 perturbation experiments
-  to populate the per-trajectory metric battery (recurrence, dwell,
-  basin, late_recurrence, exit_return, …).
-- Ran `cmd_report` on 14 experiments to populate `report.md` +
-  `reports/plots/`.
-- Ran `geodesic_skeleton`, `rg_dendrogram`, `bulk_plots`,
-  `flow_skeleton` (with `--conditions recursive`) on 19 non-perturbation
-  experiments to populate the 4 single-condition geometric
-  visualizations.
-- Patched `basin_predictability.py` with **adaptive `n_splits`** —
-  StratifiedKFold previously crashed on phase-1 pilots whose smallest
-  cluster had < 5 members; now uses `min(5, smallest_class_size)` and
-  returns NaN when 2-fold is impossible.
-- Extended `aggregate_perturbation_geometric_barriers.py` to include
-  D2 as a fifth row (with NaN for neutral/lorem since D2 ran only
-  control + adversarial).
+The shape of the matrix tells the story of the project — different
+experiment phases run different analyses by design. Reading
+"x/y" as "x experiments have this artifact among y to which it's
+applicable":
+
+| artifact category | Phase 0 (3) | Phase 1 (8) | Phase 2 (12) | Phase 3 (14) |
+|---|---|---|---|---|
+| **raw + config** (config.yaml, steps.jsonl, manifest, run.log) | 3/3 | 8/8 | 12/12 | 14/14 |
+| **per-trajectory metric battery** (recurrence, dwell, basin, periodicity, dispersion, dynamics, explained_variance) | 3/3 | 8/8 | 12/12 | 14/14 |
+| **v2 metrics** (basin_entry, exit_return, late_recurrence) | 1/1 (only `exp_long`/`exp_noclip`; `exp_default` config has the flags off → N/A there) | 8/8 | 12/12 | 1/1 (only the D2 exploratory parent — `exp_perturb_*` runs are N/A because there's no recursive regime to anchor entry/return) |
+| **statistical** (bootstrap_summary, permutation_tests) | 1–2 / 1–2 (`exp_default` had bootstrap off; permutation needs `time_shuffled`, which T-sweeps don't include) | 8/8 | 5/12 permutation (7 T-sweeps don't run `time_shuffled` baseline) | 14/14 bootstrap; 1/1 permutation (only the D2 exploratory parent has recursive runs) |
+| **PCA / t-SNE / clusters** (n_pca_models, n_pca_projections, n_tsne_csvs, n_cluster_csvs) | 3/3 | 8/8 | 12/12 | 14/14 |
+| **reports** (report.md, report_operators.md, basin_predictability) | 3/3 | 8/8 | 12/12 | 1/1 basin_predictability (perturbation experiments are N/A); 14/14 reports |
+| **single-condition geometric viz** (geodesic_skeleton, rg_dendrogram, bulk_landscape, flow_skeleton) | 3/3 | 8/8 | 12/12 | 14/14 |
+| **multi-condition perturbation viz** (switching_summary, relaxation_*, G/H/I, flow_*_by_condition) | N/A | N/A | N/A | 13/13 (all perturbation experiments) |
+| **headline-pilot extras** (geodesic_barriers CSV, rg_dendrogram_summary, rg_stack_png) | N/A | N/A | N/A | 4–5 / 4–5 (the 4 main pilots + D2; rg_stack only main 4) |
+| **animations** (n_animation_mp4) | N/A | N/A | 4/4 (one per pub diagnostic, single `recursive` regime) | 5/5 (4 main pilots × 4 conditions = 16 + D2 × 2 = 18, plus the recursive ones already counted in pub) |
+
+**Reading the table**: the per-experiment metric battery (recurrence,
+dwell, basin, dynamics, periodicity, dispersion, …) is **fully
+populated across all 37 experiments**. Statistical baselines and
+predictability are populated wherever they're meaningful. Geometric
+viz (single-condition) is populated everywhere. Multi-condition viz
+is populated only on the 13 perturbation experiments. Animations
+exist for the 9 experiments that warrant them (5 perturb pilots × N
+condition + 4 pub × 1 recursive condition = 22 mp4 files).
+
+### Cell location index (where in the matrix things live)
+
+- **Want the per-trajectory metrics for a specific experiment?**
+  `data/<exp>/metrics/{recurrence,dwell,basin,basin_entry_times,
+  late_recurrence,exit_return,periodicity,dispersion,dynamics,
+  bootstrap_summary,permutation_tests}.csv` — match what COVERAGE.csv
+  shows for that row.
+- **Want the perturbation switching numbers?**
+  `data/exp_perturb_*/reports/perturbation/switching_summary.csv`.
+  All 13 perturbation experiments have it (D2 exploratory drilldown
+  is the parent run, not a perturbation run).
+- **Want the cross-pilot V\* table from §5.10?**
+  `data/aggregated/perturbation_geometric_barriers/v_star_table.csv`
+  (5 rows × 4 conditions). The wide RG merge-distance table is
+  alongside as `rg_merge_table.csv`.
+- **Want the cross-experiment dynamical-systems metrics?**
+  `data/dynamics_cross_experiment.csv` (19,074 rows: every
+  observable × space × experiment).
+- **Want the basin-predictability cross-regime comparison?**
+  `data/aggregated/basin_predictability_cross/cross_basin_predictability.csv`.
+- **Want a 3D animation of the cloud + perturbation kicks?** 22 mp4
+  files under `data/exp_{perturb_*,pub_*}/reports/perturbation/animation3d_*.mp4`.
+
+### What was filled to reach 100%
+
+In the order it was done during the gap-fill pass:
+
+1. Ran `dynamics.analyze --all` → 19 missing `dynamics.csv` files
+   (skipped only D2 N=1 runs which can't compute ensemble-spread
+   Lyapunov).
+2. Ran `analyze_ext` on 24 experiments to populate `periodicity.csv`,
+   `dispersion.csv`, and `report_operators.md`.
+3. Ran the standard `cmd_analyze` on the 13 perturbation experiments
+   to populate the full per-trajectory metric battery (recurrence,
+   dwell, basin, late_recurrence, exit_return, t-SNE projections,
+   PCA models, cluster occupancy, …).
+4. Ran `cmd_report` on 14 experiments to populate `report.md` +
+   `reports/plots/`.
+5. Ran `geodesic_skeleton`, `rg_dendrogram`, `bulk_plots`,
+   `flow_skeleton` (with `--conditions recursive`) on 19
+   non-perturbation experiments to populate the 4 single-condition
+   geometric visualizations.
+6. Re-ran `cmd_analyze` + `cmd_report` on `exp_default` to populate
+   v2-era metrics that the original 2025 run didn't compute.
+7. Ran `geodesic_skeleton + rg_dendrogram` on `exp_perturb_D2_exploratory`
+   so D2 has the same companion CSVs as the 4 main pilots.
+8. Patched `basin_predictability.py` with **adaptive `n_splits`** —
+   StratifiedKFold previously crashed on phase-1 pilots whose
+   smallest cluster had < 5 members; now uses
+   `min(5, smallest_class_size)` and returns NaN when 2-fold is
+   impossible.
+9. Extended `aggregate_perturbation_geometric_barriers.py` to include
+   D2 as a fifth row (with NaN for neutral/lorem since D2 ran only
+   control + adversarial).
+10. Added applicability rules in `build_coverage.py` so cells that
+    are structurally not-applicable show as empty (rather than 0)
+    and don't count against coverage_pct.
 
 ## How a reviewer should walk this
 
@@ -576,7 +656,11 @@ design. Regenerate with `python -m scripts.build_coverage`.
 2. **Find its section** in this file (sections mirror the article).
 3. The row gives: which `data/<exp>/` dir, which CSV column, which PNG,
    which `src/...` module / function.
-4. **Reproduce**: load the cited CSV with pandas, or invoke the cited
+4. **Confirm presence**: open `COVERAGE.csv`, find the row for that
+   `<exp>`, check the `has_*` or `n_*` column for the artifact. `1` /
+   positive count = present; empty = N/A by design (read the
+   "Coverage matrix" section above for applicability rules).
+5. **Reproduce**: load the cited CSV with pandas, or invoke the cited
    CLI with the cited config — the output is byte-deterministic for
    the analysis stage.
 
@@ -585,6 +669,11 @@ If a claim cannot be located here, the corresponding fix is one of:
 (b) the article is ahead of the code — file an audit issue (the most
 recent batch was B-1..B-10 — see commit history); (c) the code emits
 the artifact under a different path than this map — update this file.
+
+If `COVERAGE.csv` shows `0` for a cited artifact (a real missing
+file), that's a regenerable gap — re-run the corresponding analysis
+stage (see "What was filled to reach 100%" in the Coverage matrix
+section above for the standard recipes).
 
 ---
 
