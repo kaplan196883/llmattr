@@ -753,8 +753,13 @@ in the corresponding experiment's report.
 
 For each trajectory we compute the K-means cluster at the late window
 (`y` = cluster index at `t > 0.7T`). For each early step k we train a
-5-fold cross-validated multinomial logistic regression to predict y from
-PCA-10 at step k. The accuracy curve `acc(k)` is monotonic in good
+multinomial logistic regression to predict y from PCA-10 at step k,
+using stratified k-fold cross-validation with **adaptive k**:
+`n_splits = min(5, smallest_class_size)`. Publication-scale runs
+(n=1350 / regime) always reach the full 5-fold; phase-1 pilots (n=75)
+fall back to 2–4 folds when the smallest cluster has fewer than 5
+members. When even 2-fold is impossible we write `NaN` for that
+(regime, step) cell. The accuracy curve `acc(k)` is monotonic in good
 regimes — by some early step the late basin is already determined.
 
 #### 4.5.8 Perturbation switching
@@ -814,7 +819,10 @@ each baseline is computed via Cohen's d in
 - **Permutation tests** for between-condition differences (e.g.,
   switching rate under adversarial vs control), via
   `permutation_test_mean_diff` in `src/analysis/bootstrap.py`.
-- **5-fold CV** for basin predictability classifier accuracy.
+- **Adaptive stratified k-fold CV** for basin predictability classifier
+  accuracy: `n_splits = min(5, smallest_class_size)` so phase-1 pilots
+  with small clusters fall back to 2–4 folds gracefully (NaN if even
+  2-fold is impossible). See §4.5.7.
 - **Wilson-style CI** on switching-rate proportions where bootstrap
   would be unstable (small denominators in dose-response cells).
 - **Significance gate**: a regime / condition signal counts only if its
@@ -1449,7 +1457,8 @@ window opens at step 28).
 `data/aggregated/basin_predictability_cross/cross_basin_predictability.csv`,
 recursive regime only, canonical observable per regime. D1's step-5
 cell is `NaN` because the joint k-means at step 5 has too few class
-members per fold for stable 5-fold CV; it stabilizes by step 10.)
+members for any k-fold ≥ 2 even after the adaptive fallback to
+`n_splits = smallest_class_size`; it stabilizes by step 10.)
 
 Three orderings emerge cleanly:
 
@@ -2033,7 +2042,15 @@ single-threaded.
 
 All raw trajectories are stored under `data/exp_*/raw/steps.jsonl` and
 LFS-tracked in the public repository. Total raw payload: 3.3 GB across
-37 experiments.
+37 experiments. Per-experiment analytical artifacts (metrics CSVs,
+plots, perturbation visualizations, animations) are summarized in the
+`COVERAGE.csv` matrix at the repo root — 37 rows × 60 columns
+recording presence (1), absence (0), or structural non-applicability
+(empty cell) of each artifact. A complementary document
+`EVIDENCE.md` maps every substantive claim in this paper to its
+backing data file, source code function, and CLI command. Together
+the two answer "what exists?" (COVERAGE) and "where is the evidence
+for claim X?" (EVIDENCE).
 
 ### 10.2 Code availability
 
@@ -2078,12 +2095,32 @@ python -m scripts.aggregate_basin_predictability
 python -m scripts.aggregate_t_sweep
 python -m scripts.aggregate_o1_d1_t_sensitivity
 python -m scripts.aggregate_perturbation_geometric_barriers
+
+# Audit / catalog
+python -m scripts.build_coverage          # rebuild COVERAGE.csv (37 × 60 matrix)
 ```
 
 ### 10.5 Per-experiment catalog
 
-Full catalog of the 37 experiments with phase, regime, scope, and
-purpose: see `docs/DATA_INDEX.md`.
+Two complementary catalogs:
+
+- **`docs/DATA_INDEX.md`** — narrative catalog of the 37 experiments
+  organized by phase, with descriptions of each experiment's purpose,
+  scope, and supersession relationships.
+- **`COVERAGE.csv`** — machine-readable matrix at the repo root (37
+  rows × 60 cols) showing which analytical artifacts every experiment
+  carries, plus metadata (phase, regime, nudge_mode, temperature,
+  n_trajectories) and three summary columns (`n_applicable_artifacts`,
+  `n_present_artifacts`, `coverage_pct`). Cells are `1` (present), `0`
+  (real gap), `""` (structurally not applicable to this experiment), or
+  positive integer counts. **All 37 experiments are at 100% of their
+  applicable artifacts.** Regenerate with
+  `python -m scripts.build_coverage`. Applicability rules and the full
+  per-phase × artifact-category coverage profile are documented in
+  `EVIDENCE.md` (§"Coverage matrix").
+
+Together: DATA_INDEX answers "what is this experiment for?", COVERAGE
+answers "what artifacts does it carry?".
 
 ### 10.6 Stage reports
 
@@ -2114,6 +2151,9 @@ PYTHONPATH=. python -m pytest tests/ -q
 ```
 llm_attractor_experiment/
 ├── README.md, requirements.txt, ARTICLE.md
+├── EVIDENCE.md             claim-to-evidence map (every ARTICLE claim
+│                           ↔ data file ↔ source code function ↔ CLI)
+├── COVERAGE.csv            37 × 60 artifact-presence matrix
 ├── docs/
 │   ├── DATA_INDEX.md
 │   └── reports/REPORT1.md … REPORT6.md
@@ -2271,7 +2311,8 @@ Both carry the underlying signal counts so the verdict is auditable.
   detecting the 2-cycle regime; not in the original brief
 - **Dispersion metrics** (`dispersion_growth`, `drift_monotonicity`)
   for distinguishing contractive from divergent regimes
-- **Basin predictability** (5-fold CV logistic regression on PCA-10);
+- **Basin predictability** (adaptive stratified k-fold CV logistic
+  regression on PCA-10, `n_splits = min(5, smallest_class_size)`);
   not in the original brief
 - **The perturbation visualization toolkit** (V landscape, Dijkstra
   geodesics, marching-cubes iso-density, parallel 3D animations) —
@@ -2279,8 +2320,14 @@ Both carry the underlying signal counts so the verdict is auditable.
 - **The drill-down dialog regime (D2)** — discovered during Phase 3
   perturbation experiments
 - **Cross-experiment aggregator scripts** for T-sweep, dose-response,
-  basin hardening, perturbation cross-regime — built incrementally as
-  the experiment list grew
+  basin hardening, perturbation cross-regime, and geometric barriers
+  — built incrementally as the experiment list grew (7 scripts under
+  `scripts/aggregate_*.py`)
+- **Coverage matrix and evidence map** — `COVERAGE.csv` (37 × 60
+  artifact-presence matrix at the repo root, regenerable via
+  `scripts/build_coverage.py`) and `EVIDENCE.md` (claim-to-evidence
+  map). Together they provide reviewer-grade traceability from every
+  claim in this paper to the underlying data file and source function.
 
 Each addition is justified in the corresponding stage report.
 
