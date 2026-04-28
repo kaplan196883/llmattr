@@ -35,10 +35,23 @@ _RETRYABLE_HINTS = (
     "500",
     "connection",
 )
+# Errors that look retryable (often HTTP 429) but are actually
+# permanent until human action — never retry these. Distinguishing
+# them avoids wasting 60+ seconds of exponential backoff per call
+# when the only fix is a balance top-up.
+_TERMINAL_HINTS = (
+    "insufficient balance",
+    "insufficient_balance",
+    "insufficient_quota",
+    "exceeded your current quota",
+    "billing_not_active",
+)
 
 
 def _is_retryable(exc: Exception) -> bool:
     msg = str(exc).lower()
+    if any(h in msg for h in _TERMINAL_HINTS):
+        return False
     return any(h in msg for h in _RETRYABLE_HINTS)
 
 
