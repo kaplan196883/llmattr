@@ -97,26 +97,34 @@ def _predict_from_step(
 
     X = early[[f"pc{i}" for i in range(1, 11)]].to_numpy()
     y = early["final_cluster"].to_numpy()
+    # Drop singleton classes (clusters with only one trajectory member);
+    # they cannot be split into train/test and prevent stratified K-fold.
+    # Reporting accuracy over the well-populated classes is more
+    # informative than returning NaN for the whole cell. Records the
+    # number of classes dropped + how many trajectories were excluded.
+    unique, counts = np.unique(y, return_counts=True)
+    keep_classes = unique[counts >= 2]
+    n_dropped_classes = int((counts < 2).sum())
+    n_dropped_traj = int(counts[counts < 2].sum())
+    if n_dropped_classes > 0:
+        keep_mask = np.isin(y, keep_classes)
+        X = X[keep_mask]
+        y = y[keep_mask]
     unique, counts = np.unique(y, return_counts=True)
     n_classes = len(unique)
     if n_classes < 2:
         return {
             "regime": regime, "step": step, "n": len(early),
             "top1": 1.0, "top3": 1.0, "n_classes": n_classes,
+            "n_dropped_classes": n_dropped_classes,
+            "n_dropped_traj": n_dropped_traj,
         }
 
     # Adaptive n_splits: stratified K-fold needs every class to have at
-    # least n_splits members. Small pilots (n=75 split across k=12 clusters)
-    # routinely have classes with <5 members; reducing n_splits to the
-    # smallest class size is more robust than crashing. If even 2-fold is
-    # impossible, return NaN.
+    # least n_splits members. After dropping singletons, every remaining
+    # class has >= 2 members, so we can always run at least 2-fold CV.
+    # Cap at 5 (the publication standard).
     min_class = int(counts.min())
-    if min_class < 2:
-        return {
-            "regime": regime, "step": step, "n": len(early),
-            "top1": float("nan"), "top3": float("nan"), "n_classes": n_classes,
-            "min_class_size": min_class, "n_splits_used": 0,
-        }
     n_splits = min(5, min_class)
     kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     top1_scores: list[float] = []
@@ -149,6 +157,9 @@ def _predict_from_step(
         "top1_std": float(np.std(top1_scores)),
         "top3": float(np.mean(top3_scores)),
         "top3_std": float(np.std(top3_scores)),
+        "n_splits_used": n_splits,
+        "n_dropped_classes": n_dropped_classes,
+        "n_dropped_traj": n_dropped_traj,
     }
 
 

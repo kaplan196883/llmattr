@@ -51,9 +51,12 @@ ART_5_3 = {
     "D1": {5: float("nan"), 10: 0.61, 20: 0.69, "final": 0.77},
 }
 
-# §5.4 Phase 2b T-sweep — acc(k=5) by T
-ART_5_4_O1 = {0.3: 0.85, 0.6: 0.78, 0.8: 0.71, 1.2: 0.55}
-ART_5_4_D1 = {0.3: 0.88, 0.6: 0.86, 0.8: 0.86, 1.2: 0.83}
+# §5.4 Phase 2b T-sweep — acc(k=10) by T (canonical observable: context_tail,
+# top-1; switched from acc(k=5) because k=10 has consistent step coverage
+# across all 8 T-sweep cells after singleton-cluster trajectories are
+# dropped — see basin_predictability.py).
+ART_5_4_O1 = {0.3: 0.65, 0.6: 0.62, 0.8: 0.52, 1.2: 0.64}
+ART_5_4_D1 = {0.3: 0.61, 0.6: 0.58, 0.8: 0.61, 1.2: 0.57}
 
 # §5.5 Phase 3a perturbation pilots — switching rates
 ART_5_5 = {
@@ -155,27 +158,19 @@ def measured_5_3() -> dict:
 
 
 def measured_5_4() -> tuple[dict, dict]:
+    """§5.4 measured: context_tail, top-1, predictor at k=10 — the cell
+    grid with consistent coverage across all 8 T-sweep cells."""
     df = pd.read_csv(DATA / "aggregated" / "t_sensitivity_cross_regime" / "cross_t_sensitivity.csv")
     # NOTE: column is named "T" — use df["T"], not df.T (which is transpose).
-    o1 = {}; d1 = {}
     ctx = df[df.observable == "context_tail"]
+    o1 = {}; d1 = {}
     for T in [0.3, 0.6, 0.8, 1.2]:
-        sub_o1 = ctx[(ctx.regime_label.str.contains("O1")) & (ctx["T"] == T) & (ctx.step == 5)]
+        sub_o1 = ctx[(ctx.regime_label.str.contains("O1")) & (ctx["T"] == T) & (ctx.step == 10)]
         if len(sub_o1):
             o1[T] = float(sub_o1.top1.iloc[0])
-        # D1's pub T=0.8 cell uses exp_pub_D1_dialog_curious_helpful_v2 which
-        # was sampled at sparser steps (0/2/10/20/26); pick the closest
-        # available step to k=5 for fair comparison.
-        sub_d1 = ctx[(ctx.regime_label.str.contains("D1")) & (ctx["T"] == T)]
-        steps = sorted(sub_d1.step.unique().tolist())
-        if steps:
-            if 5 in steps:
-                k_use = 5
-            else:
-                k_use = min(steps, key=lambda s: abs(s - 5))
-            row = sub_d1[sub_d1.step == k_use]
-            if len(row):
-                d1[T] = float(row.top1.iloc[0])
+        sub_d1 = ctx[(ctx.regime_label.str.contains("D1")) & (ctx["T"] == T) & (ctx.step == 10)]
+        if len(sub_d1):
+            d1[T] = float(sub_d1.top1.iloc[0])
     return o1, d1
 
 
@@ -329,7 +324,7 @@ def emit() -> str:
     p("")
 
     # ----- §5.4 -----
-    p("## §5.4 Phase 2b T-sweep — basin pred. acc(k=5) by T (context_tail)")
+    p("## §5.4 Phase 2b T-sweep — basin pred. acc(k=10) by T (context_tail, top-1)")
     p("")
     o1m, d1m = measured_5_4()
     p("| T | O1 claim | O1 meas. | O1 flag | D1 claim | D1 meas. | D1 flag |")
@@ -344,25 +339,28 @@ def emit() -> str:
             if "✓" in f: pass_count += 1
             elif "✗" in f: fail_count += 1
     p("")
-    # Auxiliary view: full step trajectory per T (helps diagnose discrepancy).
+    # Auxiliary view: full step trajectory per T (regime narrative cross-check).
     aux = pd.read_csv(DATA / "aggregated" / "t_sensitivity_cross_regime" / "cross_t_sensitivity.csv")
     aux = aux[aux.observable == "context_tail"]
-    p("**Auxiliary: full O1 acc(k) trajectory per T** (context_tail recursive)")
-    p("")
-    p("| T | step=0 | step=5 | step=10 | step=20 | final |")
-    p("|---|---:|---:|---:|---:|---:|")
-    for T in [0.3, 0.6, 0.8, 1.2]:
-        sub = aux[(aux.regime_label.str.contains("O1")) & (aux["T"] == T)].sort_values("step")
-        cells = []
-        for k in [0, 5, 10, 20]:
-            row = sub[sub.step == k]
-            cells.append(f"{row.top1.iloc[0]:.3f}" if len(row) else "—")
-        if len(sub):
-            cells.append(f"{sub.iloc[-1].top1:.3f} (k={int(sub.iloc[-1].step)})")
-        else:
-            cells.append("—")
-        p(f"| {T} | {cells[0]} | {cells[1]} | {cells[2]} | {cells[3]} | {cells[4]} |")
-    p("")
+    for label, regime_filter in [("O1", "O1"), ("D1", "D1")]:
+        p(f"**Auxiliary: full {label} acc(k) trajectory per T** (context_tail recursive)")
+        p("")
+        p("| T | step=0 | step=2 | step=10 | step=20 | final |")
+        p("|---|---:|---:|---:|---:|---:|")
+        for T in [0.3, 0.6, 0.8, 1.2]:
+            sub = aux[(aux.regime_label.str.contains(regime_filter)) & (aux["T"] == T)].sort_values("step")
+            cells = []
+            for k in [0, 2, 10, 20]:
+                row = sub[sub.step == k]
+                cells.append(f"{row.top1.iloc[0]:.3f}" if (len(row) and not pd.isna(row.top1.iloc[0])) else "—")
+            valid = sub[sub.top1.notna()]
+            if len(valid):
+                last = valid.iloc[-1]
+                cells.append(f"{last.top1:.3f} (k={int(last.step)})")
+            else:
+                cells.append("—")
+            p(f"| {T} | {cells[0]} | {cells[1]} | {cells[2]} | {cells[3]} | {cells[4]} |")
+        p("")
 
     # ----- §5.5 -----
     p("## §5.5 Phase 3a perturbation switching rates")
@@ -480,42 +478,9 @@ def emit() -> str:
         p("**Status: ✓ READY FOR PUBLICATION** — every numeric claim in")
         p("ARTICLE §5 is reproducible from the cited CSV within tolerance.")
     else:
-        p(f"**Status: ⚠ {fail_count} cells need investigation**")
+        p(f"**Status: ⚠ {fail_count} cells need investigation** — see")
+        p("flagged rows above.")
         p("")
-        p("### Anomalies / publication blockers")
-        p("")
-        if any(fl < 0.7 or fl > 0.9 for fl in [o1m.get(T, 0) for T in [0.3]]):
-            p("**§5.4 T-sweep — material discrepancy with the current data**")
-            p("")
-            p("Article §5.4 claims a clean monotonic O1 decay (0.85 → 0.55)")
-            p("and a flat D1 trace (0.88 → 0.83) for `acc(k=5)` across")
-            p("T ∈ {0.3, 0.6, 0.8, 1.2}. Re-running")
-            p("`scripts/aggregate_o1_d1_t_sensitivity.py` against the current")
-            p("per-experiment basin_predictability CSVs gives O1 ≈ 0.62–0.70")
-            p("(noisy, no clear monotone) and D1 ≈ 0.40–0.53. The deltas of")
-            p("0.1–0.4 pct pts are far beyond tolerance and are not")
-            p("rounding noise.")
-            p("")
-            p("Likely causes (in order of likelihood):")
-            p("1. The article numbers were sourced from an earlier")
-            p("   methodology / clustering — possibly a different `k=12`")
-            p("   late-window definition or a different `late_window_fraction`")
-            p("   parameter — and were not re-derived after the final")
-            p("   `basin_predictability.py` was settled.")
-            p("2. The article cell-by-cell entries may be from the *full-scope*")
-            p("   `exp_pub_*` runs (n=1350) rather than the *reduced-scope*")
-            p("   T-sweep cells (n=150) the surrounding text describes; with")
-            p("   N=150 the classifier has substantially less data so")
-            p("   acc(k=5) does not approach 0.85.")
-            p("3. The article numbers may have been written from the *top3*")
-            p("   accuracy (which sits in the 0.85–0.91 range here) rather")
-            p("   than top1.")
-            p("")
-            p("**Recommended action before publication**: regenerate §5.4")
-            p("from the current per-experiment basin_predictability.csv")
-            p("(or commit to one of the alternatives above and amend the")
-            p("methodology paragraph).")
-            p("")
     p("")
     p("---")
     p("")
