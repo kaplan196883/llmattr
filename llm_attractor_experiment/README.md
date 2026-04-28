@@ -94,7 +94,7 @@ llm_attractor_experiment/
 │       ├── dialog/           # D1/D2/D3 dialog runners
 │       ├── operators/        # O1–O4 operator runners
 │       ├── dynamics/         # post-hoc dynamical-systems analysis CLIs
-│       └── perturbation/     # perturbation runners + holographic-bulk plots
+│       └── perturbation/     # perturbation runners + empirical potential landscape plots
 ├── scripts/                  # standalone aggregators + config builders
 ├── configs/                  # entry-point configs + dialog/operators/perturbation/archive subdirs
 ├── tests/                    # pytest suite

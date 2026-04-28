@@ -9,8 +9,9 @@ Per condition:
      which is the coarse-graining scale: leaves (right) = fine; root (left) =
      coarsest grouping.
 
-This is the dendrogram analogue of holographic-RG flow: trajectory clouds at
-different scales are layers; merge events are RG-coarsening steps.
+This is a coarse-graining picture borrowed from renormalization-group
+intuition: trajectory clouds at different scales are layers; merge events
+are coarse-graining steps.
 
 Output:
   data/<exp>/reports/perturbation/rg_dendrogram_pca.png

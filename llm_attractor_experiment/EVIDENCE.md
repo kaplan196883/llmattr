@@ -397,7 +397,7 @@ same data dirs already listed.
 | Article element | Pointer |
 |---|---|
 | §6.1 architecture × content interaction | Read off the §5.0 master table (data sources above) |
-| §6.4 holographic-bulk picture (V landscape, geodesics, marching-cubes shells) | All artifacts in `data/exp_perturb_*_pilot/reports/perturbation/` |
+| §6.4 empirical potential landscape (V = −log ρ, geodesics, marching-cubes shells) | All artifacts in `data/exp_perturb_*_pilot/reports/perturbation/` |
 | §7.x limitations | No new evidence; cross-references to method sections |
 | §8 future work | Open items — no implementation yet |
 

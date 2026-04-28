@@ -1,5 +1,5 @@
 """
-Free-energy / 'holographic-bulk' visualization for perturbation experiments.
+Empirical potential landscape visualization for perturbation experiments.
 
 For a perturbation experiment with conditions {control, neutral, lorem,
 adversarial}, render a 4-panel 3D figure where each panel is the effective
@@ -14,9 +14,10 @@ Reading:
     the height jump tracks how 'far up' the perturbation pushed the
     trajectory before relaxation.
 
-This is borrowed visual language from holographic-bulk reasoning, not a
-literal AdS/CFT duality. V is the boundary-distribution-derived static
-landscape; trajectories are the boundary observers' worldlines on it.
+V here is purely empirical — the negative-log of the kernel-density
+estimate of the trajectory ensemble's marginal in PCA-2. No
+thermodynamic or AdS/CFT-style claims are made; the "landscape"
+framing is descriptive, used because it makes basin geometry legible.
 
 Output (per experiment):
   data/<exp>/reports/perturbation/bulk_landscape_pca.png

@@ -1,52 +1,64 @@
 # Endogenous attractor regimes in recursive large-language-model loops
-## A quantitative taxonomy with measured basin barriers
+## What does it cost to nudge an LLM out of an attractor? A theoretical framework with measured barrier heights in tokens.
 
 ---
 
 ## Abstract
 
-We study what happens when a large language model is iterated on its own
-output. Beyond the well-known anecdotal observation that such loops "lock
-into a topic" or "cycle between paraphrases," we ask whether the resulting
-trajectories live in measurable, reproducible attractor regimes — and if
-so, whether different loop architectures select different regimes.
+When a language model is iterated on its own output through a
+context-update **nudge** — append, replace, or role-alternating
+dialog — the resulting trajectory lives in one of a small number of
+attractor regimes. Recent work has classified such regimes
+qualitatively (arXiv:2512.10350 *Dynamics of Agentic Loops*;
+arXiv:2510.21258 *Correlation Dimension of Auto-Regressive LLMs*),
+but has not asked **how hard** it is to nudge a trajectory across a
+regime boundary, nor provided a measurable unit for that difficulty.
 
-Across 37 experiments spanning four phases (pilot, publication-scale,
-temperature sweep, perturbation), we sample 50–1350 trajectories per
-configuration of `gpt-4o-mini`, embed each step with
-`text-embedding-3-small` (1536-dim), and compute a battery of
-dynamical-systems metrics on the resulting time-series in embedding
-space. We identify four mechanistically distinct attractor regimes — a
-contractive basin under append-mode continuation (O1), an oscillatory
-2-cycle under replace-mode paraphrase (O2), a near-singular absorbing
-state under replace-mode summarize-then-negate (O3), and a stylistic
-multi-basin under free dialog (D1) — plus a fifth regime,
-*structured-dialog drill-down* (D2), characterized by topical content
-gravity that resists cross-topic perturbations. Each regime has a
-distinct basin-predictability signature: replace-mode regimes (O2,
-O3) lock in by step 5 (acc ≈ 0.90–0.92), append-mode O1 climbs from
-0.77 to 0.85 over 40 steps, and dialog regime D1 climbs from 0.61
-(step 10) to 0.77 (final). A compact regime × diagnostic comparison
-appears in §5.0.
+We do both. We introduce a **theoretical framework** that separates
+the language model (generator) from the context-update operator
+(nudge), making nudges first-class objects of study. Within that
+framework we define the **barrier height** of an attractor against a
+perturbation as the *token-cost* of injected text required for 50%
+trajectory switching — a model-agnostic, interpretable unit for
+comparing regimes.
 
-Using a perturbation protocol that injects mid-trajectory text from four
-distinct sources (control, neutral Wikipedia, lorem random words,
-adversarial in-distribution text from another basin), we measure
-**barrier heights in tokens**. Append-mode continuation requires
-~150 tokens of in-distribution text for 50% switching, while
-out-of-distribution text saturates at the irreducible drift floor of
-~24%. Replace-mode operators are essentially perturbation-transparent
-(94–96% switching). Dialog regimes occupy intermediate barrier scales
-that depend on conversational structure (D1 free dialog 60%, D2
-drill-down 64% at matched relaxation horizons).
+Across 37 experiments on `gpt-4o-mini` (50–1350 trajectories per
+configuration, embedded with `text-embedding-3-small` at 1536-dim),
+a four-condition perturbation protocol (control, neutral Wikipedia,
+lorem random words, adversarial in-distribution text from another
+basin) with three sweep dimensions (regime, dose, injection time)
+gives:
 
-We supplement the metric battery with a "holographic-bulk"
-visualization toolkit that renders the effective potential V(x) =
-−log ρ(x) on PCA-2, computes Dijkstra geodesics between density-peak
-basins (with their maximum-V along the path as a barrier-height
-estimate), and animates 50 trajectories simultaneously through
-volumetric iso-density renderings. The geometric barrier heights agree
-with the perturbation-derived dose thresholds.
+- **Append-mode contractive regime**: ~150 tokens of in-distribution
+  adversarial text for 50% switching; out-of-distribution text
+  saturates at the irreducible drift floor of ~24%. The barrier is
+  *finite* against in-basin perturbations and *effectively infinite*
+  against out-of-basin perturbations.
+- **Replace-mode operators** (paraphrase, summarize+negate):
+  essentially perturbation-transparent — 94–96% switching at any dose
+  ≥ 80 tokens. The barrier is ~0.
+- **Dialog regimes** occupy intermediate scales (60% free dialog,
+  64% drill-down) determined by conversational structure rather than
+  perturbation magnitude.
+
+We **triangulate** these *behavioral* barriers against *geometric*
+barrier estimates from the empirical potential landscape V(x) =
+−log ρ(x) on PCA-2, computing Dijkstra geodesics between density-peak
+basins (with their maximum-V along the path as a barrier estimate).
+The two estimates agree.
+
+Building on the three-regime taxonomy of recent work (contractive,
+oscillatory, exploratory), we contribute (1) two additional regimes —
+stylistic-multi-basin dialog (D1) and drill-down dialog (D2,
+characterized by content gravity) — distinguished by their barrier
+signatures rather than their dispersion alone; (2) a fully
+reproducible pipeline with raw trajectories LFS-tracked, 99 unit
+tests, and **103/103 cell-verified numeric claims** (`RESULTS.md`).
+Each regime has a distinct basin-predictability signature:
+replace-mode regimes (O2, O3) lock in by step 5 (acc ≈ 0.90–0.92),
+append-mode O1 climbs from 0.77 to 0.85 over 40 steps, and dialog
+regime D1 climbs from 0.61 (step 10) to 0.77 (final). A compact
+regime × diagnostic comparison appears in §5.0.
 
 The full pipeline regenerates from raw trajectories
 (`steps.jsonl`, LFS-tracked) using a documented `embed → analyze →
@@ -95,25 +107,63 @@ If they are distinct, the natural follow-up questions are:
 
 This paper presents:
 
-1. A **four-regime taxonomy** (contractive, oscillatory, absorbing,
-   stylistic-multi-basin) supported by 1350-trajectory publication-scale
-   experiments and 12 metric families.
-2. A **perturbation protocol** with four-condition controls (control,
-   neutral, lorem, adversarial) and three sweep dimensions (regime, dose,
-   injection time) yielding measured barrier heights in tokens.
-3. A **fifth regime** — drill-down dialog (D2) — discovered through the
-   perturbation work, characterized by content gravity that resists
-   topic-switching.
-4. A **holographic-bulk visualization toolkit** combining effective
-   free-energy landscapes, Dijkstra geodesics through V, and volumetric
-   3D animations rendered in parallel; the geometric barriers obtained
-   from V agree with the perturbation-derived dose thresholds.
-5. A **fully reproducible pipeline** with raw trajectories LFS-tracked,
-   94 unit tests, a documented `embed → analyze → report` workflow,
-   and a cell-by-cell verification (`RESULTS.md`) showing **all 103
-   numeric claims in §5 reproduce from the cited CSVs** (100.0%
-   pass), backed by an artifact-presence matrix (`COVERAGE.csv`)
-   showing all 37 experiments at 100% of their applicable artifacts.
+1. **A theoretical framework for nudge-induced attractor dynamics**.
+   The state-generator-nudge formalism (§3.1) separates the LLM
+   (generator) from the context-update operator (nudge), making the
+   nudge a first-class object of study rather than an implementation
+   detail. Within the framework we define the **perturbation barrier
+   height** of a regime as the *token-cost* of injected text required
+   for 50% trajectory switching — a model-agnostic, interpretable
+   unit for comparing regimes. The framework predicts qualitatively
+   distinct barrier signatures for append, replace, and dialog
+   nudges, which our measurements verify quantitatively.
+
+2. **Token-quantified barrier heights** between LLM attractor regimes
+   via a four-condition perturbation protocol (control, neutral,
+   lorem, adversarial) with three sweep dimensions (regime, dose,
+   injection time). Append-mode contractive regime: ~150 tokens for
+   50% switching against in-distribution adversarial text;
+   out-of-distribution text saturates at ~24%. Replace-mode operators:
+   essentially zero barrier (94–96% switching at any dose). Dialog
+   regimes: 60–64% switching at matched relaxation horizons,
+   intermediate between append and replace. **This is the paper's
+   headline empirical contribution.**
+
+3. **Geometric/behavioral barrier triangulation**. The empirical
+   potential landscape V(x) = −log ρ(x) on PCA-2, with Dijkstra
+   geodesics between density-peak basins, gives a *geometric* barrier
+   estimate that agrees with the *behavioral* perturbation-derived
+   dose threshold — a cross-check between two independent measurement
+   regimes that validates the framework's prediction that nudge
+   barriers are well-defined geometric quantities, not artefacts of
+   any specific perturbation type.
+
+4. **A finer-grained regime taxonomy** that builds on prior 3-regime
+   classifications (contractive, oscillatory, exploratory): we
+   distinguish a contractive append-mode basin (O1), an oscillatory
+   replace-mode 2-cycle (O2), a near-singular absorbing state from
+   summarize-then-negate (O3), a stylistic multi-basin dialog regime
+   (D1), and a *structured-dialog drill-down* regime (D2, discovered
+   through perturbation work, characterized by topical content
+   gravity that resists cross-topic perturbations). The two dialog
+   regimes (D1, D2) are novel relative to prior work on agentic
+   loops, distinguished by their barrier signatures rather than by
+   dispersion alone.
+
+5. **An empirical potential landscape visualization toolkit**
+   combining V(x) = −log ρ(x) effective free-energy on PCA-2,
+   Dijkstra geodesics through V, volumetric iso-density rendering of
+   the basin geometry, and parallel-rendered animations of 50
+   trajectories at once. The geometric barriers obtained from V agree
+   with the perturbation-derived dose thresholds.
+
+6. **A fully reproducible pipeline** with raw trajectories
+   LFS-tracked, 99 unit tests, a documented `embed → analyze →
+   report` workflow, and a cell-by-cell verification (`RESULTS.md`)
+   showing **all 103 numeric claims in §5 reproduce from the cited
+   CSVs** (100.0% pass), backed by an artifact-presence matrix
+   (`COVERAGE.csv`) showing all 37 experiments at 100% of their
+   applicable artifacts.
 
 ---
 
@@ -132,33 +182,75 @@ empirical-density-derived effective potential V(x) = −log ρ(x)).
 
 ### 2.2 Attractor observations in language models
 
-Carlini et al. (2021) noted that aggressive top-k sampling in GPT-2 can
-produce repetitive collapse. Holtzman et al. (2020) systematized the
-"degeneration" failure modes (repetition, blandness) and motivated
-nucleus sampling. These works study collapse but not the broader regime
-structure; we treat collapse as one of four possible outcomes.
+The dynamical-systems framing of LLM inference loops has emerged
+rapidly in 2025. arXiv:2512.10350 (*Dynamics of Agentic Loops in
+Large Language Models: A Geometric Theory of Trajectories*)
+formalizes recursive LLM transformations as discrete dynamical
+systems in semantic space, identifying three regimes — **contractive**
+(convergence to stable semantic attractors), **oscillatory**
+(cycling), and **exploratory** (unbounded divergence) — through a
+measurement protocol of local drift, global drift, dispersion, and
+cluster persistence. They show empirically that prompt design selects
+the regime: iterative paraphrasing → contractive, iterative negation
+→ exploratory.
 
-Tuci et al. (2026, arXiv:2604.19740) study SGD-optimization dynamics on
-neural-net loss landscapes via random dynamical systems and introduce a
-"sharpness dimension" generalization bound at the edge of stability.
-Their setting (parameter space, Hessian-anchored, training dynamics)
-is structurally different from ours (embedding space, no gradients,
-inference-time recursion of a frozen LLM). We borrow only the
-*functional form* of their sharpness dimension (Definition 4.2) as a
-comparative diagnostic across regimes; the ensemble-spread Lyapunov
-machinery in `src/experiments/dynamics/lyapunov.py` is our own
-construction. See §4.5.6 for the explicit caveats.
+arXiv:2510.21258 (*Correlation Dimension of Auto-Regressive Large
+Language Models*) quantifies degeneration as **a sudden collapse from
+a higher-dimensional trajectory in the model's state space into a
+lower-dimensional attractor**, using correlation dimension on
+sequences of next-token log-probability vectors. This validates the
+absorbing-regime interpretation we report in O3 (§5.2): a near-zero
+sharpness-dim and a single-cluster late window are exactly what a
+correlation-dim collapse predicts.
 
-### 2.3 Free-energy landscapes and holography
+Earlier work characterized degeneration *symptomatically* but without
+the dynamical-systems framing. Carlini et al. (2021) noted aggressive
+top-k sampling in GPT-2 can produce repetitive collapse. Holtzman et
+al. (2020) systematized "degeneration" failure modes (repetition,
+blandness) and motivated nucleus sampling.
 
-The use of V(x) = −log ρ(x) as an empirical effective potential is
+**This paper builds on the dynamical-systems framing of the agentic-
+loops literature and asks the next question**: what does it *cost* to
+move a trajectory across an attractor boundary? The qualitative
+classifications above tell us regimes *exist*; we measure how
+*stable* they are, in tokens of injected perturbation. We also
+identify two regimes the agentic-loops three-regime classification
+misses: **stylistic-multi-basin dialog** (D1, where trajectories
+settle into different attractors based on conversational voice but
+do not cross between them within a single trajectory) and
+**drill-down dialog** (D2, characterized by content gravity that
+resists topic-switching), both distinguished from O1/O2/O3 by their
+barrier signatures rather than by their dispersion alone.
+
+Tuci et al. (2026, arXiv:2604.19740) study SGD-optimization dynamics
+on neural-net loss landscapes via random dynamical systems and
+introduce a "sharpness dimension" generalization bound at the edge
+of stability. Their setting (parameter space, Hessian-anchored,
+training dynamics) is structurally different from ours (embedding
+space, no gradients, inference-time recursion of a frozen LLM). We
+borrow only the *functional form* of their sharpness dimension
+(Definition 4.2) as a comparative diagnostic across regimes; the
+ensemble-spread Lyapunov machinery in
+`src/experiments/dynamics/lyapunov.py` is our own construction. See
+§4.5.6 for the explicit caveats.
+
+### 2.3 Free-energy landscapes from empirical density
+
+The use of V(x) = −log ρ(x) as an empirical *effective potential* is
 standard in chemical-physics free-energy analysis and reaction-rate
-theory. The holographic-bulk framing (V as a static landscape, geodesics
-as minimum-action paths, density iso-shells as nested "skin" layers) is
-borrowed visual language, not a literal AdS/CFT duality. We do not claim
-the trajectory ensemble has the conformal structure that holography
-strictly requires — we use the framing because it makes basin geometry
-legible.
+theory: ρ(x) is the stationary density of a stochastic trajectory
+ensemble in some reduced coordinate system, and V is the potential
+that would yield ρ as the Boltzmann weight at unit temperature. We
+adopt this as a purely empirical / data-driven landscape over the
+PCA-2 projection of trajectory embeddings; no thermodynamic claims
+are made about the LLM itself.
+
+The accompanying visualization battery — Dijkstra geodesics between
+density peaks (with their maximum-V along the path used as a
+geometric barrier estimate) and volumetric iso-density renderings —
+is descriptive rather than theoretical. It converts the empirical
+density into shapes a human reader can navigate, without assuming
+any particular generative model of ρ.
 
 ### 2.4 Dialog dynamics
 
@@ -1037,7 +1129,7 @@ we compute the Dijkstra shortest path on the V grid (8-connected, edge
 weight = V at endpoint). The maximum V along the path is the **barrier
 height V*(i, j)**.
 
-#### Volumetric bulk
+#### Volumetric iso-density rendering
 
 For 3D animations we extract iso-density shells at five density
 fractions (4%, 10%, 20%, 35%, 55% of max ρ) using
@@ -1220,7 +1312,7 @@ as `→` (each is independently re-runnable):
    │  └─────────────────────┘      └─────────────────────┘                      │
    │                                                                            │
    │  ┌─────────────────────────────────────────────────────────────────────┐   │
-   │  │ HOLOGRAPHIC-BULK TOOLKIT (perturbation only)                        │   │
+   │  │ EMPIRICAL POTENTIAL LANDSCAPE TOOLKIT (perturbation only)           │   │
    │  │                                                                     │   │
    │  │   Z_PCA2 ──▶ smoothed density ρ̂(x)                                  │   │
    │  │              │                                                      │   │
@@ -1850,7 +1942,7 @@ preservation. It opens up the question: are there other dialog
 structures (debate, role-play, multi-party brainstorm) that select
 different content-vs-style attractor balances?
 
-### 6.4 The holographic-bulk picture as visualization
+### 6.4 The empirical potential landscape as visualization
 
 V(x) = −log ρ(x) is not an honest physical free energy — it's a
 post-hoc summary of the trajectory ensemble's marginal density. Using
@@ -1930,7 +2022,7 @@ outputs at each step).
 We do not vary the system prompt mid-trajectory. The contractive basin
 of O1 might break under prompt drift; we have not tested.
 
-### 7.6 The holographic-bulk framing
+### 7.6 The empirical potential landscape as descriptive, not theoretical
 
 Treating V(x) = −log ρ(x) as an effective potential is a useful
 visualization but not a derived physical statement. The Dijkstra V\*
@@ -2416,7 +2508,7 @@ sampling-based generators.
 
 This research was conducted with the assistance of Claude (Anthropic)
 as a code-development partner — specifically for the perturbation
-visualization toolkit, the holographic-bulk geometry implementation,
+visualization toolkit, the empirical-potential-landscape geometry implementation,
 and the article structure.
 
 ---
