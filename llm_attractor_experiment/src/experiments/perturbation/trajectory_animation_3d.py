@@ -7,8 +7,14 @@ into 3D. Skips the V landscape and streamlines (those are inherently 2D);
 background is a faint scatter of all condition's points so the cloud
 shape is visible. Camera optionally rotates frame-by-frame.
 
-Output:
+Output (parallel path, default — `--parallel > 1`):
+  data/<exp>/reports/perturbation/animation3d_<cond>_n<N>_seed<S>.mp4
+  (libx264 via imageio-ffmpeg)
+
+Output (sequential / single-trajectory path):
   data/<exp>/reports/perturbation/animation3d_<cond>_n<N>_seed<S>.gif
+  data/<exp>/reports/perturbation/animation3d_<cond>_<famfrag>_<ic>_<run>.gif
+  (PIL/PillowWriter)
 """
 from __future__ import annotations
 
