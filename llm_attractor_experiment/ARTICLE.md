@@ -400,6 +400,101 @@ out-of-distribution text per §5.6) is consistent with a barrier
 that scales as the **logarithm of the basin's effective volume**
 in some embedding space — a conjecture we leave open.
 
+#### 3.1.3 Tokens vs nats: a model-agnostic reading of barrier height
+
+A natural objection to reporting barrier heights in tokens: *tokens
+of which tokenizer?* A perturbation that costs 150 tokens of
+`text-embedding-3-small`-tokenized text might cost 130 or 180 tokens
+under a different vocabulary; a model with a wildly different
+tokenizer would give numerically different barriers for the same
+underlying phenomenon. Tokens are not, per se, a model-agnostic unit.
+
+**The model-agnostic quantity is barrier height in *nats*.** For a
+generator $P_\theta$, each token of injected text $y_i$ at context
+$X$ carries
+
+$$
+h_i = -\log P_\theta(y_i \mid X) \quad \text{(nats)}
+$$
+
+worth of information about the trajectory's next state. The total
+information content of $\tau$ tokens of injected text is therefore
+
+$$
+I(\tau) = \sum_{i=1}^{\tau} h_i \approx \tau \cdot \langle h \rangle_\text{cond},
+$$
+
+where $\langle h \rangle_\text{cond}$ is the average per-token
+conditional surprisal under the model's own predictive distribution
+(typically 3–5 nats per token for English text under modern
+sub-word LLMs at $T = 0.8$). The barrier height in nats is then
+
+$$
+\mathrm{B}^{\text{nats}}(B_1 \to B_2)
+= \mathrm{B}^{\text{tokens}}(B_1 \to B_2) \cdot \langle h \rangle_\text{cond}.
+$$
+
+Two things follow.
+
+**(a) Out-of-distribution perturbations carry low *basin-relevant*
+information per token.** The neutral and lorem conditions saturate
+at the irreducible drift floor (~24% switching for O1) precisely
+because their per-token surprisal under $P_\theta$ is high in absolute
+terms but their information *about the basin manifold* is low — the
+model can't absorb random-character entropy as evidence for or against
+any particular attractor. In-distribution adversarial text, by contrast,
+is fluent under $P_\theta$ (low surprisal) but its content is
+misaligned with $B_1$, so each token contributes basin-relevant
+counter-evidence that integrates toward $B_2$. This is exactly the
+asymmetry §5.6's dose-response curves report: the *same* number of
+tokens crosses or doesn't cross the barrier depending on whether
+those tokens carry basin-relevant or basin-irrelevant information.
+
+**(b) Barrier height in nats should approximate the
+basin-distribution Kullback-Leibler distance.** If we model the late-
+window basin distributions as $\rho_{B_1}, \rho_{B_2}$ on the
+embedding-space manifold, then for a trajectory to relocate from
+$B_1$ to $B_2$ requires injected information that exceeds the
+geometric "distance" between the two distributions. The natural
+candidate is
+
+$$
+\mathrm{B}^{\text{nats}}(B_1 \to B_2)
+\;\;\sim\;\; \mathrm{KL}(\rho_{B_2} \| \rho_{B_1})
+\;\;\text{or, symmetrically,}\;\;
+\mathrm{V}^{\star}(B_1, B_2) = -\log \rho(\text{saddle})
+$$
+
+where $\mathrm{V}^{\star}$ is exactly the geometric barrier estimate
+we compute in §5.10 from $V(x) = -\log \rho(x)$ on PCA-2 with
+Dijkstra geodesics through density-peak basins.
+
+This is the bridge: §5.10's $\mathrm{V}^{\star}$ is a *geometric*
+estimate of $\mathrm{B}^{\text{nats}}$ (in units of nats per
+PCA-2-dimension via the kernel-density-estimate normalization);
+§5.6's token-cost is a *behavioral* estimate of $\mathrm{B}^{\text{nats}}$
+(via $\tau \cdot \langle h \rangle_\text{cond}$). Their qualitative
+ordering across regimes (O1 mid, O2/O3 low, D1 D2 intermediate)
+agrees, which is the empirical content of the
+"geometric/behavioral barrier triangulation" claim. Numerical
+equality is *not* expected — the KDE bandwidth and PCA-2 projection
+introduce regime-independent constants that re-scale $\mathrm{V}^{\star}$
+relative to $\mathrm{B}^{\text{nats}}$ — but ordinal agreement is, and
+ordinal agreement is what we observe.
+
+**Practical consequence.** A claim of the form *"O1 has a 150-token
+barrier"* is a tokenizer-specific quantity; the underlying
+*information-theoretic* claim is *"O1 has a barrier of $150
+\langle h \rangle_\text{cond} \approx 600$ nats against in-distribution
+adversarial text, and an effectively infinite barrier against
+out-of-distribution text"*. The latter is portable across tokenizers
+and across models that share the same embedding space; the former is
+the most directly measurable approximation. Future work would use the
+generator's logprobs (`include_logprobs=True` in our `Config`) to
+report $\mathrm{B}^{\text{nats}}$ directly; we did not capture logprobs
+in the current 37-experiment battery and report tokens as the more
+operationally meaningful unit.
+
 ### 3.2 Observable maps and embedding
 
 Attractor-like structure is not legible in raw text. We introduce

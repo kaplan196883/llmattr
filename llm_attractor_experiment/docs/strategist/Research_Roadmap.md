@@ -53,14 +53,18 @@ in-context-attack resistance).
 
 ### Tier 2 — high-impact / medium-effort
 
-#### 🟡 #4 Information-theoretic interpretation of barrier height
-**Deferred / partial.** A passing mention in §6.5 ("perturbation
-barrier as a token-cost ≈ KL distance between basin distributions")
-is included in the alignment paragraph, but a half-page derivation
-showing barrier-height-in-tokens × ⟨log P(token | basin)⟩ ≈
-barrier-in-nats was not written.
-**To do for follow-on:** ~4–8 hours. Argue model-agnostic interpretation;
-optionally back with a single empirical "tokens-vs-nats" table.
+#### ✅ #4 Information-theoretic interpretation of barrier height
+**Applied** in commit `[next]` as new §3.1.3 ("Tokens vs nats: a
+model-agnostic reading of barrier height"). Argues that barrier
+height in tokens × ⟨per-token surprisal⟩ ≈ barrier in nats ≈ KL
+distance between basin distributions. Two consequences explicit:
+(a) out-of-distribution perturbations carry low *basin-relevant*
+information per token, explaining why lorem/neutral saturate at
+the drift floor; (b) the geometric V\* (§5.10) and behavioral
+token-cost (§5.6) are two estimates of the same underlying
+nat-quantity, predicting the ordinal-agreement we report. Notes
+that future work using `include_logprobs=True` could report
+B^nats directly.
 
 #### ✅ #5 Formal Proposition 1 (replace-mode barrier collapse)
 **Applied** in commit `7aa9eac` as new §3.1.1 (formal definition of
@@ -160,7 +164,7 @@ or substantially new theoretical work. Captured here for completeness:
 | budget | what to do | net lift |
 |---|---|---|
 | **DONE: 1 afternoon** | #1 + #2 + #3 + #5 + #6 | 33/35 → **35/35** ✅ |
-| 1 day more | #4 (IT interpretation half-page) | adds theoretical clarity at the unit-of-measurement level |
+| ~~1 day more | #4 (IT interpretation half-page) | adds theoretical clarity at the unit-of-measurement level~~ DONE |
 | ~$80 + 12h wall + 1 day analysis | **#7** Claude Haiku 4.5 headline-only | turns "single-vendor" claim into "cross-vendor confirmed" — strongest remaining move |
 | 2 days | #8 embedding ablation | preempts the "would BERT change the regimes?" reviewer challenge |
 | 1 week | + #9 dedicated alignment section | repositions for ACL/EMNLP main-track instead of arXiv |
