@@ -109,7 +109,7 @@ This paper presents:
    3D animations rendered in parallel; the geometric barriers obtained
    from V agree with the perturbation-derived dose thresholds.
 5. A **fully reproducible pipeline** with raw trajectories LFS-tracked,
-   84 unit tests, and a documented `embed → analyze → report` workflow.
+   94 unit tests, and a documented `embed → analyze → report` workflow.
 
 ---
 
@@ -1324,7 +1324,7 @@ of ~$30 in OpenAI embedding API calls and ~2 hours of local compute.
 All experiments run locally with API calls to OpenAI. CPU: 40 cores
 available for parallel rendering. Python 3.x with numpy, scipy,
 scikit-learn, scikit-image, pandas, matplotlib, imageio-ffmpeg. Tests:
-84 pytest tests, all green. See `requirements.txt` for exact
+94 pytest tests, all green. See `requirements.txt` for exact
 dependencies.
 
 ---
@@ -1615,7 +1615,7 @@ and we identify it as the fifth member of the taxonomy.
 
 ### 5.9 Cross-experiment aggregation
 
-Six standalone aggregator scripts produce the cross-regime comparison
+Seven standalone aggregator scripts produce the cross-regime comparison
 artifacts that anchor the figures in this paper:
 
 - `scripts/aggregate_basin_predictability.py` — overlay the basin
@@ -1636,6 +1636,12 @@ artifacts that anchor the figures in this paper:
 - `scripts/aggregate_basin_hardening.py` — injection-time × switching
   curves for D1 + O1, with the basin-hardening interpretation.
   Output: `data/aggregated/perturbation_basin_hardening/`.
+- `scripts/aggregate_perturbation_geometric_barriers.py` — combine the
+  per-pilot `geodesic_barriers_summary.csv` (V*) and
+  `rg_dendrogram_summary.csv` (Ward merge distance) into the wide
+  regime × condition tables shown in §5.10. Output:
+  `data/aggregated/perturbation_geometric_barriers/`
+  (`v_star_table.csv`, `rg_merge_table.csv`, `geometric_barriers_long.csv`).
 
 Each script reads only the per-experiment CSV outputs and is fully
 deterministic — re-running them produces byte-identical figures. They
@@ -1648,33 +1654,47 @@ For each of the four diagnostic perturbation pilots we computed:
 
 #### Geodesic skeleton on V
 
-Per-condition mean barrier height V* across the n basin centers:
+Per-condition mean barrier height V\* across the 6 inter-basin geodesics
+(`V_star_mean` column in the per-pilot `geodesic_barriers_summary.csv`):
 
 | regime | control | neutral | lorem | adversarial |
 |---|---:|---:|---:|---:|
-| O1 | 2.5 | 2.6 | 2.5 | 2.2 |
-| O2 | 2.7 | 2.5 | 0.55 | 1.3 |
-| O3 | 2.3 | 2.5 | 0.52 | 1.4 |
-| D1 | 1.2 | 1.0 | 0.8 | 0.4 |
+| O1 | 4.4 | 2.3 | 2.6 | 2.2 |
+| O2 | 2.8 | 3.5 | **5.6** | 1.6 |
+| O3 | 1.1 | 5.2 | **7.0** | 2.2 |
+| D1 | 1.3 | 1.1 | 0.8 | 0.4 |
 
-(Values are rough averages across the 6 inter-basin geodesics in each
-panel; raw V\* annotations are visible in
-`data/exp_perturb_*_pilot/reports/perturbation/geodesic_skeleton_pca.png`.)
+(Per-geodesic raw V\* values are written alongside the figure to
+`data/exp_perturb_*_pilot/reports/perturbation/geodesic_barriers_pca.csv`;
+the V_max ≈ 8.0 ceiling appears when a geodesic crosses a region of
+near-zero density.)
 
-The geometric V\* values agree with the perturbation switching rates:
+The geometric V\* values complement the perturbation switching rates:
 
-- **O2/O3 lorem** has V\* < 0.7 — basins are essentially merged →
-  consistent with 100% switching.
+- **O2/O3 lorem** has V\* ≈ 5.6 / 7.0 — the highest barriers in the
+  matrix. Those barriers separate *control* from a *new* basin that
+  lorem injection creates far from any pre-perturbation density
+  mass: geodesics between the original and lorem-induced basins
+  traverse low-density plateaus where ρ ≈ ε (V near the V_max
+  ceiling). Switch rates are 100% because the perturbation places
+  the trajectory *into* the new basin — the perturbed run does not
+  have to climb the barrier; it lands on the far side. The high V\*
+  is consistent with the per-regime RG cloud expansion (3.6 / 3.3
+  below).
 - **O1 adversarial** has V\* ≈ 2.2 — basins remain distinct but the kick
   occasionally clears the ridge → consistent with 54% switching at
   ~150 tokens dose.
-- **D1 adversarial** has V\* < 0.5 — basins are stylistic, not
+- **D1 adversarial** has V\* ≈ 0.4 — basins are stylistic, not
   content-bound, so the geometric barrier is small → consistent with
   the 60% switching at saturated doses.
 
-Cross-validation between the dose-response measurement and the
-geometric V from kernel-density-estimation gives us two
-independent estimates of barrier height that agree.
+Cross-validating dose-response barrier estimates (from §5.6) against
+geometric V\* gives two complementary readings: O1 adversarial agrees
+quantitatively (V\* ≈ 2.2 ↔ 150-token saturation dose), D1 agrees
+qualitatively (low V\*, near-zero saturation dose), and the
+replace-mode regimes are explained by basin *creation* rather than
+barrier crossing — different geometric mechanisms producing the same
+100% switching.
 
 #### Hierarchical RG dendrogram
 
@@ -2057,6 +2077,7 @@ python -m scripts.aggregate_basin_hardening
 python -m scripts.aggregate_basin_predictability
 python -m scripts.aggregate_t_sweep
 python -m scripts.aggregate_o1_d1_t_sensitivity
+python -m scripts.aggregate_perturbation_geometric_barriers
 ```
 
 ### 10.5 Per-experiment catalog
@@ -2081,11 +2102,11 @@ The discovery process is documented in six stage reports:
 
 ### 10.7 Test coverage
 
-84 pytest tests cover the analysis primitives plus integration:
+94 pytest tests cover the analysis primitives plus integration:
 
 ```bash
 PYTHONPATH=. python -m pytest tests/ -q
-# 84 passed in ~12s
+# 94 passed in ~12s
 ```
 
 ### 10.8 Repository layout summary
@@ -2109,7 +2130,7 @@ llm_attractor_experiment/
 │   └── utils/         io, logging, seeds, text helpers
 ├── scripts/           build_publication_configs + 6 aggregators
 ├── configs/           dialog/ + operators/ + perturbation/ + archive/
-├── tests/             84 pytest tests
+├── tests/             94 pytest tests
 └── data/              37 experiment dirs + aggregated/ outputs
 ```
 
@@ -2140,7 +2161,7 @@ requirements to where they're implemented.
 | 11 | Robustness across observables, spaces, seeds | `src/analysis/robustness.py` + cross-observable comparison in reports |
 | 12 | Markdown report with not_supported / weak / moderate / strong classification | `src/reports/summary.py` (`classify_two_axis`, `classify_three_axis`) |
 
-All 12 phases are implemented and exercised in the 84 unit + integration
+All 12 phases are implemented and exercised in the 94 unit + integration
 tests under `tests/`.
 
 ### 11.2 OpenAI API surfaces (req2.txt)

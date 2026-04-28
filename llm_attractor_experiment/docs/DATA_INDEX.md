@@ -47,7 +47,8 @@ for the diagnostic four regimes.
 
 | dir | regime | notes |
 |---|---|---|
-| `exp_pub_D1_dialog_curious_helpful_v2/` | D1 dialog (free) | "v2" = REPORT5 anchor; v1 (`exp_pub_D1_dialog_curious_helpful`) was the smaller pilot |
+| `exp_pub_D1_dialog_curious_helpful/` | D1 dialog (free), pilot | v1 — superseded by `exp_pub_D1_dialog_curious_helpful_v2/` |
+| `exp_pub_D1_dialog_curious_helpful_v2/` | D1 dialog (free) | "v2" = REPORT5 anchor; canonical D1 pub run at T=0.8 |
 | `exp_pub_O1_continue/` | O1 continue (append, contractive) | REPORT5 anchor |
 | `exp_pub_O2_paraphrase_replace/` | O2 paraphrase + replace (oscillatory 2-cycle) | REPORT5 anchor |
 | `exp_pub_O3_summarize_negate_replace/` | O3 summarize + negate + replace (absorbing) | REPORT5 anchor |

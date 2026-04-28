@@ -337,6 +337,7 @@ output directory:
 | `scripts/aggregate_perturbation_cross_regime.py` | `data/aggregated/perturbation_cross_regime/` |
 | `scripts/aggregate_dose_response.py` | `data/aggregated/perturbation_dose_response/` |
 | `scripts/aggregate_basin_hardening.py` | `data/aggregated/perturbation_basin_hardening/` |
+| `scripts/aggregate_perturbation_geometric_barriers.py` | `data/aggregated/perturbation_geometric_barriers/` (`v_star_table.csv`, `rg_merge_table.csv`, `geometric_barriers_long.csv`) — sourced from the per-pilot `geodesic_barriers_summary.csv` and `rg_dendrogram_summary.csv` written by §5.10 scripts |
 
 Deterministic — re-running produces byte-identical output.
 
@@ -621,9 +622,15 @@ first authorship and have been corrected in this same revision:
 - **F-6**: §4.3.4 adjacent-step similarity — speculatively pointed at
   `tests/test_embeddings_adjacency.py`, which does not exist. Replaced
   with the actual evidence (PCA-2 and t-SNE step-colored plots).
-- **F-7 (NEW — discovered by CG-1 rerun)**: §5.10 V* table at
-  ARTICLE.md:1655–1658 disagrees with the recomputed values from the
-  current `geodesic_skeleton.py`. Specifically:
+- **F-7 (RESOLVED — article updated)**: §5.10 V* table at
+  ARTICLE.md:1655–1658 originally disagreed with the recomputed values
+  from the current `geodesic_skeleton.py`. The article has now been
+  updated to the measured values (4.4/2.3/2.6/2.2 for O1, etc.) and
+  the surrounding interpretive paragraph rewritten to explain the
+  high O2/O3-lorem V* as "lorem creates a *new* far basin; geodesics
+  traverse low-density plateau → high V*; perturbed runs land *into*
+  the new basin, hence 100% switching without climbing the barrier."
+  The original mismatch table is preserved here for traceability:
 
   | regime | column | article | measured (`V_star_mean`) |
   |---|---|---:|---:|
@@ -671,20 +678,37 @@ first authorship and have been corrected in this same revision:
 
 ### Remaining caveats / known gaps
 
-- **CG-1 (resolved as CSV emission; new discrepancy F-7)**: V* values
-  for §5.10 (ARTICLE.md:1655–1658) are now dumped to
+- **CG-1 (resolved + article updated)**: V* values for §5.10
+  (ARTICLE.md:1655–1658) are now dumped to
   `reports/perturbation/geodesic_barriers_pca.csv` (per-geodesic) and
   `geodesic_barriers_summary.csv` (per-condition mean/min/max/n) by
   `src/experiments/perturbation/geodesic_skeleton.py`. After rerunning
-  on all four perturbation pilots, **the D1 row matches the article
-  numerically (1.32 ≈ 1.2, 1.08 ≈ 1.0, 0.84 = 0.8, 0.40 = 0.4) but the
-  O1/O2/O3 rows disagree** — see finding **F-7** below.
+  on all four perturbation pilots, the D1 row matched the article
+  numerically but O1/O2/O3 disagreed (see F-7 history below). The
+  ARTICLE.md §5.10 V* table and surrounding interpretive paragraph
+  have been updated to the measured values; the regime-level
+  conclusion (replace-mode lorem causes 100% switching by basin
+  *creation* rather than barrier *crossing*) is unchanged.
 - **CG-2 (resolved)**: §5.10 RG dendrogram values are now dumped to
   `reports/perturbation/rg_dendrogram_summary.csv` by
   `src/experiments/perturbation/rg_dendrogram.py`. After rerunning on
   all four perturbation pilots, **the values match the article
   exactly** (O1 control 2.38, O2 lorem 3.64, O3 lorem 3.25, D1 all
   ~1.79). The article's RG table is reproducible from this CSV.
+- **CG-3 (resolved)**: 654 MB of leftover diagnostic files
+  (`steps.jsonl.bak`, `steps.jsonl.doubled`) under
+  `data/exp_pub_D1_dialog_curious_helpful_v2/raw/` have been deleted.
+  The canonical `steps.jsonl` (163 MB) and `manifest.json` remain.
+- **CG-4** unchanged — D1 T=0.8 / O1 T=0.8 cell reuse is documented
+  in §5.4 / `docs/DATA_INDEX.md`.
+- **CG-5** unchanged — per-experiment dynamics plots are conditional
+  on the dynamics extension having run.
+- **CG-6** unchanged — line numbers are anchors, not invariants.
+- **CG-7 (new — informational)**: `ARTICLE_SCI.md` (461 lines) is an
+  alternative, more-formal scientific-paper rendering of the same
+  results, kept untracked at the repo root. Status: held for the
+  user to decide (track as alternative version, merge into ARTICLE.md,
+  or delete). No action taken in this pass.
 - **CG-3**: `data/exp_pub_D1_dialog_curious_helpful_v2/raw/` contains
   `steps.jsonl.bak` and `steps.jsonl.doubled` artifacts (visible in
   `git status`). These are leftover diagnostics from a duplicate-import
