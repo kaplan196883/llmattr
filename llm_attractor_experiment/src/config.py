@@ -79,6 +79,31 @@ class BasinConfig:
 
 
 @dataclass
+class ProviderConfig:
+    """How to talk to the generation LLM.
+
+    Defaults to OpenAI's native Responses API (the path every existing
+    experiment in this repo was generated with). Override the block in
+    YAML to drive cross-model validation runs against a different
+    vendor without touching any other config:
+
+        generation_provider:
+          name: minimax
+          base_url: https://api.minimaxi.chat/v1
+          api_key_env: MINIMAX_API_KEY
+          api: chat_completions
+
+    Embeddings are intentionally not provider-pluggable — they always
+    go through OpenAI `text-embedding-3-small` so the PCA-10 / cluster
+    / V* geometric space is comparable across generation models.
+    """
+    name: str = "openai"
+    base_url: str | None = None     # None = use OpenAI SDK default
+    api_key_env: str = "OPENAI_API_KEY"
+    api: str = "responses"          # "responses" | "chat_completions"
+
+
+@dataclass
 class PromptFamily:
     name: str
     system_prompt: str
@@ -90,6 +115,7 @@ class Config:
     experiment_id: str
     generation_model: str
     embedding_model: str
+    generation_provider: ProviderConfig
 
     steps_per_run: int
     runs_per_condition: int
@@ -244,10 +270,24 @@ def load_config(path: str | Path) -> Config:
             )
         )
 
+    gp_raw = raw.get("generation_provider", {}) or {}
+    generation_provider = ProviderConfig(
+        name=str(gp_raw.get("name", "openai")),
+        base_url=(str(gp_raw["base_url"]) if gp_raw.get("base_url") else None),
+        api_key_env=str(gp_raw.get("api_key_env", "OPENAI_API_KEY")),
+        api=str(gp_raw.get("api", "responses")),
+    )
+    if generation_provider.api not in ("responses", "chat_completions"):
+        raise ValueError(
+            f"generation_provider.api must be 'responses' or 'chat_completions'; "
+            f"got {generation_provider.api!r}"
+        )
+
     cfg = Config(
         experiment_id=str(raw["experiment_id"]),
         generation_model=str(raw["generation_model"]),
         embedding_model=str(raw["embedding_model"]),
+        generation_provider=generation_provider,
         steps_per_run=int(raw["steps_per_run"]),
         runs_per_condition=int(raw["runs_per_condition"]),
         initial_conditions_per_family=int(raw.get("initial_conditions_per_family", 0)) or None,  # type: ignore

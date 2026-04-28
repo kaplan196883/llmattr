@@ -26,7 +26,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from src.api.openai_client import make_client
+from src.api.openai_client import make_generation_client
 from src.config import Config, PromptFamily, limit_initial_conditions, load_config, save_config_snapshot
 from src.core.trajectory import RunIds
 from src.experiments.dialog.main import _load_manifest, _roles_from_cfg, _loop_mode
@@ -140,7 +140,7 @@ def _is_dialog_config(cfg: Config) -> bool:
 
 def cmd_run(cfg: Config) -> None:
     set_global_seed(cfg.seed)
-    client = make_client()
+    client = make_generation_client(cfg.generation_provider)
     is_dialog = _is_dialog_config(cfg)
     if is_dialog:
         role_a, role_b, initiator = _roles_from_cfg(cfg)

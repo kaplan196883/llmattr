@@ -77,9 +77,17 @@ def fake_client(monkeypatch):
     def make_fake_client():
         return FakeClient()
 
+    # Patch every helper the entry points might call; both the
+    # generation client (now provider-aware) and the legacy/embedding
+    # client take no-arg or single-arg fakes.
+    def make_fake_client_arg(provider=None):
+        return FakeClient()
+    monkeypatch.setattr(client_mod, "make_generation_client", make_fake_client_arg)
+    monkeypatch.setattr(client_mod, "make_embedding_client", make_fake_client)
     monkeypatch.setattr(client_mod, "make_client", make_fake_client)
-    # also patch main.make_client reference that was imported by name
-    monkeypatch.setattr(cli, "make_client", make_fake_client)
+    # main.py imports make_generation_client + make_embedding_client by name.
+    monkeypatch.setattr(cli, "make_generation_client", make_fake_client_arg)
+    monkeypatch.setattr(cli, "make_embedding_client", make_fake_client)
 
     def fake_generate_step(client, context_text, config, system_prompt=None, **kwargs):
         # Deterministic varied output so embeddings differ step to step.

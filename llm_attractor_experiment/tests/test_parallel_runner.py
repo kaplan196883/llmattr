@@ -88,10 +88,10 @@ def fake_gen(monkeypatch):
 
         monkeypatch.setattr(op_traj, "generate_step", fake_generate_step)
 
-        def fake_make_client():
+        def fake_make_generation_client(provider=None):
             return object()
 
-        monkeypatch.setattr(op_main, "make_client", fake_make_client)
+        monkeypatch.setattr(op_main, "make_generation_client", fake_make_generation_client)
         return call_count
 
     return _make()

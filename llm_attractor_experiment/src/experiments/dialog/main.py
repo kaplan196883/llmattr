@@ -30,7 +30,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.api.embedder import embed_texts
-from src.api.openai_client import make_client
+from src.api.openai_client import make_embedding_client, make_generation_client
 from src.config import Config, PromptFamily, limit_initial_conditions, load_config, save_config_snapshot
 from src.core.trajectory import RunIds
 from src.experiments.dialog.observables import build_dialog_observables
@@ -79,7 +79,7 @@ def _loop_mode(cfg: Config) -> str:
 
 def cmd_run_dialog(cfg: Config) -> None:
     set_global_seed(cfg.seed)
-    client = make_client()
+    client = make_generation_client(cfg.generation_provider)
     role_a, role_b, initiator = _roles_from_cfg(cfg)
     loop_mode = _loop_mode(cfg)
 
@@ -230,7 +230,7 @@ def cmd_embed_dialog(cfg: Config) -> None:
     and cfg.dialog.role_b.name, so D2 (`explorer`/`expert`) gets correct
     role-specific observables.
     """
-    client = make_client()
+    client = make_embedding_client()
     role_a, role_b, _ = _roles_from_cfg(cfg)
 
     steps_path = cfg.raw_dir / STEPS_FILE

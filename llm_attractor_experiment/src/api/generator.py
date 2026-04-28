@@ -49,15 +49,39 @@ def generate_step(
     max_retries: int = 5,
     base_delay: float = 2.0,
 ) -> GenerationResult:
-    """
-    Single recursive step. Uses the Responses API, client-side context only
-    (store=False), never passes previous_response_id.
+    """Single recursive step. Dispatches to the OpenAI Responses API
+    (`config.generation_provider.api == "responses"`) or to the
+    OpenAI-compatible Chat Completions API (`"chat_completions"`).
+    Both paths use client-side context only (`store=False` /
+    no conversation state), so trajectories remain pure
+    state-generator-nudge under the formalism in §3.1.
     """
     if not context_text.strip():
         raise ValueError("context_text must be non-empty")
 
     system = system_prompt or "Continue the text naturally. Do not summarize or explain."
+    api = config.generation_provider.api
+    if api == "responses":
+        return _generate_responses(
+            client, context_text, system, config, max_retries, base_delay
+        )
+    if api == "chat_completions":
+        return _generate_chat_completions(
+            client, context_text, system, config, max_retries, base_delay
+        )
+    raise ValueError(f"unknown generation_provider.api: {api!r}")
 
+
+def _generate_responses(
+    client: OpenAI,
+    context_text: str,
+    system: str,
+    config: Config,
+    max_retries: int,
+    base_delay: float,
+) -> GenerationResult:
+    """OpenAI native Responses API (used by every existing exp_pub_*
+    experiment in this repo)."""
     request: dict[str, Any] = {
         "model": config.generation_model,
         "input": [
@@ -93,7 +117,7 @@ def generate_step(
                 raw=raw,
                 logprobs=logprobs,
             )
-        except Exception as exc:  # openai raises typed exceptions; catch broadly
+        except Exception as exc:
             last_exc = exc
             if attempt >= max_retries or not _is_retryable(exc):
                 log.error("responses.create failed (attempt %d): %s", attempt, exc)
@@ -101,6 +125,76 @@ def generate_step(
             delay = base_delay * (2**attempt) + random.uniform(0, 0.5)
             log.warning(
                 "responses.create retryable error (attempt %d, sleeping %.1fs): %s",
+                attempt,
+                delay,
+                exc,
+            )
+            time.sleep(delay)
+
+    raise RuntimeError(f"generate_step exhausted retries: {last_exc}")
+
+
+def _generate_chat_completions(
+    client: OpenAI,
+    context_text: str,
+    system: str,
+    config: Config,
+    max_retries: int,
+    base_delay: float,
+) -> GenerationResult:
+    """OpenAI-compatible Chat Completions API. Used for cross-vendor
+    generators (MiniMax, DeepSeek, …) that don't implement Responses."""
+    request: dict[str, Any] = {
+        "model": config.generation_model,
+        "messages": [
+            {"role": "system", "content": system},
+            {"role": "user", "content": context_text},
+        ],
+        "max_tokens": config.max_output_tokens,
+    }
+    if config.temperature is not None:
+        request["temperature"] = config.temperature
+    if config.top_p is not None:
+        request["top_p"] = config.top_p
+    # Logprobs format differs across vendors; we keep the request flag
+    # but don't force-extract — most cross-model runs don't need them.
+    if config.include_logprobs:
+        request["logprobs"] = True
+
+    last_exc: Exception | None = None
+    for attempt in range(max_retries + 1):
+        t0 = time.monotonic()
+        try:
+            resp = client.chat.completions.create(**request)
+            latency = time.monotonic() - t0
+            choice = resp.choices[0] if resp.choices else None
+            text = (choice.message.content or "") if choice is not None else ""
+            raw = _response_to_dict(resp)
+            logprobs_obj: Any | None = None
+            if config.include_logprobs and choice is not None:
+                lp = getattr(choice, "logprobs", None)
+                if lp is not None:
+                    try:
+                        logprobs_obj = lp.model_dump()
+                    except Exception:
+                        logprobs_obj = None
+            return GenerationResult(
+                output_text=text,
+                model=getattr(resp, "model", config.generation_model),
+                response_id=getattr(resp, "id", None),
+                latency_sec=latency,
+                retries=attempt,
+                raw=raw,
+                logprobs=logprobs_obj,
+            )
+        except Exception as exc:
+            last_exc = exc
+            if attempt >= max_retries or not _is_retryable(exc):
+                log.error("chat.completions.create failed (attempt %d): %s", attempt, exc)
+                raise
+            delay = base_delay * (2**attempt) + random.uniform(0, 0.5)
+            log.warning(
+                "chat.completions.create retryable error (attempt %d, sleeping %.1fs): %s",
                 attempt,
                 delay,
                 exc,

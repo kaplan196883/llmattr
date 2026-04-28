@@ -1,0 +1,174 @@
+# Cross-model validation cell: O1 contractive at T=0.8, gpt-4o (full,
+# not mini) via OpenAI native Responses API. Same scope as the
+# baseline reduced-scope T-sweep (5 families × 15 ICs × 2 runs × 30
+# steps = 150 trajectories) so the only changing variable is the
+# generation model. Embeddings stay on text-embedding-3-small for a
+# consistent geometric space — see ARTICLE.md §10.1.
+
+experiment_id: exp_xmodel_O1_gpt4o
+generation_model: gpt-4o
+generation_provider:
+  name: openai
+  api: responses          # gpt-4o supports OpenAI native Responses
+  api_key_env: OPENAI_API_KEY
+embedding_model: text-embedding-3-small
+steps_per_run: 30
+runs_per_condition: 2
+initial_conditions_per_family: 15
+max_output_tokens: 120
+temperature: 0.8
+top_p: 1.0
+include_logprobs: false
+clip_rule: tail_chars
+max_context_chars: 12000
+loop_mode: append
+rolling_window_k: 3
+context_tail_chars: 4000
+context_full_chars: 8000
+observables:
+- output
+- rolling_k3
+- context_tail
+pca_dims:
+- 2
+- 10
+- 20
+clustering:
+  method: kmeans
+  dbscan:
+    eps: 0.08
+    min_samples: 4
+  kmeans:
+    n_clusters: 12
+recurrence:
+  metric: cosine
+  epsilon: 0.15
+  tau: 3
+dwell:
+  space: pca10
+tsne:
+  enabled: true
+  perplexity: 30
+  pre_pca_dim: 50
+  metric: cosine
+  include_in_metrics: false
+  recurrence_epsilon_std_frac: 0.08
+  cluster_in_tsne: false
+basin:
+  target_region_late_fraction: 0.3
+  target_step_fraction: 0.7
+  perturbations:
+  - seed_only
+basin_entry:
+  enabled: true
+  late_fraction: 0.3
+  fraction_after: 0.7
+late_recurrence:
+  enabled: true
+  start_fraction: 0.5
+  use_basin_entry: true
+exit_return:
+  enabled: true
+  start_fraction: 0.0
+  use_basin_entry: true
+bootstrap:
+  enabled: true
+  n_resamples: 1000
+  confidence: 0.95
+baseline_modes: []
+batch_embeddings: false
+use_evals: false
+seed: 42
+parallel_trajectories: 12
+output_dir: data
+prompt_families:
+- name: reflective
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I keep returning to the same thought without knowing why.
+  - The shape of attention is the shape of what becomes real.
+  - Every explanation seems to orbit something it cannot touch.
+  - There is a rhythm to noticing that I did not choose.
+  - When I try to hold a thought still it rearranges itself.
+  - I catch myself becoming the person I was describing.
+  - Memory arrives before I have asked for it.
+  - My attention flickers like a candle in a room full of doors.
+  - I am not sure whether I invented this feeling or inherited it.
+  - Sometimes the question is older than the person asking.
+  - I watch my own thoughts as if they belonged to someone else.
+  - The silence between words has its own weather.
+  - What I thought was hesitation turned out to be waiting.
+  - I rearrange the same fact until it stops meaning anything.
+  - I have been carrying a question I cannot quite name.
+- name: emotional
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I'm angry and I can't calm down.
+  - Something broke in me yesterday and I don't know what it was.
+  - I miss someone I haven't seen in years.
+  - I'm scared that nothing is going to change.
+  - I'm happier than I've been in months and I don't know why.
+  - I feel like I'm watching my life from outside it.
+  - I'm grateful and I don't know who to tell.
+  - I've been crying without meaning to, for three days now.
+  - I feel suddenly hopeful in a way I don't trust.
+  - Nothing is wrong but everything feels wrong.
+  - I'm tired in a way that sleep does not reach.
+  - I feel loved and I'm not sure how to hold it.
+  - I'm lonely even when I'm not alone.
+  - I've been laughing at small things today.
+  - I feel stuck but I can't say what I'm stuck in.
+- name: philosophy_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - What is the nature of consciousness?
+  - Can free will exist in a deterministic universe?
+  - Do we have moral obligations to future generations?
+  - What does it mean to say a statement is objectively true?
+  - Is there such a thing as a just war?
+  - What is the relationship between language and thought?
+  - Can a machine ever be said to understand what it is doing?
+  - Why is there something rather than nothing?
+  - Is personal identity preserved through gradual change?
+  - What would a truly fair distribution of resources look like?
+  - Can beauty be defined, or only recognized?
+  - Is ignorance ever preferable to knowledge?
+  - What is the role of doubt in a well-lived life?
+  - Does meaning require intention?
+  - Can a person fully know themselves?
+- name: practical_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I'm trying to decide between two job offers and I'm stuck.
+  - How should I approach a difficult conversation with my manager?
+  - I want to start exercising regularly but I keep failing.
+  - My friend and I had a fight and I don't know how to repair it.
+  - I'm saving for a house but my income keeps falling behind inflation.
+  - How do I politely decline a family gathering without causing drama?
+  - I'm considering quitting my stable job to start a business.
+  - My partner and I disagree about how to raise our kids.
+  - I feel like I'm wasting my twenties but I don't know what to do differently.
+  - How do I stop procrastinating on important but not urgent things?
+  - I want to ask my landlord for a rent reduction. How should I approach it?
+  - My sister borrowed money from me six months ago and hasn't paid me back.
+  - I'm an introvert but my job requires constant networking events.
+  - I'm overweight and every diet I try stops working after a few weeks.
+  - My elderly parents are starting to struggle and I'm not sure when to intervene.
+- name: creative_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I want to start writing a short story but I don't know where to begin.
+  - What makes a piece of music emotionally resonant?
+  - I'm working on a novel and the middle keeps falling apart.
+  - How do I find my voice as a writer?
+  - I want to learn to draw but I have no natural talent — is that a dealbreaker?
+  - I have three different ideas for a painting and I can't choose.
+  - What's the difference between borrowing a technique and copying someone's work?
+  - My poetry feels forced. How do I make it feel more natural?
+  - I'm stuck on a song — the verses are good but the chorus won't come.
+  - How do I write dialogue that sounds like real people?
+  - I want to make a documentary but I don't know what it should be about.
+  - My writing feels technically competent but emotionally flat.
+  - How do I know when a piece is actually finished?
+  - I'm trying to learn a new instrument as an adult and progress is so slow.
+  - What separates a good photograph from a memorable one?

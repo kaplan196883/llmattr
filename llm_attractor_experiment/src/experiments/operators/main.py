@@ -23,7 +23,7 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from src.api.openai_client import make_client
+from src.api.openai_client import make_generation_client
 from src.config import Config, PromptFamily, limit_initial_conditions, load_config, save_config_snapshot
 from src.core.baselines import independent_regeneration_provider, no_feedback_provider
 from src.core.trajectory import RunIds
@@ -51,7 +51,7 @@ def _loop_mode(cfg: Config) -> str:
 
 def cmd_run_op(cfg: Config) -> None:
     set_global_seed(cfg.seed)
-    client = make_client()
+    client = make_generation_client(cfg.generation_provider)
     loop_mode = _loop_mode(cfg)
     log.info(
         "operator experiment: loop_mode=%s (nudge N_%s), experiment_id=%s",

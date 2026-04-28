@@ -24,7 +24,7 @@ from src.analysis.recurrence import recurrence_for_trajectory
 from src.analysis.tsne import fit_tsne
 from src.analysis.robustness import time_shuffle_labels
 from src.api.embedder import embed_texts
-from src.api.openai_client import make_client
+from src.api.openai_client import make_embedding_client, make_generation_client
 from src.config import Config, PromptFamily, limit_initial_conditions, load_config, save_config_snapshot
 from src.core.baselines import (
     independent_regeneration_provider,
@@ -81,7 +81,7 @@ MANIFEST_FILE = "manifest.json"
 
 def cmd_run(cfg: Config) -> None:
     set_global_seed(cfg.seed)
-    client = make_client()
+    client = make_generation_client(cfg.generation_provider)
 
     ensure_dir(cfg.experiment_dir)
     save_config_snapshot(cfg, cfg.experiment_dir / "config.yaml")
@@ -256,7 +256,7 @@ def _prune_uncommitted_steps(steps_path: Path, manifest: dict) -> None:
 
 
 def cmd_embed(cfg: Config) -> None:
-    client = make_client()
+    client = make_embedding_client()
     steps_path = cfg.raw_dir / STEPS_FILE
     if not steps_path.exists():
         raise FileNotFoundError(f"no step log at {steps_path}; run `run` first")

@@ -39,7 +39,7 @@ import pandas as pd
 from sklearn.decomposition import PCA
 
 from src.api.embedder import embed_texts
-from src.api.openai_client import make_client
+from src.api.openai_client import make_embedding_client
 from src.config import Config, load_config
 from src.core.observables import build_all_for_run
 from src.experiments.dynamics.lyapunov import compute_lyapunov_spectrum
@@ -153,7 +153,7 @@ def run(cfg: Config, only_complete: bool) -> Path:
         vecs = None
     if vecs is None or len(vecs) != len(texts):
         log.info("embedding %d texts via %s", len(texts), cfg.embedding_model)
-        client = make_client()
+        client = make_embedding_client()
         vecs = embed_texts(client, texts, cfg, batch_size=128)
         save_npy(emb_path, vecs)
         write_parquet(meta_path, meta)
