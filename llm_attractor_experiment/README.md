@@ -1,8 +1,24 @@
 # LLM Attractor Experiment
 
-Tests **Hypothesis 1**: in a bounded append-only recursive LLM loop, there exist
-endogenous attractor-like regimes that become observable in a suitable
-representation space.
+Companion code for the paper **"Endogenous attractor regimes in
+recursive large-language-model loops: A theoretical framework with
+measured barrier heights in tokens"** (`ARTICLE.md`).
+
+The paper introduces (1) a **state-generator-nudge** theoretical
+framework that separates the LLM (generator) from the context-update
+operator (nudge), making nudges first-class objects of study;
+(2) a **token-quantified barrier-height** unit for comparing how
+hard it is to nudge a trajectory across an attractor boundary;
+(3) a five-regime taxonomy (contractive O1, oscillatory O2,
+absorbing O3, stylistic-multi-basin D1, drill-down dialog D2)
+distinguished by their barrier signatures; (4) a fully reproducible
+pipeline at 103/103 cell-verified scale — see `RESULTS.md` and
+`COVERAGE.csv`.
+
+This README documents the code; ARTICLE.md is the paper. Tests
+**Hypothesis 1**: in a bounded recursive LLM loop, there exist
+endogenous attractor-like regimes that become observable in a
+suitable representation space.
 
 The experiment runs many recursive trajectories:
 

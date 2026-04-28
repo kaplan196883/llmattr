@@ -82,11 +82,20 @@ have noted at least three qualitatively distinct outcomes anecdotally:
 3. *Collapse.* The model converges to a degenerate output (a single
    word, a fixed phrase, gibberish).
 
-These observations have been informal — Twitter threads, blog posts, the
-occasional appendix figure in capability papers. To our knowledge, no
-prior work systematically classifies *which* loop configurations produce
-*which* outcome, nor measures the resulting attractors with the rigor
-applied to (e.g.) trained recurrent neural networks.
+These observations have been documented in two ways. *Anecdotally* —
+Twitter threads, blog posts, the occasional appendix figure in
+capability papers. And, recently, *empirically* — arXiv:2512.10350
+classifies recursive LLM trajectories into three regimes
+(contractive, oscillatory, exploratory) using local/global drift and
+dispersion; arXiv:2510.21258 quantifies degeneration as a collapse
+from higher-dimensional trajectories to a low-dimensional attractor;
+arXiv:2510.24797 reports that recursive self-referential dialogues
+across frontier models converge on a stable "spiritual-bliss"
+attractor. Each of these establishes that *attractor regimes exist*
+and that *prompt design selects them*. None addresses the next
+question: **what does it cost, in tokens of injected text, to nudge
+a trajectory across an attractor boundary?** That is the question
+this paper answers.
 
 ### 1.2 Question
 
@@ -1478,6 +1487,8 @@ to any perturbation; append-mode locks in slowly and resists
 out-of-distribution perturbation but yields to in-distribution
 adversaries — runs through every diagnostic below.
 
+![Figure 1. Cross-experiment regime map (joint t-SNE on rolling_k3 observable). Each point is a single trajectory's late-window centroid; each color a regime / experiment. The four (plus one) regimes occupy visibly distinct regions of the embedding space — the taxonomy is not an artifact of any specific projection.](data/aggregated/dynamics_plots/regime_map_rolling_k3.png)
+
 ### 5.1 Phase 0 — pilot validation
 
 We ran three early one-off experiments to validate the pipeline:
@@ -1585,6 +1596,8 @@ diagnostic is preserved, and the within-regime variability (across
 families and ICs) is much smaller than between-regime variation. **H4
 is supported.**
 
+![Figure 2. Basin-predictability acc(k) curves at publication scale (n=1,350 / regime; D1 n=450). Replace-mode regimes (O2 paraphrase, O3 summarize+negate) lock in by step 5 at acc≈0.90–0.92. Append-mode O1 climbs from 0.77 (k=5) to 0.85 (final). Dialog D1 climbs from 0.61 (k=10) to 0.77 (final) — slowest to commit but reaching strong late-window basin predictability. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability.png)
+
 ### 5.4 Phase 2b — temperature sensitivity
 
 We ran a temperature sweep (T ∈ {0.3, 0.6, 0.8, 1.2}) for D1 and O1 at
@@ -1641,6 +1654,8 @@ filtered to `observable=context_tail` and `step=10`. See
 `RESULTS.md` for cell-by-cell verification against this section.)
 
 ### 5.5 Phase 3a — perturbation pilots
+
+![Figure 3. **The headline result.** Switching rates by regime × condition (n=50 / cell, n=25 for D2). Replace-mode regimes (O2, O3) capitulate to *any* perturbation type ≥ 80 tokens (94–100% switching). Append-mode O1 resists out-of-distribution perturbation (lorem/neutral 18–24%) but yields to in-distribution adversarial text (54%). Dialog regimes occupy intermediate scales determined by conversational structure (D1 60%, D2 64%). Source: `data/aggregated/perturbation_cross_regime/cross_switching_rates.png`.](data/aggregated/perturbation_cross_regime/cross_switching_rates.png)
 
 For each of the four diagnostic regimes plus D2 (drill-down), we ran a
 perturbation pilot at 5 families × 5 ICs × 2 runs × 30 steps = 50
@@ -1709,6 +1724,8 @@ barrier-height measurement for an LLM loop**. The same architecture
 (O1 continue) produces qualitatively different dose-response curves
 depending on whether the perturbation is in-distribution.
 
+![Figure 4. Dose-response curves for D1 / neutral, O1 / neutral, and O1 / adversarial. The 50% switching crossing on the O1 / adversarial curve at ~150 tokens of in-distribution text *is* the paper's headline barrier height. O1 / neutral saturates at ~24% (the irreducible drift floor), confirming the contractive basin has an effectively-infinite barrier against out-of-distribution nudges. D1 / neutral shows shallow dose-dependence consistent with intermediate-barrier dialog dynamics. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.](data/aggregated/perturbation_dose_response/dose_response.png)
+
 ### 5.7 Phase 3c — injection-time sweep
 
 We injected the same perturbation (D1: neutral @80, O1: adversarial @200)
@@ -1728,6 +1745,8 @@ O1 is essentially flat across injection time — the contractive
 averaging operator integrates whatever is in context regardless of when
 it arrived. **The two regimes have qualitatively different
 time-dependence** in their barrier structure.
+
+![Figure 5. Injection-time sweep: switching rate as a function of when the perturbation lands (step 5, 15, 25 of a 30-step trajectory). D1 (neutral @ dose 80, top) shows U-shape — early/middle injections more disruptive than late. O1 (adversarial @ dose 200, bottom) is roughly flat — the contractive basin doesn't care WHEN the perturbation arrives, only how much in-distribution evidence it carries. Source: `data/aggregated/perturbation_basin_hardening/basin_hardening.png`.](data/aggregated/perturbation_basin_hardening/basin_hardening.png)
 
 ### 5.8 Phase 3d — drill-down dialog (D2)
 
@@ -1795,6 +1814,10 @@ are kept separate from the per-experiment pipeline to allow incremental
 re-aggregation as new experiments land.
 
 ### 5.10 Geometric barriers from V(x) = −log ρ(x)
+
+![Figure 6. Empirical potential landscape V(x) = −log ρ(x) on PCA-2 for the O1 perturbation pilot, four conditions. Wells = attractor basins; cliff edges = barriers. The control panel (top-left) shows the unperturbed contractive basin; the adversarial panel (bottom-right) shows the kick that ~1/2 of trajectories survive without crossing into another basin. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
+
+![Figure 7. Geodesic skeleton through V on PCA-2 for the O1 pilot's four conditions. Density-peak basins (red dots) are connected by Dijkstra geodesics; the maximum-V along each path is the geometric barrier height V\*. Per-condition mean V\* values reported in the table below agree with the perturbation-derived dose thresholds — the cross-check that validates barrier height as a real geometric quantity. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
 
 For each of the four diagnostic perturbation pilots we computed:
 
@@ -2515,30 +2538,75 @@ and the article structure.
 
 ## 13. References
 
-Conceptual lineage drawn from the dynamical-systems treatment of
-recurrent neural networks (Hopfield, 1982; Sussillo & Barak, 2013;
-Maheswaranathan et al., 2019), the language-model-degeneration
-literature (Holtzman et al., 2020; Carlini et al., 2021), and the
-finite-time Lyapunov framework for sampling-based generators
-(Tuci et al., 2026). Multi-turn dialog as an environment for emergent
-attractor behavior is informed by the generative-agent line (Park et
-al., 2023).
+Conceptual lineage:
 
+- The most directly relevant prior work is the recent dynamical-
+  systems framing of LLM inference loops (arXiv:2512.10350,
+  arXiv:2510.21258, arXiv:2510.24797). All three identify or
+  characterize attractor regimes in recursive LLM trajectories
+  qualitatively; this paper extends them with measured barrier
+  heights and the multi-basin / drill-down dialog regimes.
+- Sibling literature on *training*-time recursion / model collapse
+  (Shumailov et al., 2024 — the Curse-of-Recursion / Nature 2024
+  paper) studies a related but distinct phenomenon: distribution
+  drift when models are iteratively trained on their own output.
+  Our setting is *inference*-time recursion of a frozen model.
+- Prompt-sensitivity literature (Sclar et al., 2024) is relevant
+  to our finding that different ICs settle into different attractors
+  in dialog regimes (D1).
+- The broader dynamical-systems treatment of recurrent neural
+  networks (Hopfield, 1982; Sussillo & Barak, 2013; Maheswaranathan
+  et al., 2019).
+- The finite-time Lyapunov framework for sampling-based generators
+  (Tuci et al., 2026).
+- Earlier symptomatic characterization of degeneration (Holtzman et
+  al., 2020; Carlini et al., 2021).
+- Multi-turn dialog as an environment for emergent attractor
+  behavior (Park et al., 2023).
+
+References:
+
+- arXiv:2510.21258. *Correlation Dimension of Auto-Regressive Large
+  Language Models.* (October 2025.) Quantifies degeneration as a
+  collapse from a higher-dimensional trajectory in the model's state
+  space into a lower-dimensional attractor, validating our O3
+  absorbing-regime interpretation.
+- arXiv:2510.24797. Berg et al. (2025). *LLMs Report Subjective
+  Experience Under Self-Referential Processing.* Recursive
+  self-attending dialogues converge to a stable "spiritual-bliss"
+  attractor across frontier models — a strong cross-vendor
+  validation of the multi-basin claim we make for D1, on a
+  different operator family.
+- arXiv:2512.10350. *Dynamics of Agentic Loops in Large Language
+  Models: A Geometric Theory of Trajectories.* (December 2025.)
+  Three-regime taxonomy (contractive, oscillatory, exploratory) for
+  recursive LLM transformations in semantic space, with local /
+  global drift / dispersion / cluster-persistence as diagnostics.
+  This paper builds directly on its dynamical-systems framing and
+  extends with token-quantified barriers.
 - Carlini, N., Tramèr, F., Wallace, E., et al. (2021). *Extracting
-  training data from large language models.* In Proceedings of the
-  30th USENIX Security Symposium.
+  training data from large language models.* USENIX Security '21.
 - Hopfield, J. J. (1982). *Neural networks and physical systems with
-  emergent collective computational abilities.* Proceedings of the
-  National Academy of Sciences, 79(8), 2554–2558.
+  emergent collective computational abilities.* PNAS, 79(8),
+  2554–2558.
 - Holtzman, A., Buys, J., Du, L., Forbes, M., & Choi, Y. (2020).
-  *The curious case of neural text degeneration.* In ICLR.
+  *The curious case of neural text degeneration.* ICLR.
 - Maheswaranathan, N., Williams, A., Golub, M., Ganguli, S., &
   Sussillo, D. (2019). *Reverse engineering recurrent networks for
-  sentiment classification reveals line attractor dynamics.* In
+  sentiment classification reveals line attractor dynamics.*
   NeurIPS.
 - Park, J. S., O'Brien, J., Cai, C. J., Morris, M. R., Liang, P., &
   Bernstein, M. S. (2023). *Generative agents: interactive simulacra
-  of human behavior.* In Proceedings of UIST '23.
+  of human behavior.* UIST '23.
+- Sclar, M., Choi, Y., Tsvetkov, Y., & Suhr, A. (2024). *Quantifying
+  Language Models' Sensitivity to Spurious Features in Prompt
+  Design.* arXiv:2310.11324. Format-sensitivity findings inform our
+  per-IC-family basin-selection results in D1 dialog.
+- Shumailov, I., Shumaylov, Z., Zhao, Y., Papernot, N., Anderson, R.,
+  & Gal, Y. (2024). *AI models collapse when trained on recursively
+  generated data.* Nature (preprint arXiv:2305.17493). Sibling
+  literature on *training*-time recursion; our setting is
+  *inference*-time recursion of a frozen model.
 - Sussillo, D., & Barak, O. (2013). *Opening the black box:
   low-dimensional dynamics in high-dimensional recurrent neural
   networks.* Neural Computation, 25(3), 626–649.
@@ -2546,10 +2614,8 @@ al., 2023).
   *Generalization at the Edge of Stability.* arXiv:2604.19740.
   We borrow only the *functional form* of their sharpness dimension
   (Def. 4.2) as a comparative diagnostic over our ensemble-spread
-  Lyapunov spectrum. Their setting (SGD optimization on parameter
-  space, Hessian-anchored Edge-of-Stability) and their generalization
-  bound (Theorem 4.5) do not transfer to our inference-time recursive
-  setting; see §4.5.6 for the explicit caveat.
+  Lyapunov spectrum; the SGD/parameter-space context and the
+  generalization bound do not transfer (see §4.5.6).
 
 ---
 
