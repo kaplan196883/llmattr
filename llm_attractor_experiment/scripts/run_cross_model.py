@@ -101,6 +101,14 @@ def _cmd_for(phase: str, entry_class: str, cfg_path: Path) -> list[str]:
     return [*base, "--config", str(cfg_path), phase]
 
 
+def _experiment_dir(cfg_path: Path) -> Path:
+    """Where the pipeline writes data/<experiment_id>/."""
+    with cfg_path.open(encoding="utf-8") as f:
+        cfg = yaml.safe_load(f) or {}
+    out_dir = REPO / cfg.get("output_dir", "data") / cfg["experiment_id"]
+    return out_dir
+
+
 def _run_phase(cfg_path: Path, phase: str, entry_class: str,
                dry_run: bool) -> tuple[bool, str]:
     cmd = _cmd_for(phase, entry_class, cfg_path)
@@ -111,13 +119,21 @@ def _run_phase(cfg_path: Path, phase: str, entry_class: str,
     try:
         subprocess.run(cmd, check=True, cwd=str(REPO))
         dt = time.monotonic() - t0
-        return True, f"done ({dt:.0f}s)"
     except subprocess.CalledProcessError as e:
         return False, f"exit-{e.returncode}"
     except KeyboardInterrupt:
         raise
     except Exception as e:
         return False, f"err:{type(e).__name__}"
+    # Post-condition: the run phase must produce a non-empty steps.jsonl.
+    # The dialog/operator runners catch per-step API errors and continue,
+    # so a process that exits 0 with zero steps written looks "done" from
+    # subprocess but really produced nothing — surface as failure.
+    if phase == "run":
+        steps_path = _experiment_dir(cfg_path) / "raw" / "steps.jsonl"
+        if not steps_path.exists() or steps_path.stat().st_size == 0:
+            return False, f"zero-steps after {dt:.0f}s (check API key/balance)"
+    return True, f"done ({dt:.0f}s)"
 
 
 def main() -> int:
