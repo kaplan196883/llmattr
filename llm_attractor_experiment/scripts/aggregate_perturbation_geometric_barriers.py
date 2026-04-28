@@ -32,6 +32,9 @@ REGIMES = [
     ("O2", "exp_perturb_O2_pilot"),
     ("O3", "exp_perturb_O3_pilot"),
     ("D1", "exp_perturb_D1_pilot"),
+    # D2 perturb only ran 2 of the 4 conditions (control + adversarial);
+    # neutral / lorem cells in the wide tables will be NaN for D2.
+    ("D2", "exp_perturb_D2_exploratory"),
 ]
 CONDITIONS = ["control", "neutral", "lorem", "adversarial"]
 

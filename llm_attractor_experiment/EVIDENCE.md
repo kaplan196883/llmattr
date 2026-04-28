@@ -508,6 +508,35 @@ section contains the table.
 
 ---
 
+## Coverage matrix
+
+`COVERAGE.csv` at the repo root is a 37 row × 56 col table of every
+experiment's analytical-artifact presence. Rows are experiments, columns
+are artifacts (config / raw / metrics / reports / perturbation
+visualizations / animations) plus metadata (phase, regime, nudge,
+temperature, n_trajectories, …). Cells are 1/0 for presence or integer
+counts (e.g. `n_animation_mp4`, `n_plot_pngs`, `n_pca_models`).
+
+Regenerate with `python -m scripts.build_coverage`. The script
+introspects `data/exp_*/` so it always reflects current state — useful
+to spot pipeline-stage gaps (e.g. an experiment with `steps.jsonl` but
+no `recurrence.csv` is mid-pipeline).
+
+Common patterns visible in the matrix:
+
+- **Pub & Phase 0/1 experiments** carry the full per-experiment metric
+  battery (recurrence, dwell, basin, late_recurrence, exit_return,
+  basin_entry, periodicity, dispersion, dynamics, bootstrap,
+  permutation, explained_variance) plus the two report variants and
+  basin-predictability. They do not carry perturbation visualizations.
+- **Perturbation pilots** (4 conditions × 4 regimes + D2) carry the
+  perturbation visualization suite (switching, relaxation, geodesic,
+  RG, bulk, flow, G/H/I, animations) but skip the per-trajectory metric
+  battery — by design, since per-condition trajectories are not the
+  same statistical object as recursive runs.
+- **Dose / inject sweeps** carry only the switching-summary CSV;
+  geodesic / RG / animations are run only on the headline pilots.
+
 ## How a reviewer should walk this
 
 1. **Pick a claim** in ARTICLE.md.
