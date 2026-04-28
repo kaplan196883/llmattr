@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import random
+import threading
 import time
 from dataclasses import dataclass
 from typing import Any
 
 from openai import OpenAI
 
-from src.config import Config
+from src.config import Config, ProviderConfig
 from src.utils.logging import get_logger
 
 log = get_logger(__name__)
@@ -39,6 +40,32 @@ _RETRYABLE_HINTS = (
 def _is_retryable(exc: Exception) -> bool:
     msg = str(exc).lower()
     return any(h in msg for h in _RETRYABLE_HINTS)
+
+
+# Global throttle: one min-interval lock per (api_key_env, base_url)
+# pair so all in-process workers driving the same provider share the
+# rate budget. Used by `_throttle()` below.
+_throttle_locks: dict[tuple[str, str | None], threading.Lock] = {}
+_throttle_last: dict[tuple[str, str | None], float] = {}
+
+
+def _throttle(provider: ProviderConfig) -> None:
+    """Sleep just enough to keep the global request rate ≤
+    `provider.requests_per_minute` across every worker that shares
+    this (api_key_env, base_url) combination. No-op when the field
+    is None (default for the OpenAI Responses path)."""
+    rpm = provider.requests_per_minute
+    if not rpm or rpm <= 0:
+        return
+    key = (provider.api_key_env, provider.base_url)
+    lock = _throttle_locks.setdefault(key, threading.Lock())
+    min_interval = 60.0 / rpm
+    with lock:
+        last = _throttle_last.get(key, 0.0)
+        wait = (last + min_interval) - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        _throttle_last[key] = time.monotonic()
 
 
 def generate_step(
@@ -163,6 +190,7 @@ def _generate_chat_completions(
 
     last_exc: Exception | None = None
     for attempt in range(max_retries + 1):
+        _throttle(config.generation_provider)
         t0 = time.monotonic()
         try:
             resp = client.chat.completions.create(**request)

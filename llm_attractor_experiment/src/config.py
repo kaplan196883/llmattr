@@ -101,6 +101,11 @@ class ProviderConfig:
     base_url: str | None = None     # None = use OpenAI SDK default
     api_key_env: str = "OPENAI_API_KEY"
     api: str = "responses"          # "responses" | "chat_completions"
+    # Token-bucket throttle (per provider). None = unbounded. Used to
+    # respect subscription rate caps — e.g., MiniMax Monthly Max is
+    # 15,000 requests / 5 hours = 50 req/min ceiling, so set 40 to
+    # stay safely under.
+    requests_per_minute: int | None = None
 
 
 @dataclass
@@ -271,11 +276,13 @@ def load_config(path: str | Path) -> Config:
         )
 
     gp_raw = raw.get("generation_provider", {}) or {}
+    rpm_raw = gp_raw.get("requests_per_minute")
     generation_provider = ProviderConfig(
         name=str(gp_raw.get("name", "openai")),
         base_url=(str(gp_raw["base_url"]) if gp_raw.get("base_url") else None),
         api_key_env=str(gp_raw.get("api_key_env", "OPENAI_API_KEY")),
         api=str(gp_raw.get("api", "responses")),
+        requests_per_minute=(int(rpm_raw) if rpm_raw is not None else None),
     )
     if generation_provider.api not in ("responses", "chat_completions"):
         raise ValueError(
