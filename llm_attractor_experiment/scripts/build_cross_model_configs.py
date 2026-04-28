@@ -30,17 +30,23 @@ TARGETS = {
             "api_key_env": "OPENAI_API_KEY",
         },
     ),
-    "m2_7": (
-        "MiniMax-M2.7",
+    "text01": (
+        # MiniMax-Text-01: pure chat completion model (no reasoning
+        # tokens emitted by default — verified by smoke test). M2.5
+        # and M2.7 both leak `<think>...</think>` blocks into output,
+        # which would corrupt the recursive trajectory's natural-
+        # continuation property. Text-01 is also the cheapest model
+        # callable on the user's PAYG account ($0.20 in / $1.10 out
+        # per million tokens, vs M-series at $0.30 / $1.20).
+        "MiniMax-Text-01",
         {
             "name": "minimax",
             "base_url": "https://api.minimax.io/v1",
             "api_key_env": "MINIMAX_API_KEY",
             "api": "chat_completions",
-            # Monthly Max plan: 15K req / 5hr = 50/min. Use 40 to
-            # stay safely under and absorb burst-time variance from
-            # parallel workers.
-            "requests_per_minute": 40,
+            # PAYG default rate limits are generous (≥ 100 RPM); no
+            # explicit throttle needed. Pipeline parallel_trajectories
+            # will dominate wall-clock anyway.
         },
     ),
 }
@@ -74,7 +80,17 @@ def emit_one(src_cfg_path: Path, tag: str, model: str, provider: dict,
 
 
 def main() -> int:
-    src_dirs = sorted(p for p in DATA.glob("exp_*") if p.is_dir() and (p / "config.yaml").exists())
+    # Exclude experiments that are themselves cross-model outputs
+    # (suffixed with a known target tag) — picking them up as
+    # sources would double-emit and chain suffixes (e.g.,
+    # exp_*_gpt4nano_text01).
+    excluded_tags = tuple("_" + t for t in TARGETS)
+    src_dirs = sorted(
+        p for p in DATA.glob("exp_*")
+        if p.is_dir()
+        and (p / "config.yaml").exists()
+        and not p.name.endswith(excluded_tags)
+    )
     print(f"found {len(src_dirs)} source experiments under data/")
     n_emitted = 0
     for src in src_dirs:
