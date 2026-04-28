@@ -704,11 +704,9 @@ first authorship and have been corrected in this same revision:
 - **CG-5** unchanged — per-experiment dynamics plots are conditional
   on the dynamics extension having run.
 - **CG-6** unchanged — line numbers are anchors, not invariants.
-- **CG-7 (new — informational)**: `ARTICLE_SCI.md` (461 lines) is an
-  alternative, more-formal scientific-paper rendering of the same
-  results, kept untracked at the repo root. Status: held for the
-  user to decide (track as alternative version, merge into ARTICLE.md,
-  or delete). No action taken in this pass.
+- **CG-7 (resolved)**: `ARTICLE_SCI.md` (461 lines, an alternative
+  formal-paper rendering) was deleted at the user's request as
+  superseded by ARTICLE.md.
 - **CG-3**: `data/exp_pub_D1_dialog_curious_helpful_v2/raw/` contains
   `steps.jsonl.bak` and `steps.jsonl.doubled` artifacts (visible in
   `git status`). These are leftover diagnostics from a duplicate-import
