@@ -94,10 +94,19 @@ ENTRY_OTHER = {
     "dialog":       ["python", "-m", "src.experiments.dialog.main"],
     "perturbation": ["python", "-m", "src.experiments.perturbation.main"],
 }
+# perturbation/main.py only implements run/embed/analyze; the report phase
+# is generic (just renders the standard report.md from the metrics dir),
+# so we route it through src.main like operator experiments do.
+ENTRY_REPORT_PERTURB = ["python", "-m", "src.main"]
 
 
 def _cmd_for(phase: str, entry_class: str, cfg_path: Path) -> list[str]:
-    base = ENTRY_RUN[entry_class] if phase == "run" else ENTRY_OTHER[entry_class]
+    if phase == "run":
+        base = ENTRY_RUN[entry_class]
+    elif phase == "report" and entry_class == "perturbation":
+        base = ENTRY_REPORT_PERTURB
+    else:
+        base = ENTRY_OTHER[entry_class]
     return [*base, "--config", str(cfg_path), phase]
 
 

@@ -150,13 +150,20 @@ def test_build_dialog_observables_accepts_explorer_expert_role_names():
     assert "[Expert]: EP5" in pair_5
 
 
-def test_build_dialog_observables_rejects_user_names_when_roles_are_explorer_expert():
+def test_build_dialog_observables_legacy_role_name_falls_back_with_warning(caplog):
     steps = _drilldown_steps()
-    # `last_user_turn` is *not* a recognized observable when the dialog is
-    # configured with explorer/expert roles — it should raise rather than
-    # silently fall back to the seed (which is the bug C3 fixed).
-    with pytest.raises(ValueError):
-        build_dialog_observables(
+    # `last_user_turn` doesn't match the configured explorer/expert roles.
+    # Historical D1-era configs that were copy-pasted into D2-style
+    # explorer/expert experiments referenced the old D1 role names. The
+    # cross-model regeneration of those configs in 2026-04 surfaced
+    # this; rather than crash the embed phase mid-sweep we emit a
+    # one-line WARNING and fill the column with the seed utterance,
+    # leaving a constant-fill column the downstream pipeline can
+    # simply ignore. (Was: ValueError; superseded once we needed
+    # backward compat across many existing configs.)
+    import logging
+    with caplog.at_level(logging.WARNING):
+        out = build_dialog_observables(
             steps,
             ["last_user_turn"],
             role_a_name="explorer",
@@ -166,3 +173,9 @@ def test_build_dialog_observables_rejects_user_names_when_roles_are_explorer_exp
             full_chars=200,
             seed_utterance="SEED: q",
         )
+    assert "last_user_turn" in out
+    assert all(s == "SEED: q" for s in out["last_user_turn"])
+    assert any(
+        "doesn't match configured role_a" in rec.message
+        for rec in caplog.records
+    ), "legacy-role fallback should emit a WARNING for visibility"

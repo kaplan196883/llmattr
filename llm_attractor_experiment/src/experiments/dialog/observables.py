@@ -112,6 +112,17 @@ def build_dialog_observables(
     last_turn_names = {f"last_{r}_turn" for r in role_names}
     role_alts = "|".join(re.escape(r) for r in role_names)
     role_rolling_re = re.compile(rf"^rolling_({role_alts})(?:_k(\d+))?$")
+    # Permissive matchers for legacy / mismatched role names: any
+    # `last_<x>_turn` or `rolling_<x>(_k{N})?` where <x> != configured
+    # role. Lets historical configs (D1-era `last_user_turn` /
+    # `last_agent_turn` / `rolling_user_k3` / `rolling_agent_k3`)
+    # continue to work on experiments whose role_a/role_b are renamed
+    # (e.g. D2 explorer/expert). Mismatched-role observables fall back
+    # to the seed utterance for every step (constant column in the
+    # output CSV) — visible in logs as a one-line WARNING, but does
+    # not crash the pipeline.
+    legacy_last_re = re.compile(r"^last_([a-zA-Z_][a-zA-Z0-9_]*)_turn$")
+    legacy_rolling_re = re.compile(r"^rolling_([a-zA-Z_][a-zA-Z0-9_]*)(?:_k(\d+))?$")
 
     out: dict[str, list[str]] = {}
 
@@ -121,6 +132,10 @@ def build_dialog_observables(
         if name in last_turn_names or name == "turn_pair":
             extras.append(name)
         elif role_rolling_re.match(name):
+            extras.append(name)
+        elif legacy_last_re.match(name) or legacy_rolling_re.match(name):
+            # mismatched-role observable; route to extras so it gets
+            # the seed-utterance fallback rather than ValueError
             extras.append(name)
         else:
             base_names.append(name)
@@ -150,16 +165,33 @@ def build_dialog_observables(
             ]
         else:
             m = role_rolling_re.match(name)
-            if not m:
-                raise ValueError(f"unknown dialog observable: {name}")
-            role_filter = m.group(1)
-            k_used = int(m.group(2)) if m.group(2) else k
-            out[name] = [
-                observable_rolling_role(
-                    steps, t, role_filter, k=k_used, fallback=seed_utterance
+            if m:
+                role_filter = m.group(1)
+                k_used = int(m.group(2)) if m.group(2) else k
+                out[name] = [
+                    observable_rolling_role(
+                        steps, t, role_filter, k=k_used, fallback=seed_utterance
+                    )
+                    for t in range(n)
+                ]
+                continue
+            # Legacy / mismatched-role fallback: emit constant-fill
+            # column equal to seed_utterance, with a one-line warning
+            # so the mismatch is visible in run.log but doesn't crash.
+            ml = legacy_last_re.match(name)
+            mr = legacy_rolling_re.match(name)
+            if ml or mr:
+                import logging as _logging
+                _logging.getLogger(__name__).warning(
+                    "dialog observable %r references a role name that "
+                    "doesn't match configured role_a=%r / role_b=%r; "
+                    "filling with seed utterance for all %d steps "
+                    "(legacy-config fallback).",
+                    name, role_a_name, role_b_name, n,
                 )
-                for t in range(n)
-            ]
+                out[name] = [seed_utterance] * n
+                continue
+            raise ValueError(f"unknown dialog observable: {name}")
     return out
 
 
