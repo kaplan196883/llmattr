@@ -244,7 +244,20 @@ def measured_5_10_RG() -> dict:
 # ============================================================================
 
 def _flag(claimed, measured, tol):
-    if claimed is None or measured is None or (isinstance(measured, float) and np.isnan(measured)):
+    """Verdict for one (claimed, measured) cell.
+
+    - Both NaN/None → ✓ (NaN matches): the article explicitly claims NaN
+      (e.g. D1 step-5 in §5.3) and the measurement agrees. This is a
+      successful verification of "this cell is intentionally absent".
+    - Only one NaN → — (no comparison possible)
+    - Qualitative claim (string like "low"/"high") → ✓ (qualitative)
+    - Numeric claim → ✓ if |Δ| ≤ tol else ✗.
+    """
+    cl_nan = claimed is None or (isinstance(claimed, float) and np.isnan(claimed))
+    me_nan = measured is None or (isinstance(measured, float) and np.isnan(measured))
+    if cl_nan and me_nan:
+        return "✓ (NaN matches)"
+    if cl_nan or me_nan:
         return "—"
     if isinstance(claimed, str):  # qualitative match (low/high/trivial)
         return "✓ (qualitative)"

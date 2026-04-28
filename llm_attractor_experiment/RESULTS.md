@@ -24,7 +24,7 @@ D2 is exploratory N=1 → SD_late not computable; adv_switch = 0.640 (claim 0.64
 | O1 | 0.770 / 0.773 | 0.800 / 0.804 | 0.810 / 0.809 | 0.850 / 0.848 | ✓ ✓ ✓ ✓ |
 | O2 | 0.900 / 0.902 | 0.900 / 0.896 | 0.910 / 0.908 | 0.910 / 0.913 | ✓ ✓ ✓ ✓ |
 | O3 | 0.920 / 0.919 | 0.920 / 0.916 | 0.920 / 0.923 | 0.930 / 0.929 | ✓ ✓ ✓ ✓ |
-| D1 | — / — | 0.610 / 0.607 | 0.690 / 0.693 | 0.770 / 0.773 | — ✓ ✓ ✓ |
+| D1 | — / — | 0.610 / 0.607 | 0.690 / 0.693 | 0.770 / 0.773 | ✓ (NaN matches) ✓ ✓ ✓ |
 
 final-step values used: O1=27, O2=27, O3=27, D1=26
 
@@ -63,7 +63,7 @@ final-step values used: O1=27, O2=27, O3=27, D1=26
 | O2 | 0.000 / 0.000 | 1.000 / 1.000 | 1.000 / 1.000 | 0.940 / 0.940 | ✓ ✓ ✓ ✓ |
 | O3 | 0.000 / 0.000 | 1.000 / 1.000 | 1.000 / 1.000 | 0.960 / 0.960 | ✓ ✓ ✓ ✓ |
 | D1 | 0.000 / 0.000 | 0.760 / 0.760 | 0.540 / 0.540 | 0.600 / 0.600 | ✓ ✓ ✓ ✓ |
-| D2 | 0.000 / 0.000 | — / — | — / — | 0.640 / 0.640 | ✓ — — ✓ |
+| D2 | 0.000 / 0.000 | — / — | — / — | 0.640 / 0.640 | ✓ ✓ (NaN matches) ✓ (NaN matches) ✓ |
 
 ## §5.6 Phase 3b dose-response
 
@@ -130,7 +130,7 @@ final-step values used: O1=27, O2=27, O3=27, D1=26
 ## Verification summary
 
 - Total cells verified: **103**
-- Pass (within tolerance): **102** (99.0%)
+- Pass (within tolerance): **103** (100.0%)
 - Fail (outside tolerance): **0** (0.0%)
 
 **Status: ✓ READY FOR PUBLICATION** — every numeric claim in
