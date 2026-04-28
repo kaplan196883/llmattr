@@ -510,32 +510,65 @@ section contains the table.
 
 ## Coverage matrix
 
-`COVERAGE.csv` at the repo root is a 37 row × 56 col table of every
+`COVERAGE.csv` at the repo root is a 37 row × 60 col matrix of every
 experiment's analytical-artifact presence. Rows are experiments, columns
 are artifacts (config / raw / metrics / reports / perturbation
 visualizations / animations) plus metadata (phase, regime, nudge,
-temperature, n_trajectories, …). Cells are 1/0 for presence or integer
-counts (e.g. `n_animation_mp4`, `n_plot_pngs`, `n_pca_models`).
+temperature, n_trajectories) and three summary columns
+(`n_applicable_artifacts`, `n_present_artifacts`, `coverage_pct`).
 
-Regenerate with `python -m scripts.build_coverage`. The script
-introspects `data/exp_*/` so it always reflects current state — useful
-to spot pipeline-stage gaps (e.g. an experiment with `steps.jsonl` but
-no `recurrence.csv` is mid-pipeline).
+**Cell semantics**:
+- `1` — artifact is present
+- `0` — artifact is **missing** (real gap)
+- `""` (empty cell) — **structurally not applicable** to this
+  experiment (e.g. perturbation experiments have no `regime=recursive`
+  trajectories, so basin_entry / exit_return / permutation_tests are
+  N/A there)
+- positive integer in `n_*` columns — count
 
-Common patterns visible in the matrix:
+**Applicability rules** (in `scripts/build_coverage.py`):
 
-- **Pub & Phase 0/1 experiments** carry the full per-experiment metric
-  battery (recurrence, dwell, basin, late_recurrence, exit_return,
-  basin_entry, periodicity, dispersion, dynamics, bootstrap,
-  permutation, explained_variance) plus the two report variants and
-  basin-predictability. They do not carry perturbation visualizations.
-- **Perturbation pilots** (4 conditions × 4 regimes + D2) carry the
-  perturbation visualization suite (switching, relaxation, geodesic,
-  RG, bulk, flow, G/H/I, animations) but skip the per-trajectory metric
-  battery — by design, since per-condition trajectories are not the
-  same statistical object as recursive runs.
-- **Dose / inject sweeps** carry only the switching-summary CSV;
-  geodesic / RG / animations are run only on the headline pilots.
+| column | applicable when |
+|---|---|
+| `has_basin_entry_csv`, `has_exit_return_csv` | non-perturbation AND `cfg.<feature>.enabled = True` |
+| `has_late_recurrence_csv` | `cfg.late_recurrence.enabled = True` |
+| `has_dynamics_csv` (Lyapunov + sharpness) | `runs_per_condition >= 2` (D2 N=1 is N/A) |
+| `has_bootstrap_summary` | `cfg.bootstrap.enabled = True` |
+| `has_permutation_tests` | `time_shuffled` in `baseline_modes` AND non-perturbation |
+| `has_basin_predictability_*` | non-perturbation (perturbation regimes are conditions, not the recursive vs no_feedback the predictor expects) |
+| `has_switching_summary`, `relaxation_*`, `G/H/I`, `flow_*_by_condition` | perturbation experiment (`exp_perturb_*`) |
+| `has_geodesic_barriers_*`, `has_rg_dendrogram_summary` | one of the 5 perturbation pilots (4 main + D2) |
+| `has_rg_stack_png` | one of the 4 main perturbation pilots |
+| `n_animation_mp4`, `n_animation_gif` | one of the 5 perturbation pilots OR one of the 4 pub diagnostic experiments |
+
+After applying applicability, **all 37 experiments report 100%
+coverage** of their applicable artifacts (mean = 100.0%, median =
+100.0%). This means the matrix has no fillable gaps left — every cell
+is either filled (1 / positive count) or marked N/A by structural
+design. Regenerate with `python -m scripts.build_coverage`.
+
+**What was filled to reach 100%**:
+
+- Ran `dynamics.analyze --all` to populate `metrics/dynamics.csv`
+  across all eligible experiments (skipped only D2 N=1 runs).
+- Ran `analyze_ext` on 24 experiments to populate `periodicity.csv`,
+  `dispersion.csv`, and `report_operators.md`.
+- Ran the standard `cmd_analyze` on the 13 perturbation experiments
+  to populate the per-trajectory metric battery (recurrence, dwell,
+  basin, late_recurrence, exit_return, …).
+- Ran `cmd_report` on 14 experiments to populate `report.md` +
+  `reports/plots/`.
+- Ran `geodesic_skeleton`, `rg_dendrogram`, `bulk_plots`,
+  `flow_skeleton` (with `--conditions recursive`) on 19 non-perturbation
+  experiments to populate the 4 single-condition geometric
+  visualizations.
+- Patched `basin_predictability.py` with **adaptive `n_splits`** —
+  StratifiedKFold previously crashed on phase-1 pilots whose smallest
+  cluster had < 5 members; now uses `min(5, smallest_class_size)` and
+  returns NaN when 2-fold is impossible.
+- Extended `aggregate_perturbation_geometric_barriers.py` to include
+  D2 as a fifth row (with NaN for neutral/lorem since D2 ran only
+  control + adversarial).
 
 ## How a reviewer should walk this
 

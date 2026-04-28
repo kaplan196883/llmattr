@@ -97,14 +97,28 @@ def _predict_from_step(
 
     X = early[[f"pc{i}" for i in range(1, 11)]].to_numpy()
     y = early["final_cluster"].to_numpy()
-    n_classes = len(np.unique(y))
+    unique, counts = np.unique(y, return_counts=True)
+    n_classes = len(unique)
     if n_classes < 2:
         return {
             "regime": regime, "step": step, "n": len(early),
             "top1": 1.0, "top3": 1.0, "n_classes": n_classes,
         }
 
-    kf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    # Adaptive n_splits: stratified K-fold needs every class to have at
+    # least n_splits members. Small pilots (n=75 split across k=12 clusters)
+    # routinely have classes with <5 members; reducing n_splits to the
+    # smallest class size is more robust than crashing. If even 2-fold is
+    # impossible, return NaN.
+    min_class = int(counts.min())
+    if min_class < 2:
+        return {
+            "regime": regime, "step": step, "n": len(early),
+            "top1": float("nan"), "top3": float("nan"), "n_classes": n_classes,
+            "min_class_size": min_class, "n_splits_used": 0,
+        }
+    n_splits = min(5, min_class)
+    kf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
     top1_scores: list[float] = []
     top3_scores: list[float] = []
     for train_idx, test_idx in kf.split(X, y):
