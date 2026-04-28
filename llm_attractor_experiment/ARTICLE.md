@@ -763,8 +763,13 @@ For each trajectory we run paired runs with the same prefix but four
 different perturbation conditions injected at `t_inject`:
 
 - `control`: no perturbation
-- `neutral`: 80 tokens of off-topic Wikipedia text (8-paragraph pool)
-- `lorem`: 70 random English words from a noun frequency list
+- `neutral`: a paragraph (~80 tokens) of off-topic Wikipedia text drawn
+  from an 8-paragraph hand-written pool (`corpora.NEUTRAL_WIKI`); the
+  pilot default sends the full paragraph, dose-parametrized variants
+  (`neutral_<N>`) resize to N tokens explicitly
+- `lorem`: 70 random English words drawn from a hand-curated neutral
+  word pool (`corpora._WORD_POOL`) chosen to avoid emotional or
+  introspective vocabulary
 - `adversarial`: late-step output from a *different* (family, IC) trajectory of the same regime
 
 We compute the K-means cluster (joint PCA-10 across all conditions, k=12)
@@ -828,24 +833,30 @@ standardized set of static plots, defined in
 
 - **A: joint t-SNE colored by regime / family / step** — global view of
   where the regimes and the families live in the joint embedding.
+  (`plot_joint_tsne` in `dynamics/regime_plots.py`)
 - **B: per-family grid** — one t-SNE panel per prompt family, sharing
   coordinates, so cross-family heterogeneity is visible.
-- **C: single-IC trajectories** — five sample trajectories with explicit
-  step-coloring; for sanity checks and report figures.
-- **E: per-experiment flow field** (PCA-2 quiver) — averaged
-  per-step displacement field overlay on the density background.
-- **F: trajectory sample** — six sample trajectories with the time-
-  ordering visible.
+  (`plot_trajectory_grid` in `dynamics/regime_plots.py`)
+- **C: ensemble-spread timelines** — σ(t) curves per family, the visual
+  analog of FTLE; useful for distinguishing contractive (shrinking spread)
+  from expanding regimes. (`plot_spread_timelines` in
+  `dynamics/regime_plots.py`)
+- **E: per-experiment flow field** (PCA-2 quiver) — averaged per-step
+  displacement field overlay on the density background.
+  (`plot_flow_field_*` in `dynamics/regime_plots.py`)
+- **F: t-SNE trajectory sample** — sample trajectories with the
+  time-ordering visible. (`plot_tsne_trajectories_single` in
+  `dynamics/regime_plots.py`)
 - **G/H/I: streamlines + density / speed-colored streamlines / divergence**
-  — three richer flow-field views from `dynamics/field_plots.py`.
+  — three richer flow-field views from `dynamics/field_plots.py`
+  (`plot_streamlines_density`, `plot_speed_colored_streamlines`,
+  `plot_divergence_field`).
 - **`plot_v2_by_step_parity`** and **`plot_v2_per_family_parity_grid`**
   in `pub_tsne_plots_v2.py` — even/odd step stratification, used to
   separate the two arms of an oscillatory 2-cycle visually.
 - **`plot_regime_map_by_family`** in `dynamics/partial_snapshot.py` —
   family × IC heatmap colored by final-window cluster, useful for
   detecting whether basins are family-dependent or shared.
-- **`plot_spread_timelines`** in `dynamics/regime_plots.py` —
-  ensemble-spread σ(t) curves per family, the visual analog of FTLE.
 - **`basin_entry_hist`**, **`basin_scores`**, **`cluster_occupancy`**,
   **`dwell_dist`** in `src/reports/plots.py` — distributional plots of
   the analysis primitives, one panel per observable.
@@ -1667,7 +1678,7 @@ independent estimates of barrier height that agree.
 
 #### Hierarchical RG dendrogram
 
-Per-condition maximum Ward-linkage merge distance across k=64 fine-cluster
+Per-condition maximum Ward-linkage merge distance across k=48 fine-cluster
 centroids:
 
 | regime | control | neutral | lorem | adversarial |
