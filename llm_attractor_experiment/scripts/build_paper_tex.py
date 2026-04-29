@@ -67,6 +67,8 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 
 % --- arxiv-style preprint preamble (self-contained) --------------------------
 \usepackage[a4paper,margin=1in]{geometry}
+\usepackage{lmodern}      % scalable Latin Modern fonts (required by microtype expansion)
+\usepackage[T1]{fontenc}
 \usepackage{amsmath, amssymb, amsthm}
 \usepackage{graphicx}
 \usepackage{booktabs}
@@ -84,6 +86,145 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 }
 \renewcommand{\baselinestretch}{1.05}
 
+% Map common Unicode characters that appear in the source markdown
+% (math/typographic) to LaTeX-safe substitutes for pdflatex.
+\usepackage{newunicodechar}
+\newunicodechar{−}{$-$}    % U+2212 minus
+\newunicodechar{×}{$\times$}
+\newunicodechar{÷}{$\div$}
+\newunicodechar{±}{$\pm$}
+\newunicodechar{≈}{$\approx$}
+\newunicodechar{≠}{$\neq$}
+\newunicodechar{≤}{$\leq$}
+\newunicodechar{≥}{$\geq$}
+\newunicodechar{∈}{$\in$}
+\newunicodechar{∉}{$\notin$}
+\newunicodechar{∞}{$\infty$}
+\newunicodechar{α}{$\alpha$}
+\newunicodechar{β}{$\beta$}
+\newunicodechar{γ}{$\gamma$}
+\newunicodechar{δ}{$\delta$}
+\newunicodechar{ε}{$\varepsilon$}
+\newunicodechar{ζ}{$\zeta$}
+\newunicodechar{η}{$\eta$}
+\newunicodechar{θ}{$\theta$}
+\newunicodechar{κ}{$\kappa$}
+\newunicodechar{λ}{$\lambda$}
+\newunicodechar{μ}{$\mu$}
+\newunicodechar{π}{$\pi$}
+\newunicodechar{ρ}{$\rho$}
+\newunicodechar{σ}{$\sigma$}
+\newunicodechar{τ}{$\tau$}
+\newunicodechar{φ}{$\varphi$}
+\newunicodechar{χ}{$\chi$}
+\newunicodechar{ψ}{$\psi$}
+\newunicodechar{ω}{$\omega$}
+\newunicodechar{Δ}{$\Delta$}
+\newunicodechar{Σ}{$\Sigma$}
+\newunicodechar{Π}{$\Pi$}
+\newunicodechar{Ω}{$\Omega$}
+\newunicodechar{Ψ}{$\Psi$}
+\newunicodechar{ℝ}{$\mathbb{R}$}
+\newunicodechar{ℕ}{$\mathbb{N}$}
+\newunicodechar{ℤ}{$\mathbb{Z}$}
+\newunicodechar{·}{$\cdot$}
+\newunicodechar{…}{\ldots}
+\newunicodechar{—}{---}     % em dash
+\newunicodechar{–}{--}      % en dash
+\newunicodechar{‘}{`}
+\newunicodechar{’}{'}
+\newunicodechar{“}{``}
+\newunicodechar{”}{''}
+\newunicodechar{§}{\S}
+\newunicodechar{ℓ}{$\ell$}
+\newunicodechar{✓}{\checkmark}
+\newunicodechar{✗}{$\times$}
+\newunicodechar{🟢}{}
+\newunicodechar{🟡}{}
+\newunicodechar{⏸}{}
+\newunicodechar{⇒}{$\Rightarrow$}
+\newunicodechar{⇐}{$\Leftarrow$}
+\newunicodechar{⇔}{$\Leftrightarrow$}
+\newunicodechar{→}{$\to$}
+\newunicodechar{←}{$\leftarrow$}
+\newunicodechar{↔}{$\leftrightarrow$}
+\newunicodechar{↑}{$\uparrow$}
+\newunicodechar{↓}{$\downarrow$}
+\newunicodechar{∂}{$\partial$}
+\newunicodechar{∇}{$\nabla$}
+\newunicodechar{∼}{$\sim$}
+\newunicodechar{∝}{$\propto$}
+\newunicodechar{⊂}{$\subset$}
+\newunicodechar{⊃}{$\supset$}
+\newunicodechar{⊆}{$\subseteq$}
+\newunicodechar{⊇}{$\supseteq$}
+\newunicodechar{∪}{$\cup$}
+\newunicodechar{∩}{$\cap$}
+\newunicodechar{∅}{$\emptyset$}
+\newunicodechar{∀}{$\forall$}
+\newunicodechar{∃}{$\exists$}
+\newunicodechar{∧}{$\wedge$}
+\newunicodechar{∨}{$\vee$}
+\newunicodechar{¬}{$\neg$}
+\newunicodechar{∑}{$\sum$}
+\newunicodechar{∏}{$\prod$}
+\newunicodechar{∫}{$\int$}
+\newunicodechar{√}{$\sqrt{}$}
+\newunicodechar{ℓ}{$\ell$}
+\newunicodechar{†}{$\dagger$}
+\newunicodechar{‡}{$\ddagger$}
+\newunicodechar{°}{$^{\circ}$}
+\newunicodechar{²}{$^2$}
+\newunicodechar{³}{$^3$}
+\newunicodechar{¹}{$^1$}
+\newunicodechar{½}{$\frac{1}{2}$}
+\newunicodechar{¼}{$\frac{1}{4}$}
+\newunicodechar{¾}{$\frac{3}{4}$}
+\newunicodechar{⌈}{$\lceil$}
+\newunicodechar{⌉}{$\rceil$}
+\newunicodechar{⌊}{$\lfloor$}
+\newunicodechar{⌋}{$\rfloor$}
+\newunicodechar{⟨}{$\langle$}
+\newunicodechar{⟩}{$\rangle$}
+\newunicodechar{‖}{$\|$}
+\newunicodechar{∥}{$\|$}
+\newunicodechar{‐}{-}
+\newunicodechar{‑}{-}
+\newunicodechar{ᵀ}{$^{\top}$}
+\newunicodechar{·}{$\cdot$}
+\newunicodechar{‹}{$<$}
+\newunicodechar{›}{$>$}
+\newunicodechar{«}{``}
+\newunicodechar{»}{''}
+\newunicodechar{ι}{$\iota$}
+\newunicodechar{ν}{$\nu$}
+\newunicodechar{ξ}{$\xi$}
+\newunicodechar{ο}{o}
+\newunicodechar{Φ}{$\Phi$}
+\newunicodechar{Λ}{$\Lambda$}
+\newunicodechar{Θ}{$\Theta$}
+\newunicodechar{Γ}{$\Gamma$}
+\newunicodechar{Ξ}{$\Xi$}
+\newunicodechar{Υ}{$\Upsilon$}
+\newunicodechar{Β}{B}
+\newunicodechar{ⁿ}{$^{n}$}
+\newunicodechar{₀}{$_0$}
+\newunicodechar{₁}{$_1$}
+\newunicodechar{₂}{$_2$}
+\newunicodechar{₃}{$_3$}
+\newunicodechar{₄}{$_4$}
+\newunicodechar{₅}{$_5$}
+\newunicodechar{ᵢ}{$_i$}
+\newunicodechar{ⱼ}{$_j$}
+\newunicodechar{ₜ}{$_t$}
+\newunicodechar{₊}{$_+$}
+\newunicodechar{₋}{$_-$}
+\newunicodechar{∘}{$\circ$}
+\newunicodechar{⊗}{$\otimes$}
+\newunicodechar{⊕}{$\oplus$}
+\newunicodechar{≡}{$\equiv$}
+
+
 % Theorem environments for Lemma 1, Corollaries 1 & 2, Conjecture 1.
 \theoremstyle{plain}
 \newtheorem{lemma}{Lemma}
@@ -99,7 +240,7 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \title{Endogenous attractor regimes in recursive large-language-model loops:\\
        What does it cost to nudge an LLM out of an attractor?\\
        A theoretical framework with measured barrier heights in tokens.}
-\author{[Author Name]\\[Affiliation]\\\texttt{[email]}}
+\author{[Author Name]\\{}[Affiliation]\\\texttt{[email]}}
 \date{\today}
 
 \begin{document}
@@ -139,21 +280,38 @@ def _escape_special_chars(text: str) -> str:
 
 
 def _convert_math_blocks(text: str) -> tuple[str, list[str]]:
-    """Replace $$...$$ display-math blocks with placeholders so they
-    pass through inline-text rewriters unchanged.
-    Returns (rewritten_text, list_of_blocks)."""
-    blocks: list[str] = []
-    def _stash(m: re.Match) -> str:
-        blocks.append(m.group(1))
+    """Replace $$...$$ display-math blocks AND inline $..$ math with
+    placeholders so they pass through inline-text rewriters unchanged.
+    The placeholders distinguish the two so we can restore differently.
+    Returns (rewritten_text, list_of_blocks_typed)."""
+    blocks: list[tuple[str, str]] = []  # list of (kind, body)
+    def _stash_display(m: re.Match) -> str:
+        blocks.append(("display", m.group(1)))
         return f"\x00MATHBLOCK{len(blocks)-1}\x00"
-    rewritten = re.sub(r"\$\$([\s\S]*?)\$\$", _stash, text)
+    def _stash_inline(m: re.Match) -> str:
+        blocks.append(("inline", m.group(1)))
+        return f"\x00MATHBLOCK{len(blocks)-1}\x00"
+    # Display math first (avoid re-matching $..$ inside $$..$$)
+    rewritten = re.sub(r"\$\$([\s\S]*?)\$\$", _stash_display, text)
+    # Inline math: $...$ — body excludes `$`, may span single
+    # newlines (multi-line inline math like
+    # `$\mathrm{B} \le \kappa\n\approx 80$`) but NOT paragraph
+    # breaks (\n\s*\n) — otherwise a stray `$30` (currency) would
+    # swallow text up to the next `$` arbitrarily far away.
+    rewritten = re.sub(
+        r"(?<!\$)\$((?:(?!\$|\n\s*\n)[\s\S])+?)\$(?!\$)",
+        _stash_inline, rewritten,
+    )
     return rewritten, blocks
 
 
-def _restore_math_blocks(text: str, blocks: list[str]) -> str:
-    for i, b in enumerate(blocks):
-        text = text.replace(f"\x00MATHBLOCK{i}\x00",
-                            "\\begin{equation*}\n" + b.strip() + "\n\\end{equation*}")
+def _restore_math_blocks(text: str, blocks: list[tuple[str, str]]) -> str:
+    for i, (kind, b) in enumerate(blocks):
+        if kind == "display":
+            replacement = "\\begin{equation*}\n" + b.strip() + "\n\\end{equation*}"
+        else:
+            replacement = "$" + b + "$"
+        text = text.replace(f"\x00MATHBLOCK{i}\x00", replacement)
     return text
 
 
@@ -173,36 +331,110 @@ def _convert_fenced_code(text: str) -> tuple[str, list[str]]:
     return rewritten, blocks
 
 
+_VERBATIM_UNICODE_MAP = {
+    "‖": "||",   "ε": "eps", "τ": "tau",  "λ": "lambda", "ρ": "rho",
+    "σ": "sigma","θ": "theta","κ": "kappa","α": "alpha","β": "beta",
+    "γ": "gamma","δ": "delta","Δ": "Delta","Σ": "Sigma","π": "pi",
+    "η": "eta", "μ": "mu",   "φ": "phi",  "ψ": "psi",   "Ω": "Omega",
+    "≈": "~=",  "≠": "!=",   "≤": "<=",   "≥": ">=",
+    "∈": "in",  "∉": "not_in","∞": "inf",
+    "⇒": "=>",  "⇐": "<=",   "⇔": "<=>", "→": "->",  "←": "<-",
+    "↔": "<->", "↑": "^",    "↓": "v",
+    "−": "-",   "×": "x",    "÷": "/",   "±": "+/-",
+    "·": ".",   "…": "...",  "—": "--",  "–": "-",
+    "²": "^2",  "³": "^3",   "₀": "_0",  "₁": "_1", "₂": "_2",
+    "₃": "_3",  "₄": "_4",   "₅": "_5",
+    "ℝ": "R",   "ℕ": "N",    "ℤ": "Z",
+    "∂": "d",   "∇": "grad", "∼": "~",   "∝": "prop",
+    "∧": "and", "∨": "or",   "¬": "not",
+    "∑": "sum", "∏": "prod", "∫": "int", "√": "sqrt",
+    "ℓ": "l",   "°": "deg",  "§": "S",
+    "‘": "'",   "’": "'",    "“": '"',   "”": '"',
+}
+
+
 def _restore_fenced_code(text: str, blocks: list[str]) -> str:
+    """Restore fenced ``` blocks as `\\begin{verbatim}...\\end{verbatim}`.
+    Verbatim doesn't go through `\\newunicodechar` substitution, so we
+    replace unicode chars with ASCII fallbacks at restoration time.
+    Strategy:
+      1. Apply named substitutions from _VERBATIM_UNICODE_MAP for
+         common math/typographic chars.
+      2. For any remaining non-ASCII char, fall back to NFKD
+         compatibility decomposition + drop combining marks; if that
+         still leaves non-ASCII bytes, replace with `?`."""
+    import unicodedata
+    def _asciify(s: str) -> str:
+        for u, a in _VERBATIM_UNICODE_MAP.items():
+            s = s.replace(u, a)
+        out_chars: list[str] = []
+        for ch in s:
+            if ord(ch) < 128:
+                out_chars.append(ch)
+                continue
+            # Try compatibility decomposition (e.g., z̄ → z + combining)
+            decomp = unicodedata.normalize("NFKD", ch)
+            ascii_only = "".join(c for c in decomp if ord(c) < 128)
+            if ascii_only:
+                out_chars.append(ascii_only)
+            else:
+                out_chars.append("?")
+        return "".join(out_chars)
     for i, b in enumerate(blocks):
         text = text.replace(
             f"\x00CODEBLOCK{i}\x00",
-            "\\begin{verbatim}\n" + b + "\n\\end{verbatim}",
+            "\\begin{verbatim}\n" + _asciify(b) + "\n\\end{verbatim}",
         )
     return text
 
 
 def _convert_inline_code(text: str) -> str:
-    """Convert `code` to \texttt{code} (after escaping)."""
+    """Convert `code` to \\texttt{code} (after escaping LaTeX-special
+    characters that would otherwise break inside \\texttt{} text
+    mode)."""
     def _ttify(m: re.Match) -> str:
         s = m.group(1)
-        # Inside \texttt{}, escape underscore + special chars
+        # Order matters: backslash first so subsequent backslash-
+        # introducing escapes (\_, \&, etc.) aren't double-escaped.
         s = s.replace("\\", r"\textbackslash{}")
+        s = s.replace("{", r"\{")
+        s = s.replace("}", r"\}")
         s = s.replace("_", r"\_")
         s = s.replace("&", r"\&")
         s = s.replace("#", r"\#")
         s = s.replace("%", r"\%")
         s = s.replace("$", r"\$")
-        s = s.replace("{", r"\{")
-        s = s.replace("}", r"\}")
+        s = s.replace("^", r"\textasciicircum{}")
+        s = s.replace("~", r"\textasciitilde{}")
         return r"\texttt{" + s + "}"
     return re.sub(r"`([^`]+)`", _ttify, text)
 
 
 def _convert_inline_emphasis(text: str) -> str:
-    """**bold** → \textbf{...}; *italic* → \textit{...}."""
-    text = re.sub(r"\*\*([^*]+)\*\*", r"\\textbf{\1}", text)
-    text = re.sub(r"(?<![*\\])\*([^*\n]+)\*(?!\*)", r"\\textit{\1}", text)
+    """**bold** → \\textbf{...}; *italic* → \\textit{...}.
+
+    Order matters AND nesting matters. Markdown allows
+    `**bold with *italic* inside**`. We:
+      1. Stash backslash-escaped asterisks (`\\*`) as placeholders.
+      2. Run bold first, allowing internal `*` characters in the
+         body (so nested italic markers don't break the match), but
+         restricted to a single line (no spanning paragraphs).
+      3. Run italic on the whole text afterward — the italic
+         markers that were inside `\\textbf{...}` are still single-`*`
+         tokens and will be picked up.
+      4. Restore literal asterisks."""
+    text = text.replace(r"\*", "\x00ESCASTERISK\x00")
+    # Bold: non-greedy, allow newlines in the body but not paragraph
+    # breaks (\n\s*\n). Body is "anything that doesn't contain '**'
+    # or a paragraph break".
+    text = re.sub(
+        r"\*\*((?:(?!\*\*|\n\s*\n)[\s\S])+?)\*\*",
+        r"\\textbf{\1}", text,
+    )
+    # Italic: single `*` not adjacent to another `*` (avoids
+    # mismatching the closing marker of an already-converted bold).
+    text = re.sub(r"(?<![*\\])\*([^*\n]+?)\*(?!\*)", r"\\textit{\1}", text)
+    text = text.replace("\x00ESCASTERISK\x00", "*")
     return text
 
 
@@ -286,10 +518,35 @@ def _convert_lists(text: str) -> str:
     return "\n".join(out)
 
 
+def _split_table_row(line: str) -> list[str]:
+    """Split a markdown table row on `|`, respecting brace depth so
+    that `|` characters inside `\\texttt{...}` (or any LaTeX command
+    body) are not treated as column separators."""
+    body = line.strip().strip("|")
+    cells: list[str] = []
+    cur: list[str] = []
+    depth = 0
+    for ch in body:
+        if ch == "{":
+            depth += 1
+            cur.append(ch)
+        elif ch == "}":
+            depth = max(0, depth - 1)
+            cur.append(ch)
+        elif ch == "|" and depth == 0:
+            cells.append("".join(cur).strip())
+            cur = []
+        else:
+            cur.append(ch)
+    cells.append("".join(cur).strip())
+    return cells
+
+
 def _convert_tables(text: str) -> str:
     """Convert markdown pipe tables to LaTeX tabular environments.
     Detects header line followed by separator line (---) followed by
-    data rows."""
+    data rows. Cell-splitter is brace-aware so `|` inside
+    `\\texttt{...}` (already converted from backticks) is preserved."""
     lines = text.split("\n")
     out: list[str] = []
     i = 0
@@ -299,7 +556,7 @@ def _convert_tables(text: str) -> str:
         if (line.strip().startswith("|") and i + 1 < len(lines)
                 and re.match(r"^\s*\|[\s\-:|]+\|\s*$", lines[i + 1])):
             # collect table rows
-            header = [c.strip() for c in line.strip().strip("|").split("|")]
+            header = _split_table_row(line)
             sep_line = lines[i + 1]
             # column alignments from separator
             alignments = []
@@ -314,7 +571,7 @@ def _convert_tables(text: str) -> str:
             rows = []
             j = i + 2
             while j < len(lines) and lines[j].strip().startswith("|"):
-                rows.append([c.strip() for c in lines[j].strip().strip("|").split("|")])
+                rows.append(_split_table_row(lines[j]))
                 j += 1
             # Emit tabular
             col_spec = "".join(alignments)
@@ -372,6 +629,55 @@ def _convert_figures(text: str, fig_target_dir: Path) -> str:
         out.append(r"\caption{" + cap_clean + "}")
         out.append(r"\end{figure}")
     return "\n".join(out)
+
+
+def _escape_prose_specials(text: str) -> str:
+    """Escape LaTeX-special characters in prose.
+
+    State-aware:
+      - Inside `\\begin{verbatim}...\\end{verbatim}`: leave everything alone.
+      - Inside `\\begin{tabular}...\\end{tabular}`: leave `&` (column
+        separator), but ESCAPE `%` and `#` (still LaTeX-special inside
+        tables — `%` would comment-out the rest of the row including
+        `\\\\` and `\\bottomrule`!).
+      - Elsewhere: escape `&`, `%`, `#`."""
+    out_lines: list[str] = []
+    in_tabular = False
+    in_verbatim = False
+    for line in text.split("\n"):
+        if r"\begin{tabular}" in line:
+            in_tabular = True
+        if r"\begin{verbatim}" in line:
+            in_verbatim = True
+        if not in_verbatim:
+            # % must always be escaped (except in verbatim) — it starts
+            # a LaTeX comment otherwise and silently eats the rest of
+            # the line, including \\bottomrule etc.
+            line = re.sub(r"(?<!\\)%", r"\\%", line)
+            # # is parameter char in macros; escape outside verbatim.
+            line = re.sub(r"(?<!\\)#", r"\\#", line)
+            # $ (dollar) is math-mode toggle. Math has been stashed by
+            # _convert_math_blocks before this pass, so any remaining $
+            # is a literal currency / numeric-prefix sign that must be
+            # escaped to avoid pdfTeX entering math mode.
+            line = re.sub(r"(?<!\\)\$", r"\\$", line)
+            # _ (underscore) is math-subscript marker outside math.
+            # Common in technical prose (rolling_k3, context_tail,
+            # last_user_turn, etc.) when the markdown didn't bracket
+            # them in backticks. Escape to \_. Already-escaped \_ from
+            # earlier \texttt{} processing is left alone via the
+            # negative lookbehind.
+            line = re.sub(r"(?<!\\)_", r"\\_", line)
+            if not in_tabular:
+                # & is column-separator in tabular envs; only escape
+                # outside them.
+                line = re.sub(r"(?<!\\)&", r"\\&", line)
+        if r"\end{tabular}" in line:
+            in_tabular = False
+        if r"\end{verbatim}" in line:
+            in_verbatim = False
+        out_lines.append(line)
+    return "\n".join(out_lines)
 
 
 def _convert_theorem_envs(text: str) -> str:
@@ -524,6 +830,17 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
     if not authors_chunk:
         authors_chunk = "Anonymous"
 
+    # BibTeX wants " and " between authors, not commas. Our markdown
+    # entries use comma-separated "Last, F., Last, F., ..." which
+    # bibtex would otherwise misread as one author with too many
+    # commas. Normalize: a "., " or "et al, " pattern marks an
+    # author boundary.
+    authors_chunk = authors_chunk.replace(" & ", " and ")
+    # Replace ". X.," patterns (initial period + comma) with " and ".
+    authors_chunk = re.sub(r"\.\s*,\s*(?=[A-ZŞŁÅÇÉÈÄÖÜ])", ". and ", authors_chunk)
+    # "et al" → "et al." properly terminated
+    authors_chunk = re.sub(r"\bet al\b\.?", "et al.", authors_chunk)
+
     # 5. First-author-last-name for bibkey
     first_author_part = authors_chunk.split(",")[0].split(" et al")[0].strip()
     first_author_last = first_author_part.split()[-1] if first_author_part else "anon"
@@ -627,6 +944,10 @@ def main() -> int:
     article_text = _convert_lists(article_text)
     article_text = _convert_headings(article_text)
     article_text = _convert_theorem_envs(article_text)
+
+    # Escape LaTeX-special prose characters (&, #, %). State-aware:
+    # & only outside tables; # and % everywhere except verbatim.
+    article_text = _escape_prose_specials(article_text)
 
     # Restore code + math blocks now that text rewrites are done
     article_text = _restore_fenced_code(article_text, code_blocks)

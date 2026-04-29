@@ -1808,7 +1808,7 @@ scope (Phase 3).
 | **O2** oscillatory | replace | paraphrase | 0.90 → 0.91 | high (period-2) | 1.39 | 94% | n/a (saturated) | (not measured) |
 | **O3** absorbing | replace | summarize+negate | 0.92 → 0.93 | trivial | 1.45 | 96% | n/a (saturated) | (not measured) |
 | **D1** multi-basin | dialog (append) | curious + helpful | n/a → 0.77 | low (per-style) | 1.89 | 60% | < 5 tokens | T-stable |
-| **D2** drill-down | dialog (append) | explorer drill-down | (not measured)** | (not measured) | (not measured)** | 64% | (not measured) | (not measured) |
+| **D2** drill-down | dialog (append) | explorer drill-down | (not measured) | (not measured) | (not measured) | 64% | (not measured) | (not measured) |
 
 \* Sharpness dim is computed on a 2-element Lyapunov spectrum (rank ≤ N−1 = 2 for N=3 runs per IC), so values are bounded above by 2.0. Mean SD_late on `context_tail`. The *ordering* across regimes is informative, the absolute magnitudes are constrained by the rank ceiling. See §4.5.6.
 

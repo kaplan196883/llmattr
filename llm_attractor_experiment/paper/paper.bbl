@@ -1,0 +1,28 @@
+\begin{thebibliography}{4}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Anonymous(2025{\natexlab{a}})]{arxiv251021258}
+Anonymous.
+\newblock Correlation dimension of auto-regressive large language models,
+  2025{\natexlab{a}}.
+
+\bibitem[Anonymous(2025{\natexlab{b}})]{arxiv251210350}
+Anonymous.
+\newblock Dynamics of agentic loops in large language models: A geometric
+  theory of trajectories, 2025{\natexlab{b}}.
+
+\bibitem[et~al.(2025)]{arxiv251024797}
+Berg et~al.
+\newblock Llms report subjective experience under self-referential processing,
+  2025.
+
+\bibitem[Tuci et~al.(2026)Tuci, Korkmaz, Şimşekli, and
+  Birdal]{arxiv260419740}
+M.~Tuci, C.~Korkmaz, U.~Şimşekli, and T~Birdal.
+\newblock Generalization at the edge of stability, 2026.
+
+\end{thebibliography}
