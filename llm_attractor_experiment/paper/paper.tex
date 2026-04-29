@@ -407,7 +407,8 @@ after each generation step. In this regime, the next state depends
 only on the newly generated text, not on an accumulated context
 history. This permits a clean finite-time access bound.
 
-\textbf{Lemma 1 (replace-mode access bound).} Let $(X_t)_{t\ge 0}$ be a
+\begin{lemma}[replace-mode access bound]
+ Let $(X_t)_{t\ge 0}$ be a
 recursive loop with replace-mode nudge
 
 \begin{equation*}
@@ -451,8 +452,10 @@ Then after $m$ post-injection replace steps,
 \begin{equation*}
 \Pr(X_T \in B_2) \;\ge\; 1 - (1 - q_0 r_0)^m.
 \end{equation*}
+\end{lemma}
 
-\textbf{Proof.} Fix a trajectory with $X_{t_{\mathrm{inj}}} \in B_1$. For
+\begin{proof}
+ Fix a trajectory with $X_{t_{\mathrm{inj}}} \in B_1$. For
 $j \ge 1$, define the event
 
 \begin{equation*}
@@ -484,9 +487,12 @@ so
 \end{equation*}
 
 Since $\bigcup_{j=1}^{m} E_j \subseteq \{X_T \in B_2\}$, it follows
-that $\Pr(X_T \in B_2) \ge 1 - (1 - q_0 r_0)^m$. $\square$
+that $\Pr(X_T \in B_2) \ge 1 - (1 - q_0 r_0)^m$.
+\end{proof}
 
-\textbf{Corollary 1 (replace-mode barrier bound).} Under the assumptions
+
+\begin{corollary}[replace-mode barrier bound]
+ Under the assumptions
 of Lemma 1, the perturbation barrier defined in §3.1.1 satisfies
 
 \begin{equation*}
@@ -494,8 +500,10 @@ of Lemma 1, the perturbation barrier defined in §3.1.1 satisfies
 \;\le\;
 \kappa \,\Bigl\lceil \frac{\log(1/2)}{\log(1 - q_0 r_0)} \Bigr\rceil .
 \end{equation*}
+\end{corollary}
 
-\textbf{Proof.} By Lemma 1, after $m$ replace steps the terminal switching
+\begin{proof}
+ By Lemma 1, after $m$ replace steps the terminal switching
 probability is at least $1 - (1 - q_0 r_0)^m$. To reach $50\%$
 switching it is sufficient that $1 - (1 - q_0 r_0)^m \ge \tfrac{1}{2}$,
 equivalently
@@ -507,18 +515,25 @@ m \;\ge\; \frac{\log(1/2)}{\log(1 - q_0 r_0)} .
 Thus $m^\star = \lceil \log(1/2) / \log(1 - q_0 r_0) \rceil$ replace
 steps suffice. Since each replace step has expected token cost at most
 $\kappa$, the total expected token budget required for $50\%$
-switching is bounded above by $\kappa \, m^\star$. $\square$
+switching is bounded above by $\kappa \, m^\star$.
+\end{proof}
 
-\textbf{Corollary 2 (one-generation special case).} If, in addition,
+
+\begin{corollary}[one-generation special case]
+ If, in addition,
 $q_0 r_0 \ge \tfrac{1}{2}$, then
 
 \begin{equation*}
 \mathrm{B}(B_1 \to B_2) \;\le\; \kappa.
 \end{equation*}
+\end{corollary}
 
-\textbf{Proof.} If $q_0 r_0 \ge \tfrac{1}{2}$, then a single replace step
+\begin{proof}
+ If $q_0 r_0 \ge \tfrac{1}{2}$, then a single replace step
 already yields terminal switching probability at least $1/2$. The
-barrier is therefore at most the expected cost of one generation. $\square$
+barrier is therefore at most the expected cost of one generation.
+\end{proof}
+
 
 Lemma 1 and its corollaries formalize the central structural property
 of replace mode: because the next state depends only on the newly
@@ -557,7 +572,8 @@ one-step access alone, but on the cumulative amount of
 \textbf{basin-relevant counter-context} that survives inside the effective
 state.
 
-\textbf{Conjecture 1 (append-mode accumulation barrier).} Let
+\begin{conjecture}[append-mode accumulation barrier]
+ Let
 $B_1, B_2 \subset \mathcal{C}$ be basin sets for an append-mode
 recursive loop $X_{t+1} = \operatorname{clip}(X_t \Vert Y_t)$. Then
 there exists a basin-dependent threshold
@@ -595,6 +611,7 @@ $\Psi_{B_1 \to B_2} : [0, 1] \to [0, 1]$ such that
 
 with rapid growth occurring near a basin-dependent threshold
 $\alpha^\star_{B_1 \to B_2}$.
+\end{conjecture}
 
 The O1 dose-response measurements in §5.6 are consistent with this
 conjecture. Neutral and lorem perturbations remain near the
