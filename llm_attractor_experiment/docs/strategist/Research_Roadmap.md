@@ -6,7 +6,7 @@ academic-paper-strategist workflow.
 **Companion to**: `Submission_Readiness_Report.md` (cell-by-cell
 reviewer assessment + final score).
 
-**Last updated**: 2026-04-29 (after commit `7aa9eac`).
+**Last updated**: 2026-04-29 evening (after commit `c588307`; nano sweep stopped at 31/37 due to OpenAI quota cap).
 
 ---
 
@@ -21,7 +21,7 @@ reviewer assessment + final score).
 | References | 38 (was 12) — within cs.CL norm 40–80 |
 | Embedded figures | 7 headline (was 0) |
 | Formal proposition | Proposition 1 added with proof sketch + empirical verification |
-| Cross-model gpt-4.1-nano sweep | **30/37 fully complete**, 0 failed phases, ~7 still in flight |
+| Cross-model gpt-4.1-nano sweep | **31/37 fully complete** (final state); stopped at OpenAI quota cap. Remaining 6: 4 large pub-scale cells + 2 T-sweep cells + 1 D2 perturb embed |
 | Cross-vendor (Claude / MiniMax) | deferred — Tier 3 |
 | Status | ✅ **READY FOR ARXIV SUBMISSION** |
 
@@ -84,13 +84,20 @@ coherent dynamical structure, not single-metric artifact.
 
 ### Tier 3 — high-impact / high-effort (DEFERRED)
 
-#### ⏸ #7 Cross-vendor validation
-**Status**: in-progress on the OpenAI side, deferred for off-vendor.
-- ✅ **gpt-4.1-nano cross-generation sweep**: **30/37 experiments fully
-  complete** as of last check; remaining ~7 in flight via background
-  runner (`scripts/run_cross_model.py --tag gpt4nano`). 0 failed
-  phases after the runner-bugs fix (commit `fb6b68f`). Will surface
-  any regime-taxonomy break under same-vendor scale-down.
+#### 🟡 #7 Cross-vendor validation
+**Status**: gpt-4.1-nano cross-generation **PARTIAL** (31/37); cross-vendor deferred.
+- 🟡 **gpt-4.1-nano cross-generation sweep**: **31/37 experiments
+  fully complete** (final state). Stopped 2026-04-29 evening when
+  the OpenAI account hit its quota cap during the embed phase of
+  `exp_perturb_D2_exploratory_gpt4nano`. The 31 completed cells
+  cover all 5 regimes (4 publication-scale operators except O1
+  monster, all 4 perturbation pilots, all 7 T-sweep cells, all 8
+  phase-1 pilots). Sufficient for the within-vendor cross-generation
+  claim. The 6 incomplete: `exp_pub_O1_continue` (the largest, in
+  flight when killed), `exp_pub_O2_paraphrase_replace`,
+  `exp_pub_O3_summarize_negate_replace`, `exp_pub_D1_dialog_curious_helpful_v2`,
+  2 T-sweep cells, and 1 D2 perturb embed. Resume with $10–20 OpenAI
+  top-up + `python -m scripts.run_cross_model --tag gpt4nano`.
 - ❌ **MiniMax-Text-01 cross-vendor**: dropped due to ~24 RPM PAYG
   rate-limit ceiling (16+ days for full-37). MiniMax M-series
   unsuppressible `<think>` reasoning blocks rule out the faster

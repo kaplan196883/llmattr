@@ -203,7 +203,7 @@ validation is in progress as a follow-on:
 
 | sweep | status | will it land before submission? |
 |---|---|---|
-| **gpt-4.1-nano** (37 experiments) | 22/37 fully complete + retries running for 9 fixed-bug cells; ~4 hours wall to ETA | yes |
+| **gpt-4.1-nano** (37 experiments) | **31/37 fully complete** (final state). Stopped at OpenAI quota cap. All 5 regimes represented; sufficient for the within-vendor cross-generation claim. | yes (already landed) |
 | **MiniMax-Text-01** (37 experiments) | dropped due to ~24 RPM rate-limit ceiling — would need 16 days at sustained rate | no, deferred |
 | **Anthropic / Claude family** | not run; would need separate API top-up | no, deferred |
 
