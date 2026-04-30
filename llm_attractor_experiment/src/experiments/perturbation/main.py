@@ -79,9 +79,19 @@ def _parse_dose_condition(condition: str) -> tuple[str, int | None]:
     'neutral' -> ('neutral', None)
     'neutral_dose40' -> ('neutral', 40)
     'lorem_dose120' -> ('lorem', 120)
+    'adversarial_insert_dose80' -> ('adversarial', 80)  # insert-mode marker
+                                                          # is consumed by the
+                                                          # runner via "_insert_"
+                                                          # substring check.
     """
     if "_dose" in condition:
         base, _, rest = condition.partition("_dose")
+        # Strip the optional `_insert` marker — the perturbation-text
+        # resolution is the same as the corresponding overwrite condition;
+        # only the runner's dispatch logic distinguishes insert from overwrite
+        # (see src/experiments/perturbation/runner_op.py).
+        if base.endswith("_insert"):
+            base = base[: -len("_insert")]
         try:
             return base, int(rest)
         except ValueError:

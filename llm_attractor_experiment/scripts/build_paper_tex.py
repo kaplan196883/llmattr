@@ -63,28 +63,87 @@ OUT_README = OUT_DIR / "README.md"
 # LaTeX preamble (self-contained arxiv-style preprint look)
 # ---------------------------------------------------------------------------
 
-PREAMBLE = r"""\documentclass[11pt]{article}
+PREAMBLE = r"""\documentclass{article}
 
-% --- arxiv-style preprint preamble (self-contained) --------------------------
-\usepackage[a4paper,margin=1in]{geometry}
-\usepackage{lmodern}      % scalable Latin Modern fonts (required by microtype expansion)
+% --- Kourgeorge arxiv.sty preprint look --------------------------------------
+% Provides: Times+Helvetica fonts, letter geometry (6.5x9in), fancy header
+% with "A Preprint" + title + page number, horizontal-rule title box,
+% small-caps centered Abstract environment, tighter section spacing.
+\usepackage{arxiv}
+
+% Encoding (explicit per Kourgeorge template)
+\usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+
+% Math
 \usepackage{amsmath, amssymb, amsthm}
+
+% Tables / figures
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{microtype}
-\usepackage{hyperref}
-\usepackage{enumitem}
-\usepackage[section]{placeins}
 \usepackage{caption}
+\usepackage[section]{placeins}
 \captionsetup{font=small,labelfont=bf}
+
+% Microtype protrusion / expansion (works with Times via T1)
+\usepackage{microtype}
+
+% Lists
+\usepackage{enumitem}
+
+% Citations + hyperlinks (natbib MUST load before hyperref)
+\usepackage{natbib}
+\usepackage{hyperref}
+
+% ORCID logo + hyperlinked iD next to author name. Falls back gracefully
+% if the package is missing — pdflatex will warn but not error.
+\usepackage{orcidlink}
+
+% Allow LaTeX more flexibility in line-breaking: long file paths
+% inside \texttt{...} (e.g. data/aggregated/.../scatter.png) are
+% otherwise unbreakable and trigger Overfull \hbox warnings + visible
+% margin overflow. \emergencystretch gives the typesetter up to 3em
+% of extra glue per line as a last resort.
+\setlength{\emergencystretch}{3em}
+\tolerance=1000
+
+% Wide-table support: tabularx provides the X column type which
+% wraps long prose-content cells to fit within \textwidth instead of
+% pushing the table off the right margin. Define a ragged-right
+% variant Y — without it, default X is justified and cells with
+% unbreakable runs (\texttt{...}, URLs, long camelCase) can still
+% trigger "Overfull hbox in alignment" warnings.
+\usepackage{tabularx}
+\usepackage{array}    % \arraybackslash
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% Code / ASCII-art verbatim wrappers — font-only (no background, no
+% border). codeblock = \footnotesize for typical code; asciiblock =
+% \scriptsize for wide ASCII diagrams whose 80-100 char layouts only
+% fit the 6.5in textwidth at smaller sizes. Both support an optional
+% [caption] argument rendered as italic small-caps above the block.
+\usepackage{etoolbox}    % for \ifstrempty
+\newenvironment{codeblock}[1][]{%
+  \par\addvspace{4pt}%
+  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
+  \footnotesize%
+}{%
+  \par\addvspace{4pt}%
+}
+\newenvironment{asciiblock}[1][]{%
+  \par\addvspace{4pt}%
+  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
+  \scriptsize%
+}{%
+  \par\addvspace{4pt}%
+}
 \hypersetup{
   colorlinks=true,
   linkcolor=blue,
   citecolor=blue,
   urlcolor=blue,
+  breaklinks=true,
 }
-\renewcommand{\baselinestretch}{1.05}
 
 % Map common Unicode characters that appear in the source markdown
 % (math/typographic) to LaTeX-safe substitutes for pdflatex.
@@ -232,25 +291,47 @@ PREAMBLE = r"""\documentclass[11pt]{article}
 \theoremstyle{definition}
 \newtheorem{conjecture}{Conjecture}
 
-% Allow long URLs and arXiv IDs to break in references.
-\hypersetup{breaklinks=true}
-\sloppy
-
 % --- title block (user must fill in author block before submission) ---------
-\title{Endogenous attractor regimes in recursive large-language-model loops:\\
-       What does it cost to nudge an LLM out of an attractor?\\
-       A theoretical framework with measured barrier heights in tokens.}
-\author{[Author Name]\\{}[Affiliation]\\\texttt{[email]}}
+\title{Perturbation dose responses in recursive large-language-model loops:\\
+       Raw switching, stochastic floors, and rare persistent escape\\
+       across append, replace, and dialog nudges.}
+
+% Short title for the running header on pages 2+. Without this, the
+% full multi-line title gets crammed into the header.
+\renewcommand{\shorttitle}{Perturbation dose responses in recursive LLM loops}
+
+% `\\{}` (with the empty group) prevents \\ from parsing the next
+% line-content as its optional vertical-space argument.
+\author{Paweł Kapłański~\orcidlink{0000-0003-2223-0870}\\{}Kaplanski Ai Lab\\\texttt{pawel@kaplanski.ai}}
 \date{\today}
+
+% PDF metadata (per Kourgeorge template best-practice). Helps reference
+% managers / pdf viewers display the paper correctly.
+\hypersetup{
+  pdftitle={Perturbation dose responses in recursive large-language-model loops},
+  pdfsubject={cs.LG, cs.CL},
+  pdfauthor={Paweł Kapłański},
+  pdfkeywords={recursive LLM loops, attractor regimes, barrier height,
+    token-cost perturbation, embedding-space dynamics},
+}
 
 \begin{document}
 \maketitle
+
+% Optional keywords line (rendered just under the abstract).
+\keywords{recursive LLM loops \and attractor regimes \and barrier height
+  \and token-cost perturbation \and embedding-space dynamics}
 
 """
 
 POSTAMBLE = r"""
 
-\bibliographystyle{plainnat}
+% Strict citation hygiene: bibliography contains only works with
+% explicit \cite calls in the body. Use `\nocite{*}` here to also
+% surface uncited refs.bib entries (e.g. survey-style "Further reading"
+% mode).
+
+\bibliographystyle{unsrtnat}
 \bibliography{refs}
 
 \end{document}
@@ -315,17 +396,29 @@ def _restore_math_blocks(text: str, blocks: list[tuple[str, str]]) -> str:
     return text
 
 
-def _convert_fenced_code(text: str) -> tuple[str, list[str]]:
-    """Replace fenced ```lang...``` blocks with placeholders so the
-    inline-backtick rewriter doesn't accidentally consume their
-    content. Returns (rewritten_text, list_of_blocks)."""
-    blocks: list[str] = []
+def _convert_fenced_code(text: str) -> tuple[str, list[tuple[str, str, str]]]:
+    """Replace fenced ```lang [caption]\\n...\\n``` blocks with
+    placeholders so the inline-backtick rewriter doesn't accidentally
+    consume their content.
+
+    Info-string convention: anything after the language tag on the
+    opening fence is treated as an optional caption, e.g.
+        ```python  Compute the V landscape
+        ...
+        ```
+    The caption is then rendered as italic small text above the block.
+
+    Returns (rewritten_text, list of (lang, caption, body) tuples)."""
+    blocks: list[tuple[str, str, str]] = []
     def _stash(m: re.Match) -> str:
-        blocks.append(m.group(2))  # body without lang label
+        lang = m.group(1).strip()
+        caption = m.group(2).strip()
+        body = m.group(3)
+        blocks.append((lang, caption, body))
         return f"\x00CODEBLOCK{len(blocks)-1}\x00"
-    # ```optional_lang\n...\n```
+    # ```lang [caption text]\n body \n```
     rewritten = re.sub(
-        r"```([a-zA-Z0-9_+\-]*)\n([\s\S]*?)\n```",
+        r"```([a-zA-Z0-9_+\-]*)([^\n]*)\n([\s\S]*?)\n```",
         _stash, text,
     )
     return rewritten, blocks
@@ -350,19 +443,42 @@ _VERBATIM_UNICODE_MAP = {
     "∑": "sum", "∏": "prod", "∫": "int", "√": "sqrt",
     "ℓ": "l",   "°": "deg",  "§": "S",
     "‘": "'",   "’": "'",    "“": '"',   "”": '"',
+    # Box-drawing (U+2500..U+257F) — preserve diagram structure with ASCII.
+    "─": "-",   "━": "-",    "│": "|",   "┃": "|",
+    "┌": "+",   "┐": "+",    "└": "+",   "┘": "+",
+    "├": "+",   "┤": "+",    "┬": "+",   "┴": "+",   "┼": "+",
+    "┏": "+",   "┓": "+",    "┗": "+",   "┛": "+",
+    "┣": "+",   "┫": "+",    "┳": "+",   "┻": "+",   "╋": "+",
+    "═": "=",   "║": "|",
+    "╔": "+",   "╗": "+",    "╚": "+",   "╝": "+",
+    "╠": "+",   "╣": "+",    "╦": "+",   "╩": "+",   "╬": "+",
+    "╭": "+",   "╮": "+",    "╯": "+",   "╰": "+",
+    # Block / triangle arrowheads in diagrams.
+    "▶": ">",   "◀": "<",    "▲": "^",   "▼": "v",
+    "►": ">",   "◄": "<",    "△": "^",   "▽": "v",
+    "■": "#",   "□": "[]",   "●": "*",   "○": "o",
 }
 
 
-def _restore_fenced_code(text: str, blocks: list[str]) -> str:
-    """Restore fenced ``` blocks as `\\begin{verbatim}...\\end{verbatim}`.
-    Verbatim doesn't go through `\\newunicodechar` substitution, so we
-    replace unicode chars with ASCII fallbacks at restoration time.
-    Strategy:
-      1. Apply named substitutions from _VERBATIM_UNICODE_MAP for
-         common math/typographic chars.
-      2. For any remaining non-ASCII char, fall back to NFKD
-         compatibility decomposition + drop combining marks; if that
-         still leaves non-ASCII bytes, replace with `?`."""
+def _restore_fenced_code(
+    text: str,
+    blocks: list[tuple[str, str, str]],
+) -> str:
+    """Restore fenced ``` blocks as styled verbatim environments.
+
+    Routing by language tag:
+      - empty (no lang) → `asciiblock` (\\scriptsize) — typical for
+        +-+|+ ASCII art / pipeline diagrams whose width needs the
+        smaller font to fit \\textwidth.
+      - any language tag (python/bash/yaml/...) → `codeblock`
+        (\\footnotesize) — narrower line widths in real code, so a
+        less aggressive size shift suffices.
+
+    Verbatim doesn't go through \\newunicodechar substitution, so we
+    asciify unicode chars at restoration time:
+      1. Named substitutions from _VERBATIM_UNICODE_MAP.
+      2. NFKD compatibility decomposition + drop non-ASCII bytes.
+      3. Anything still non-ASCII becomes `?`."""
     import unicodedata
     def _asciify(s: str) -> str:
         for u, a in _VERBATIM_UNICODE_MAP.items():
@@ -372,18 +488,18 @@ def _restore_fenced_code(text: str, blocks: list[str]) -> str:
             if ord(ch) < 128:
                 out_chars.append(ch)
                 continue
-            # Try compatibility decomposition (e.g., z̄ → z + combining)
             decomp = unicodedata.normalize("NFKD", ch)
             ascii_only = "".join(c for c in decomp if ord(c) < 128)
-            if ascii_only:
-                out_chars.append(ascii_only)
-            else:
-                out_chars.append("?")
+            out_chars.append(ascii_only if ascii_only else "?")
         return "".join(out_chars)
-    for i, b in enumerate(blocks):
+    for i, (lang, caption, body) in enumerate(blocks):
+        env = "asciiblock" if not lang else "codeblock"
+        opt = f"[{caption}]" if caption else ""
         text = text.replace(
             f"\x00CODEBLOCK{i}\x00",
-            "\\begin{verbatim}\n" + _asciify(b) + "\n\\end{verbatim}",
+            f"\\begin{{{env}}}{opt}\n"
+            + "\\begin{verbatim}\n" + _asciify(body) + "\n\\end{verbatim}\n"
+            + f"\\end{{{env}}}",
         )
     return text
 
@@ -406,6 +522,12 @@ def _convert_inline_code(text: str) -> str:
         s = s.replace("$", r"\$")
         s = s.replace("^", r"\textasciicircum{}")
         s = s.replace("~", r"\textasciitilde{}")
+        # Hide `*` inside \texttt{} from the emphasis regex that runs
+        # next; restored to a literal `*` by _convert_inline_emphasis.
+        # Without this, `*` inside two adjacent inline-code spans pairs
+        # up across the prose between them and produces a spurious
+        # \textit{} that mangles the texttt content.
+        s = s.replace("*", "\x00ESCASTERISK\x00")
         return r"\texttt{" + s + "}"
     return re.sub(r"`([^`]+)`", _ttify, text)
 
@@ -433,7 +555,13 @@ def _convert_inline_emphasis(text: str) -> str:
     )
     # Italic: single `*` not adjacent to another `*` (avoids
     # mismatching the closing marker of an already-converted bold).
-    text = re.sub(r"(?<![*\\])\*([^*\n]+?)\*(?!\*)", r"\\textit{\1}", text)
+    # Body allows single newlines (multi-line titles like
+    # "*Dynamics of Agentic Loops...\nA Geometric Theory*") but bails
+    # on paragraph breaks.
+    text = re.sub(
+        r"(?<![*\\])\*((?:[^*\n]|\n(?!\s*\n))+?)\*(?!\*)",
+        r"\\textit{\1}", text,
+    )
     text = text.replace("\x00ESCASTERISK\x00", "*")
     return text
 
@@ -460,15 +588,23 @@ def _convert_inline_math(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 def _convert_headings(text: str) -> str:
-    """Convert ##/###/#### to LaTeX section commands."""
+    """Convert ##/###/#### to LaTeX section commands.
+
+    Strips leading numeric prefix from the heading text (`1. `, `1.1 `,
+    `4.3.5 `, etc.) — LaTeX adds its own `\\section{}` numbering, so a
+    literal "1.1" baked into the title produces "1.1  1.1 Phenomenon"
+    in the rendered PDF."""
+    num_prefix = re.compile(r"^\d+(?:\.\d+)*\.?\s+")
+    def _clean(title: str) -> str:
+        return num_prefix.sub("", title.strip())
     out_lines: list[str] = []
     for line in text.split("\n"):
         if line.startswith("#### "):
-            out_lines.append(r"\subsubsection{" + line[5:].strip() + "}")
+            out_lines.append(r"\subsubsection{" + _clean(line[5:]) + "}")
         elif line.startswith("### "):
-            out_lines.append(r"\subsection{" + line[4:].strip() + "}")
+            out_lines.append(r"\subsection{" + _clean(line[4:]) + "}")
         elif line.startswith("## "):
-            out_lines.append(r"\section{" + line[3:].strip() + "}")
+            out_lines.append(r"\section{" + _clean(line[3:]) + "}")
         elif line.startswith("# "):
             # top-level title — already in preamble; emit as paragraph break
             continue
@@ -479,7 +615,12 @@ def _convert_headings(text: str) -> str:
 
 def _convert_lists(text: str) -> str:
     """Convert markdown - / 1. lists to itemize / enumerate.
-    Naive: only handles top-level lists, not nesting."""
+    Naive: only handles top-level lists, not nesting.
+
+    Indented continuation lines (the wrap of a bullet whose source
+    spans multiple lines) are appended to the most recent \\item
+    rather than ending the list — without this, multi-line italic /
+    bold spans inside a bullet get split by a stray \\end{itemize}."""
     lines = text.split("\n")
     out: list[str] = []
     in_itemize = False
@@ -487,6 +628,12 @@ def _convert_lists(text: str) -> str:
     for line in lines:
         m_ul = re.match(r"^(\s*)-\s+(.+)$", line)
         m_ol = re.match(r"^(\s*)\d+\.\s+(.+)$", line)
+        is_blank = line.strip() == ""
+        is_indented_cont = (
+            (in_itemize or in_enumerate)
+            and not m_ul and not m_ol and not is_blank
+            and re.match(r"^\s+\S", line) is not None
+        )
         if m_ul:
             if in_enumerate:
                 out.append(r"\end{enumerate}")
@@ -503,6 +650,10 @@ def _convert_lists(text: str) -> str:
                 out.append(r"\begin{enumerate}")
                 in_enumerate = True
             out.append(r"  \item " + m_ol.group(2))
+        elif is_indented_cont:
+            # Continuation of the previous bullet — keep it inside the
+            # list, preserving the indent so the rendered prose flows.
+            out.append(line)
         else:
             if in_itemize:
                 out.append(r"\end{itemize}")
@@ -573,12 +724,31 @@ def _convert_tables(text: str) -> str:
             while j < len(lines) and lines[j].strip().startswith("|"):
                 rows.append(_split_table_row(lines[j]))
                 j += 1
-            # Emit tabular
-            col_spec = "".join(alignments)
+            # Heuristic for when to switch from plain tabular to
+            # tabularx (wrapping cells):
+            #  (a) 3+ columns with any cell longer than ~40 chars, OR
+            #  (b) 5+ columns regardless — multi-column tables with
+            #      short cells still overflow because tabular adds
+            #      fixed padding (\tabcolsep) per column boundary.
+            max_cell_len = max(
+                (len(c) for r in [header, *rows] for c in r),
+                default=0,
+            )
+            n_cols = len(header)
+            use_tabularx = (n_cols >= 3 and max_cell_len > 40) or n_cols >= 5
             out.append(r"\begin{table}[h!]")
             out.append(r"\centering")
             out.append(r"\small")
-            out.append(r"\begin{tabular}{" + col_spec + "}")
+            if use_tabularx:
+                # Keep first column at its natural width, wrap the
+                # remaining columns ragged-right (Y). Y = raggedright
+                # X — defined in preamble; avoids "alignment overflow"
+                # from justified X failing on unbreakable runs.
+                xspec = alignments[0] + "".join("Y" for _ in alignments[1:])
+                out.append(r"\begin{tabularx}{\textwidth}{" + xspec + "}")
+            else:
+                col_spec = "".join(alignments)
+                out.append(r"\begin{tabular}{" + col_spec + "}")
             out.append(r"\toprule")
             out.append(" & ".join(c for c in header) + r" \\")
             out.append(r"\midrule")
@@ -588,7 +758,7 @@ def _convert_tables(text: str) -> str:
                     row.append("")
                 out.append(" & ".join(row[:len(header)]) + r" \\")
             out.append(r"\bottomrule")
-            out.append(r"\end{tabular}")
+            out.append(r"\end{tabularx}" if use_tabularx else r"\end{tabular}")
             out.append(r"\end{table}")
             i = j
             continue
@@ -645,7 +815,10 @@ def _escape_prose_specials(text: str) -> str:
     in_tabular = False
     in_verbatim = False
     for line in text.split("\n"):
-        if r"\begin{tabular}" in line:
+        # Track BOTH \begin{tabular} and \begin{tabularx} — wide tables
+        # use the latter, and without this check & gets escaped to \&
+        # inside tabularx rows, breaking column separation.
+        if r"\begin{tabular}" in line or r"\begin{tabularx}" in line:
             in_tabular = True
         if r"\begin{verbatim}" in line:
             in_verbatim = True
@@ -672,7 +845,7 @@ def _escape_prose_specials(text: str) -> str:
                 # & is column-separator in tabular envs; only escape
                 # outside them.
                 line = re.sub(r"(?<!\\)&", r"\\&", line)
-        if r"\end{tabular}" in line:
+        if r"\end{tabular}" in line or r"\end{tabularx}" in line:
             in_tabular = False
         if r"\end{verbatim}" in line:
             in_verbatim = False
@@ -733,7 +906,7 @@ def _parse_references_section(article_text: str) -> tuple[str, dict]:
     # Locate "## 13. References" header and capture the body until
     # next ##-level header or end of file.
     m = re.search(
-        r"##\s*13\.\s*References\s*\n([\s\S]*?)(?=\n##\s|\Z)",
+        r"##\s*\d+\.\s*References\s*\n([\s\S]*?)(?=\n##\s|\Z)",
         article_text,
     )
     if not m:
@@ -828,7 +1001,14 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
 
     authors_chunk = authors_chunk.strip()
     if not authors_chunk:
-        authors_chunk = "Anonymous"
+        # Unattributed entries: prefer the arXiv ID over "Anonymous" so
+        # natbib renders [arXiv:2510.21258(2025)] instead of an
+        # awkward [Anonymous(2025a)] / [Anonymous(2025b)] disambiguator.
+        # Double braces tell BibTeX to treat the value as a single
+        # non-decomposed corporate name.
+        authors_chunk = (
+            "{{arXiv:" + arxiv_id + "}}" if arxiv_id else "{{Anonymous}}"
+        )
 
     # BibTeX wants " and " between authors, not commas. Our markdown
     # entries use comma-separated "Last, F., Last, F., ..." which
@@ -837,9 +1017,23 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
     # author boundary.
     authors_chunk = authors_chunk.replace(" & ", " and ")
     # Replace ". X.," patterns (initial period + comma) with " and ".
-    authors_chunk = re.sub(r"\.\s*,\s*(?=[A-ZŞŁÅÇÉÈÄÖÜ])", ". and ", authors_chunk)
-    # "et al" → "et al." properly terminated
-    authors_chunk = re.sub(r"\bet al\b\.?", "et al.", authors_chunk)
+    # The lookahead allows lowercase nobiliary particles ("de Lucena",
+    # "van der Berg", "von Neumann") in addition to plain capitalized
+    # surnames — without this, "Berg, C., de Lucena, D." stays comma-
+    # separated and BibTeX merges the first two authors into one.
+    authors_chunk = re.sub(r"\.\s*,\s*(?=[A-Za-zŞŁÅÇÉÈÄÖÜ])", ". and ", authors_chunk)
+    # Strip a redundant " and and " that the regex above can produce
+    # when the input already had ", and " (Oxford comma).
+    authors_chunk = re.sub(r"\s+and\s+and\s+", " and ", authors_chunk)
+    # "et al" / "et al." → BibTeX's "and others" sentinel so plainnat
+    # can render proper et-al suppression. Without this, "Berg et al."
+    # becomes a single malformed author and natbib emits "[et al.(YYYY)]"
+    # with no surname at all.
+    authors_chunk = re.sub(r"\s*,?\s*et\s+al\.?", " and others", authors_chunk)
+    # Re-run the and-and cleanup: the previous separator-normalization
+    # step turned ", et al." into " and et al." in some entries; the
+    # et-al replacement then produces " and and others". Squash.
+    authors_chunk = re.sub(r"\s+and\s+and\s+", " and ", authors_chunk)
 
     # 5. First-author-last-name for bibkey
     first_author_part = authors_chunk.split(",")[0].split(" et al")[0].strip()
@@ -863,12 +1057,16 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
 
     # 8. Build BibTeX
     if arxiv_id:
+        # Include both `eprint` (semantic) and `url` (renderable by
+        # unsrtnat.bst as a clickable link via hyperref). Without `url`,
+        # the rendered bibliography entry contains no link to the paper.
         bib = (f"@misc{{{bibkey},\n"
                f"  title = {{{title}}},\n"
                f"  author = {{{authors_chunk}}},\n"
                f"  year = {{{year}}},\n"
                f"  eprint = {{{arxiv_id}}},\n"
-               f"  archivePrefix = {{arXiv}}\n"
+               f"  archivePrefix = {{arXiv}},\n"
+               f"  url = {{https://arxiv.org/abs/{arxiv_id}}}\n"
                f"}}\n")
     else:
         bib = (f"@article{{{bibkey},\n"
@@ -881,15 +1079,151 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
 
 
 def _replace_inline_citations(text: str, refs: dict) -> str:
-    """Replace inline citation patterns with \cite{key}.
-    Handles `arXiv:NNNN.NNNNN` → \cite{arxivNNNNNNNNN}."""
+    """Replace inline `arXiv:NNNN.NNNNN` patterns with natbib cites.
+
+    Three passes (order matters):
+      1. Parenthetical group `(arXiv:A, arXiv:B, ...)` → `\\citep{a,b,...}`.
+         Without this, three adjacent \\citep produce nested parens
+         "((X), (Y), (Z))".
+      2. Sentence-initial `arXiv:N` (start of paragraph or after `. `,
+         `? `, `! `) → \\citet{a} so it reads "Berg et al. (2025) reports
+         that..." instead of the awkward "(Berg et al., 2025) reports
+         that...".
+      3. Anything else → \\citep{a} (mid-sentence parenthetical).
+
+    Required because the bibliography uses plainnat.bst, whose
+    `\\bibitem[short(year)long]{key}` alias only renders correctly
+    through natbib commands; bare `\\cite{}` dumps the alias verbatim.
+    """
+    def _bibkey(arxiv_id: str) -> str:
+        return f"arxiv{arxiv_id.replace('.', '')}"
+
+    def _grouped(m: re.Match) -> str:
+        ids = re.findall(r"arXiv:(\d{4}\.\d{4,5})", m.group(1))
+        keys = [_bibkey(i) for i in ids if _bibkey(i) in refs]
+        if len(keys) != len(ids) or not keys:
+            return m.group(0)
+        return f"\\citep{{{','.join(keys)}}}"
+    text = re.sub(
+        r"\(((?:arXiv:\d{4}\.\d{4,5}(?:,\s*)?)+)\)",
+        _grouped, text,
+    )
+
+    def _textual(m: re.Match) -> str:
+        prefix, arxiv_id = m.group(1), m.group(2)
+        bk = _bibkey(arxiv_id)
+        return f"{prefix}\\citet{{{bk}}}" if bk in refs else m.group(0)
+    text = re.sub(
+        r"(^|(?<=[.!?])\s+)arXiv:(\d{4}\.\d{4,5})",
+        _textual, text, flags=re.MULTILINE,
+    )
+
     def _arxiv(m: re.Match) -> str:
-        arxiv_id = m.group(1)
-        bibkey = f"arxiv{arxiv_id.replace('.', '')}"
-        if bibkey in refs:
-            return f"\\cite{{{bibkey}}}"
-        return m.group(0)
+        bk = _bibkey(m.group(1))
+        return f"\\citep{{{bk}}}" if bk in refs else m.group(0)
     text = re.sub(r"arXiv:(\d{4}\.\d{4,5})", _arxiv, text)
+    return text
+
+
+def _build_authoryear_index(refs: dict) -> dict:
+    """Map (firstauthor_surname_lower, year) → bibkey for prose-citation
+    rewriting. Skips corporate authors (e.g. {{arXiv:2510.21258}}) since
+    those are reachable via the arXiv-ID pattern."""
+    idx: dict[tuple[str, str], str] = {}
+    for bibkey, bibtex in refs.items():
+        m_author = re.search(r"author\s*=\s*\{(.+?)\}\s*,?\s*\n", bibtex, re.DOTALL)
+        m_year = re.search(r"year\s*=\s*\{(\d+)\}", bibtex)
+        if not m_author or not m_year:
+            continue
+        author_field = m_author.group(1).strip()
+        if author_field.startswith("{{") or author_field.lower() == "anonymous":
+            continue  # corporate / unknown — handled via arXiv ID elsewhere
+        first_chunk = author_field.split(" and ")[0].strip()
+        if "," in first_chunk:
+            first_lastname = first_chunk.split(",")[0].strip()
+        else:
+            words = first_chunk.split()
+            first_lastname = words[-1] if words else first_chunk
+        idx[(first_lastname.lower(), m_year.group(1))] = bibkey
+    return idx
+
+
+def _replace_authoryear_citations(text: str, refs: dict) -> str:
+    """Rewrite prose-style author-year citations as natbib commands.
+
+    Recognized forms (longest match first):
+      1. Grouped parenthetical with `;` separators:
+            (Smith et al., 2023; Jones, 2024)  →  \\citep{smith2023,jones2024}
+      2. Single parenthetical:
+            (Smith et al., 2023)  →  \\citep{smith2023}
+      3. Textual paren-year:
+            Smith et al. (2023)  →  \\citet{smith2023}
+      4. Bare comma-year:
+            Smith et al., 2023  →  \\citet{smith2023}
+
+    Lookup is `(first-author-surname.lower(), year) → bibkey`. Matches
+    that fail the lookup are left alone — so prose mentions of names
+    not in the bib (e.g. "Section 5" or "Phase 2 (2023)") don't get
+    spuriously rewritten."""
+    idx = _build_authoryear_index(refs)
+    if not idx:
+        return text
+
+    NAME = r"[A-Z][\wÀ-ſ\-]+"
+    YEAR = r"(?:19|20|21)\d{2}"
+    # First-author capture; optional second-author or "et al." after.
+    AUTHORS = (
+        rf"({NAME})"
+        rf"(?:\s+et\s+al\.?"
+        rf"|\s+and\s+(?:{NAME})"
+        rf"|\s+&\s+(?:{NAME}))?"
+    )
+
+    def _lookup(surname: str, year: str) -> str | None:
+        return idx.get((surname.lower(), year))
+
+    # 1. Grouped parenthetical: (X et al., 2023; Y, 2024[; ...])
+    grouped_item = rf"\s*{AUTHORS}\s*,?\s*({YEAR})\s*"
+    grouped_pat = rf"\(({grouped_item}(?:;{grouped_item})+)\)"
+
+    def grouped_repl(m: re.Match) -> str:
+        body = m.group(1)
+        items = re.split(r";", body)
+        keys: list[str] = []
+        for item in items:
+            mm = re.fullmatch(rf"\s*{AUTHORS}\s*,?\s*({YEAR})\s*", item)
+            if not mm:
+                return m.group(0)
+            key = _lookup(mm.group(1), mm.group(2))
+            if not key:
+                return m.group(0)
+            keys.append(key)
+        return f"\\citep{{{','.join(keys)}}}"
+    text = re.sub(grouped_pat, grouped_repl, text)
+
+    # 2. Single parenthetical: (Author et al., 2023)
+    single_paren_pat = rf"\(\s*{AUTHORS}\s*,\s*({YEAR})\s*\)"
+    def single_paren_repl(m: re.Match) -> str:
+        key = _lookup(m.group(1), m.group(2))
+        return f"\\citep{{{key}}}" if key else m.group(0)
+    text = re.sub(single_paren_pat, single_paren_repl, text)
+
+    # 3. Textual paren-year: Author et al. (2023)
+    textual_paren_pat = rf"{AUTHORS}\s+\(({YEAR})\)"
+    def textual_paren_repl(m: re.Match) -> str:
+        key = _lookup(m.group(1), m.group(2))
+        return f"\\citet{{{key}}}" if key else m.group(0)
+    text = re.sub(textual_paren_pat, textual_paren_repl, text)
+
+    # 4. Bare comma-year (not already inside parens / citep): Author, 2023
+    #    Constrained to the start of a "name+year" chunk; word-boundary
+    #    after year prevents matching e.g., a "20239" sequence.
+    bare_pat = rf"{AUTHORS}\s*,\s*({YEAR})\b(?!\s*[\)\d])"
+    def bare_repl(m: re.Match) -> str:
+        key = _lookup(m.group(1), m.group(2))
+        return f"\\citet{{{key}}}" if key else m.group(0)
+    text = re.sub(bare_pat, bare_repl, text)
+
     return text
 
 
@@ -912,9 +1246,27 @@ def main() -> int:
 
     # Parse and remove §13 References (we emit BibTeX file separately)
     article_text, refs = _parse_references_section(article_text)
+
+    # Run the abstract through the same conversion chain as the body.
+    # Without this, raw markdown (**, %, $, _, arXiv:N citations) leaks
+    # into the rendered PDF — `%` swallows the rest of its line as a
+    # LaTeX comment, `**` shows up literally, etc. Stashes are
+    # independent from the body's stashes; placeholders match within
+    # each call.
+    if abstract_body:
+        abstract_body, _abs_math = _convert_math_blocks(abstract_body)
+        abstract_body, _abs_code = _convert_fenced_code(abstract_body)
+        abstract_body = _convert_inline_code(abstract_body)
+        abstract_body = _convert_inline_emphasis(abstract_body)
+        abstract_body = _convert_links(abstract_body)
+        abstract_body = _replace_inline_citations(abstract_body, refs)
+        abstract_body = _replace_authoryear_citations(abstract_body, refs)
+        abstract_body = _escape_prose_specials(abstract_body)
+        abstract_body = _restore_fenced_code(abstract_body, _abs_code)
+        abstract_body = _restore_math_blocks(abstract_body, _abs_math)
     # Remove the §13 section from article_text body
     article_text = re.sub(
-        r"##\s*13\.\s*References[\s\S]*?(?=\n##\s|\Z)",
+        r"##\s*\d+\.\s*References[\s\S]*?(?=\n##\s|\Z)",
         "",
         article_text,
     )
@@ -938,6 +1290,10 @@ def main() -> int:
     article_text = _convert_inline_emphasis(article_text)
     article_text = _convert_links(article_text)
     article_text = _replace_inline_citations(article_text, refs)
+    # Catch prose-style author-year mentions ("Madaan et al., 2023",
+    # "Hopfield, 1982", "(Sussillo & Barak, 2013; ...)") that aren't
+    # arXiv-tagged but DO have matching bib entries.
+    article_text = _replace_authoryear_citations(article_text, refs)
 
     # Block patterns
     article_text = _convert_tables(article_text)

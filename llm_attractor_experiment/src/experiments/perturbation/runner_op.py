@@ -87,12 +87,41 @@ def run_perturbed_trajectory_op(
     for step in range(config.steps_per_run):
         send_ctx = context
 
-        is_override = (step == override_step) and (perturbation_condition != "control")
-        if is_override:
+        is_perturbation_step = (
+            (step == override_step) and (perturbation_condition != "control")
+        )
+        # Two perturbation modes are distinguished by the condition name:
+        #   - `*_insert_*`  (e.g. `adversarial_insert_dose200`):
+        #       Prepend perturbation_text to the context for THIS step's
+        #       generation only. The model still generates normally; the
+        #       inserted text does NOT persist into context_after, so it
+        #       affects exactly one generation step. Probes whether the
+        #       trajectory crosses a basin under context-augmented
+        #       generation, with the real model output preserved.
+        #   - default (e.g. `adversarial_dose200`):
+        #       Replace the generated output with perturbation_text — the
+        #       existing state-overwrite behavior. The perturbation text
+        #       becomes the entire output and persists in context_after.
+        # Comparing the two perturbation modes addresses review
+        # weakness #3 (replace-mode tautology) — see paper/openai_review.md.
+        is_insert_mode = (
+            is_perturbation_step and "_insert_" in perturbation_condition
+        )
+        is_overwrite_mode = is_perturbation_step and not is_insert_mode
+
+        if is_insert_mode:
+            # Context-insertion: prepend perturbation_text for this one
+            # API call. update_context below will use the unmodified
+            # `context`, so the inserted text vanishes after this step.
+            send_ctx = perturbation_text + "\n\n" + context
+            gen = generate_step(client, send_ctx, config, system_prompt=system_prompt)
+        elif is_overwrite_mode:
             gen = _synthetic_generation_result(perturbation_text, config.generation_model)
         else:
             gen = generate_step(client, send_ctx, config, system_prompt=system_prompt)
 
+        # update_context always uses the original `context` (not send_ctx)
+        # so insert-mode perturbations do not persist into context_after.
         new_context = update_context(
             context,
             gen.output_text,
@@ -108,7 +137,12 @@ def run_perturbed_trajectory_op(
         if step_sink is not None:
             step_sink(rec)
 
-        tag = "PERT" if is_override else "    "
+        if is_insert_mode:
+            tag = "INS "
+        elif is_overwrite_mode:
+            tag = "PERT"
+        else:
+            tag = "    "
         log.info(
             "%s/%s %s[%s]/%s/%s/%s step %d out='%s'",
             perturbation_condition, tag,

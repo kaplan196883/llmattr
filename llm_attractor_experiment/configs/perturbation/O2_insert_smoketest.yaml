@@ -1,0 +1,81 @@
+# Tiny smoke-test config for the new `adversarial_insert_doseN` perturbation
+# mode (review weakness #3 follow-up, see paper/openai_review.md). Runs only
+# 2 trajectories per condition (1 family × 1 IC × 2 runs), 30 steps. Uses O2
+# replace-mode operator. Cost ~$0.10 OpenAI; runtime ~3 min.
+#
+# After this smoke-test passes, scale up to the production
+# `O2_overwrite_vs_insert.yaml` (5 families × 5 ICs × 2 runs).
+
+experiment_id: exp_perturb_O2_insert_smoketest
+generation_model: gpt-4o-mini
+embedding_model: text-embedding-3-small
+steps_per_run: 30
+runs_per_condition: 2
+initial_conditions_per_family: 1
+max_output_tokens: 120
+temperature: 0.8
+top_p: 1.0
+include_logprobs: false
+clip_rule: tail_chars
+max_context_chars: 12000
+loop_mode: replace
+rolling_window_k: 3
+context_tail_chars: 4000
+context_full_chars: 8000
+observables:
+- output
+- rolling_k3
+- context_tail
+pca_dims:
+- 2
+- 10
+clustering:
+  method: kmeans
+  kmeans:
+    n_clusters: 8
+recurrence:
+  metric: cosine
+  epsilon: 0.15
+  tau: 3
+dwell:
+  space: pca10
+basin:
+  target_region_late_fraction: 0.3
+  target_step_fraction: 0.7
+  perturbations:
+  - seed_only
+basin_entry:
+  enabled: true
+  late_fraction: 0.3
+  fraction_after: 0.7
+late_recurrence:
+  enabled: true
+  start_fraction: 0.5
+  use_basin_entry: true
+exit_return:
+  enabled: true
+  start_fraction: 0.0
+  use_basin_entry: true
+bootstrap:
+  enabled: true
+  n_resamples: 200
+  confidence: 0.95
+baseline_modes: []
+batch_embeddings: false
+use_evals: false
+seed: 42
+parallel_trajectories: 4
+output_dir: data
+prompt_families:
+- name: philosophy_dialog
+  system_prompt: Paraphrase the following text while preserving its meaning. Return only the paraphrase.
+  initial_conditions:
+  - What is the nature of consciousness?
+perturbation:
+  enabled: true
+  override_step: 15
+  conditions:
+  - control
+  - adversarial_dose80
+  - adversarial_insert_dose80
+  adversarial_source_experiment: exp_pub_O2_paraphrase_replace

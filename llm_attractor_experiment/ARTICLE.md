@@ -1,5 +1,5 @@
-# Endogenous attractor regimes in recursive large-language-model loops
-## What does it cost to nudge an LLM out of an attractor? A theoretical framework with measured barrier heights in tokens.
+# Perturbation dose responses in recursive large-language-model loops
+## Raw switching, stochastic floors, and rare persistent escape across append, replace, and dialog nudges
 
 ---
 
@@ -7,50 +7,68 @@
 
 Large language models run in recursive loops do not wander arbitrarily
 through text space. Under repeated self-conditioning, they enter a
-small number of reproducible attractor regimes whose form depends not
-only on the model, but on how generated text is fed back into context.
-Recent work has classified such regimes qualitatively
+small number of reproducible attractor-like regimes whose form depends
+not only on the model, but on how generated text is fed back into
+context. Recent work has classified such regimes qualitatively
 (arXiv:2512.10350, arXiv:2510.21258, arXiv:2510.24797), but has not
-asked the next question: **what does it cost to push a trajectory out
-of an attractor?**
+asked the next question: **how much injected text does it take to
+move a recursive trajectory out of its current basin, and what does
+"moving out" mean operationally?**
 
 We answer this with a state–generator–nudge framework that treats the
-language model and the context-update rule as distinct objects. In this
-framework, a **nudge** is the operator that maps the current context
-and the model output into the next context; append, replace, and
-role-structured dialog are three concrete nudge families. We define
-the **barrier height** of an attractor as the token-cost of injected
-text required for 50% trajectory switching — an interpretable
-operational unit for comparing recursive regimes.
+language model and the context-update rule as distinct objects, and
+with a three-endpoint decomposition of "barrier height" into
+$\mathrm{ED50}_{\mathrm{raw}}$ (final-cluster disagreement),
+$\mathrm{ED50}_{\mathrm{net}}$ (above the stochastic divergence
+floor), and $\mathrm{ED50}_{\mathrm{persist}}$ (kicked at injection
+AND in the new basin at the terminal step). The formal "barrier
+height" defined in §3.1.1 corresponds to the persistent-escape
+endpoint.
 
-Across 37 experiments on `gpt-4o-mini`, with 50–1350 trajectories per
-configuration embedded using `text-embedding-3-small`, we identify
-five regimes: an append-mode contractive basin (O1), a replace-mode
-oscillatory 2-cycle (O2), a replace-mode absorbing regime induced by
-summarize-and-negate (O3), a stylistic multi-basin dialog regime (D1),
-and a drill-down dialog regime with topical content gravity (D2,
-exploratory-scale). Their barrier signatures differ sharply. O1
-requires about 150 tokens of in-distribution adversarial text for 50%
-switching, while out-of-distribution perturbations saturate near a
-24% drift floor. Replace-mode O2 and O3 are nearly
-perturbation-transparent, with 94–96% switching at tested doses.
-Dialog regimes occupy intermediate scales, with switching behavior
-determined more by conversational structure than by perturbation
-magnitude alone.
+**Headline finding (O1, append-mode continuation, $n=200$/cell × 8
+doses × 1,800 trajectories, §5.6.1):** in-distribution adversarial
+injections produce a reproducible **raw-switching ED50 ≈ 40 tokens**
+(4PL pooled = 36; GLMM = 41; family-cluster-bootstrap median = 52,
+95% CI [8.5, 242]) — but the strict **persistent-escape barrier is
+not reached in the tested 5–400 token range**. At 400 tokens, only
+**16% (k=12) / 10% (k=4) / 39.5% (HDBSCAN)** of trajectories are
+kicked into a new cluster *and* remain there at the terminal step.
+Raw switching saturates at a **plateau near 0.67** rather than 1.0,
+and a **control-vs-control stochastic divergence floor of 0.35**
+(n=600 paired comparisons) consumes most of the apparent effect at
+low doses; the *net* adversarial effect saturates at +32 pp above
+the floor at dose 400, well below the +50 pp threshold. Out-of-
+distribution perturbations (neutral / lorem) saturate at a 24% drift
+floor and show no detectable barrier crossing.
 
-We then compare these **behavioral** barriers to **geometric** barrier
-estimates derived from the empirical potential landscape
-$V(x) = -\log \rho(x)$ on PCA-2, using Dijkstra geodesics between
-density-peak basins. The two estimates agree in ordinal structure.
-Together, these results show that recursive LLM regimes are not
-defined only by contraction, oscillation, or collapse, but also by
-their **resistance to nudging**.
+**Replace-mode tautology probe (O2, §5.10.11).** A direct test
+isolates the operator-overwrite contribution from a basin-reaching
+effect: at the same injection text and dose, O2 switches at 92–98%
+under state-overwrite (the existing protocol) but only **18–32%
+under context-insertion** (perturbation prepended to context, model
+generates normally). The 60–80 percentage-point gap is the operator-
+overwrite tautology. Per Lemma 1 (§3.1.2), replace-mode regimes have
+*no formal injected-token barrier* — the bound is on a separate
+post-injection generation budget $G_m$. The new empirical evidence
+confirms that the previously-reported "near-100% switching for
+O2/O3" is mostly the operator overwriting state, not a discovered
+low attractor barrier.
+
+Across 37 experiments on `gpt-4o-mini`, we identify **four diagnostic
+regimes** that satisfy a falsifiable operational definition of
+"attractor-like" (§3.1.1.5): O1 register-shaped contractive append-
+mode; O2 oscillatory paraphrase-replace; O3 template-absorbing
+summarize-and-negate replace; D1 dialogue-state-driven multi-basin
+dialog. We additionally report **preliminary evidence** for a fifth
+regime (D2 drill-down dialog) at exploratory scale (n=25). The
+existing geometric-barrier estimates from the empirical potential
+landscape $V(x) = -\log \rho(x)$ on PCA-2 (§5.10) are descriptive,
+with parameter-grid sensitivity (CV 14–24%) but ordinal stability
+across condition rankings (89–98% of parameter combinations).
 
 The full pipeline regenerates from raw trajectories
-(`steps.jsonl`, LFS-tracked) using a documented `embed → analyze →
-report` chain. All code, configs, raw data, and reports are publicly
-available (https://github.com/kaplan196883/llmattr); 103/103 numeric
-claims are cell-verified against the published CSVs (`RESULTS.md`).
+(`steps.jsonl`, LFS-tracked). All code, configs, raw data, and
+reports are publicly available (<https://github.com/kaplan196883/llmattr>).
 
 ---
 
@@ -129,18 +147,33 @@ information-theoretic reading (§3.1.4) connects the token-cost to a
 model-agnostic surprisal-based quantity in nats.
 
 **Third**, we measure these barriers across 37 experiments on
-`gpt-4o-mini`. Append-mode continuation exhibits a finite
-in-distribution barrier of about 150 tokens, while neutral or lorem
-perturbations fail to overcome the regime beyond a drift floor near
-24%. Replace-mode paraphrase and summarize-and-negate are nearly
-barrier-free at tested doses, while dialog regimes occupy
-intermediate scales. **This barrier profile is the paper's main
-empirical result.**
+`gpt-4o-mini`. Append-mode continuation exhibits a finite, graded
+in-distribution dose-response with **ED50 ≈ 40 tokens** (4PL pooled
+36; GLMM 41; family-cluster-bootstrap median 52, 95% CI [8.5, 242];
+$n=200$/cell × 8 doses, §5.6.1) and a plateau near 67% — a
+substantial subpopulation does not switch at any tested dose. A
+control-vs-control stochastic floor of ~35% consumes most of the
+effect at low doses, leaving a net adversarial effect of ~32
+percentage points at the highest tested dose. Out-of-distribution
+neutral and lorem perturbations fail to overcome the regime beyond
+a drift floor near 24%. Replace-mode paraphrase and summarize-and-
+negate show near-saturated switching at all tested doses, while
+dialog regimes occupy intermediate scales. **The graded dose-
+response shape, plateau-below-1, and natural-floor decomposition
+together replace the simpler "barrier height" framing of earlier
+versions of this manuscript.**
 
-**Fourth**, we show that behavioral perturbation barriers agree with
-geometric barriers estimated from the empirical potential landscape
-$V(x) = -\log \rho(x)$ on PCA-2. This triangulates the perturbation
-results against an independent representation-space construction.
+**Fourth**, we report a complementary descriptive view: geometric
+"barriers" estimated from the empirical potential landscape
+$V(x) = -\log \rho(x)$ on PCA-2 give a qualitative picture of basin
+structure that is *consistent* with the perturbation results in some
+respects (e.g. replace-mode regimes show rapid basin re-organisation)
+but is *not* a quantitative independent confirmation: the geometric
+$V^\star$ values for replace-mode regimes are paradoxically *high*
+even though their behavioral switching rates are saturated near 100%
+(§5.10). We treat the geometric landscape as a useful descriptive
+visualisation, not as independent validation of the behavioral
+barrier numbers.
 
 **Fifth**, we refine the emerging taxonomy of recursive LLM dynamics.
 In addition to the now-familiar contractive, oscillatory, and
@@ -154,7 +187,11 @@ protocol is the load-bearing tool that resolves the full taxonomy.
 The full pipeline is reproducible: raw trajectories LFS-tracked, 99
 unit tests, every numeric claim in §5 verified cell-by-cell against
 the cited CSV (`RESULTS.md`, 103/103 cells), and every experiment's
-artifact presence audited (`COVERAGE.csv`, 37/37 at 100%).
+artifact presence audited (`COVERAGE.csv`, 37/37 at 100%). All
+within-vendor cross-generation results — the 37/37 nano replication
+and the 6/6-thesis PASS audit (§5.14) — are reproducible from the
+same raw trajectories via three additional artifacts:
+`COVERAGE_nano.csv`, `RESULTS_nano.md`, `THESES_nano.md`.
 
 ---
 
@@ -232,14 +269,14 @@ A concise comparison with the closest prior work:
 | geometric/behavioral triangulation | n/a | **mean V\* across 6 inter-basin geodesics agrees with perturbation-derived dose thresholds** (§5.10) |
 | reproducibility | code link only | 103/103 cell-verified numeric claims (`RESULTS.md`); 37/37 experiments at 100% applicable artifact coverage (`COVERAGE.csv`); raw trajectories LFS-tracked |
 | trajectory scope | not specified | 50–1,350 trajectories per configuration across 37 experiments |
-| model | not specified | gpt-4o-mini (cross-model with gpt-4.1-nano in §11) |
+| model | not specified | gpt-4o-mini, with within-vendor cross-generation replication on gpt-4.1-nano (37/37 cells; pub-scale headline verdicts preserved) |
 
 We share the dynamical-systems framing and the contractive /
 oscillatory pair; we *add* the cost-of-nudging measurement and the
 two dialog regimes whose distinguishing signature appears only when
 that measurement is made.
 
-Tuci et al. (2026, arXiv:2604.19740) study SGD-optimization dynamics
+Tuci et al. (2026) study SGD-optimization dynamics
 on neural-net loss landscapes via random dynamical systems and
 introduce a "sharpness dimension" generalization bound at the edge
 of stability. Their setting (parameter space, Hessian-anchored,
@@ -282,6 +319,155 @@ This turns dialog into a distinct family of nudges. In our experiments,
 dialog does not simply reproduce the operator regimes. Instead, it
 generates its own attractor structure, including stylistic
 multi-basin behavior (D1) and topic-anchored drill-down dynamics (D2).
+
+### 2.6 Terminology
+
+The reviewer flagged that the manuscript uses "attractor," "basin,"
+"cluster," "sink," "barrier," "switch," "collapse," "regime," and
+"nudge" interchangeably in places (`paper/openai_review.md` Writing
+& Structure §3). To fix this, we fix a strict hierarchy and
+explicit definitions. All later usage in the paper conforms to this
+glossary unless otherwise noted.
+
+**Text state $X_t$.**
+The text state is the bounded visible context string available to
+the generator at recursive step $t$.
+*Don't confuse with:* the generated output $Y_t$, which is only
+the model's next text sample.
+
+**Observable $\mathcal{O}(X_t)$.**
+An observable is a deterministic text view extracted from the state
+or output, such as `output`, `rolling_k3`, or `context_tail`.
+*Don't confuse with:* an embedding, which is the numerical vector
+computed from the observable text.
+
+**Embedding $z_t$.**
+An embedding is the vector representation
+$z_t = \mathrm{embed}(\mathcal{O}(X_t))$ used for distances,
+projections, clustering, and diagnostics.
+*Don't confuse with:* the text state itself, which remains a string.
+
+**Cluster.**
+A cluster is a cell of the canonical K-means partition, fit on
+PCA-10 embeddings with $k=12$ unless explicitly stated otherwise.
+*Don't confuse with:* a basin, which requires additional temporal
+or structural support beyond K-means membership.
+
+**Basin / basin candidate.**
+A basin candidate is a cluster or coarser embedding-space region
+with evidence of persistence, recurrence/dwell, robustness,
+contraction, re-entry, or collapse.
+*Don't confuse with:* a raw cluster label, which may over-partition
+or merge dynamical structure.
+
+**Attractor-like regime.**
+An attractor-like regime is a top-level recursive-loop behavior
+whose basin candidates satisfy the operational criteria defined in
+§3.1.1.5.
+*Don't confuse with:* a classical deterministic attractor; our
+claim is empirical and operational, not a smooth-state theorem.
+
+**Regime label.**
+A regime label is the human-readable name assigned to a generator–
+nudge configuration after inspecting its diagnostics and
+perturbation response.
+*Don't confuse with:* a cluster label, which is an unsupervised
+numerical partition index.
+
+**Nudge.**
+A nudge is the context-update operator $\mathcal{N}_f(X_t, Y_t)$
+that writes generated or injected text into the next state.
+*Don't confuse with:* a perturbation, which is externally injected
+text used to test stability.
+
+**Perturbation.**
+A perturbation is controlled injected text inserted at a specified
+step to test whether the trajectory changes its terminal cluster
+or basin candidate.
+*Don't confuse with:* ordinary generated text, which is sampled by
+the model during unperturbed recursion.
+
+**Switch / switching rate.**
+A switch is final-step cluster disagreement between a perturbed
+trajectory and its paired control trajectory, and switching rate
+is the fraction of such events.
+*Don't confuse with:* persistent basin escape, which requires
+stronger evidence than final-cluster disagreement.
+
+**Persistent basin escape.**
+A persistent basin escape is a visible injection-time cluster jump
+that remains in the post-injection basin through the terminal step.
+*Don't confuse with:* stochastic post-injection divergence, where
+final clusters differ without a durable basin-crossing event.
+
+**Barrier height in tokens.**
+Barrier height in tokens is the injected-token dose required to
+produce at least 50% switching under a specified perturbation
+protocol.
+*Don't confuse with:* generated-token budget, which counts model
+output after injection rather than injected text.
+
+**Barrier height in nats.**
+Barrier height in nats is the corresponding information cost
+computed from conditional token surprisal, which is not numerically
+measured in this battery.
+*Don't confuse with:* the reported token barrier, which is
+tokenizer-dependent and directly measured.
+
+**Contractive.**
+A contractive regime shows decreasing ensemble spread, low late
+Lyapunov growth, or movement toward a stable basin candidate.
+*Don't confuse with:* absorbing collapse, where trajectories become
+trapped in a narrow template or fixed form.
+
+**Oscillatory.**
+An oscillatory regime shows repeated return to alternating states
+or cycle arms, typically detected by lag-periodicity and high
+recurrence.
+*Don't confuse with:* generic recurrence, which need not imply a
+period-2 or periodic structure.
+
+**Absorbing.**
+An absorbing regime traps trajectories in a fixed discourse form,
+low-dimensional template, or near-invariant output pattern.
+*Don't confuse with:* semantic convergence; in O3 the absorption
+is template-formal, not topic-identical (see §5.10.8).
+
+**Multi-basin.**
+A multi-basin regime contains several supported basin candidates,
+often corresponding to register, dialogue state, or recent-context
+capture.
+*Don't confuse with:* many K-means clusters; multi-basin status
+requires structural support beyond cluster count.
+
+**Sink.**
+A sink is a descriptive visualization term for a local density or
+flow-convergence region in projected embedding space.
+*Don't confuse with:* an attractor-like regime, which is a full
+trajectory-level classification.
+
+**Collapse.**
+Collapse is a strong reduction of trajectory diversity into a narrow
+template, cluster, or low-dimensional region.
+*Don't confuse with:* contraction, which can preserve multiple
+supported basins while reducing dispersion.
+
+**How we use these terms.**
+In this paper, "attractor-like" is the only term used for top-level
+regime claims. "Cluster" refers specifically to the canonical
+K-means partition unless another clustering method is named.
+"Basin" means a cluster or coarser region with structural support
+from the diagnostic battery. "Switching rate" is the operational
+final-step cluster-disagreement metric used in the perturbation
+pilots. "Persistent basin escape" is the stricter measure
+introduced in §5.10.9, requiring an injection-time jump that
+remains in the new basin. Claims about barrier height are tied to
+the stated switching definition unless explicitly marked as
+persistent-escape barriers.
+
+**The strict hierarchy is:**
+
+`text state X_t  →  observable O(X_t)  →  embedding z_t  →  K-means cluster  →  basin candidate  →  attractor-like regime`
 
 ---
 
@@ -349,137 +535,325 @@ how much text you have to insert to re-aim the trajectory) and that
 **varies with the nudge**, but not arbitrarily. The next proposition
 establishes the structural difference between append and replace nudges.
 
-#### 3.1.2 Replace-mode access bound (Lemma 1 + Corollaries)
+#### 3.1.1bis Three operational endpoints for "barrier height"
+
+We separate three endpoints that earlier drafts treated as one. Let
+$D$ denote injected-dose length, $C_0$ the initial cluster, $C_T$
+the terminal cluster, and $p_0$ the control-vs-control natural
+floor.
+
+1. **Raw-switching ED50.**
+   $$
+   \mathrm{ED50}_{\mathrm{raw}}=\inf\{D:\Pr(C_T\neq C_0\mid D)\ge 0.5\}.
+   $$
+   The dose at which raw final-cluster disagreement crosses 50%,
+   without subtracting the natural stochastic floor.
+
+2. **Net-switching ED50.**
+   $$
+   \mathrm{ED50}_{\mathrm{net}}=\inf\{D:\Pr(C_T\neq C_0\mid D)-p_0\ge 0.5\}.
+   $$
+   The dose at which the treatment-induced excess switching above
+   the control-vs-control floor crosses +50 percentage points.
+
+3. **Persistent-escape ED50.**
+   $$
+   \mathrm{ED50}_{\mathrm{persist}}=\inf\{D:\Pr(J_D=1,\ C_T\neq C_0\mid D)\ge 0.5\},
+   $$
+   where $J_D=1$ denotes an injection-step jump. The dose at which
+   an injection-induced jump that persists to the terminal step
+   crosses 50%.
+
+| endpoint | definition | measured value | 95% CI | status |
+|---|---|---:|---:|---|
+| $\mathrm{ED50}_{\mathrm{raw}}$ | Raw terminal disagreement: $\Pr(C_T\neq C_0\mid D)=0.5$ | $36, 41, 52$ tokens across 4PL pooled, GLMM, and family-cluster-bootstrap median; $\approx 40$ tokens | $[8.5, 242]$ tokens | established |
+| $\mathrm{ED50}_{\mathrm{net}}$ | Excess over natural floor: $\Pr(C_T\neq C_0\mid D)-p_0=0.5$, with $p_0=0.347\,[0.310,0.386]$ | not reached; maximum observed net effect $=0.670-0.347=+0.323$ at 400 tokens | not estimable | not reached in tested range |
+| $\mathrm{ED50}_{\mathrm{persist}}$ | Injection-step jump plus terminal persistence: $\Pr(J_D=1,\ C_T\neq C_0\mid D)=0.5$ | undefined in range; maximum observed persistent escape $=32/200=16.0\%$ at 400 tokens | not estimable | not reached in tested range |
+
+The formal §3.1.1 barrier-height definition corresponds to
+$\mathrm{ED50}_{\mathrm{persist}}$: an intervention must push the
+system out of its starting basin AND the trajectory must remain
+escaped at the terminal measurement. The sparse-data "barrier
+height" claim in earlier versions implicitly conflated this
+persistent-escape endpoint with raw terminal switching. They are
+different estimands.
+
+**Reading the dense rerun.** The dense rerun establishes a
+raw-switching ED50 of approximately 40 tokens. The fitted raw curve
+has lower asymptote $d = 0.28$ and upper asymptote $a = 0.69$,
+consistent with a large natural switching floor and an incomplete
+switchable population. The control-vs-control floor is
+$p_0 = 0.347\,[0.310, 0.386]$. Subtracting that floor, the observed
+net effects across the eight doses are
+$+0.068, +0.163, +0.228, +0.283, +0.258, +0.273, +0.308, +0.323$.
+Thus $\mathrm{ED50}_{\mathrm{net}}$ is not reached: the net effect
+saturates at about +32 percentage points, well below the +50
+percentage-point threshold. Persistent escape is still rarer. The
+persistent-escape rates are
+$3.5\%, 7.0\%, 3.5\%, 9.0\%, 11.5\%, 13.0\%, 14.0\%, 16.0\%$ from
+20 to 400 tokens. $\mathrm{ED50}_{\mathrm{persist}}$ is undefined
+in the tested range.
+
+**Implication for the paper's claims.** The formal barrier-height
+construct is a persistent-escape endpoint, whereas the empirically
+measured $\approx 40$-token ED50 is a raw-switching endpoint. Under
+the strict operational reading, **O1 has no measured persistent-
+escape barrier in the tested range**. What it has is a graded raw-
+switching dose response with substantial stochastic-floor and
+non-switching aggregate contributions. This replaces the earlier
+"150-token barrier" framing. The stronger result is the
+**aggregate-rate decomposition** (these are *components of the
+observed rate*, not individually identified latent classes): roughly
+35% natural stochastic switching from a control-vs-control floor,
+an upper asymptote at ~67% suggesting a non-perturbable component
+of ~31% under the tested protocol, persistent escape rates of
+3–16% across doses (10% / 16% / 39.5% at dose 400 under K-means
+$k=4$ / $k=12$ / HDBSCAN respectively; §5.10.9), and the residual
+"transient escape" — trajectories kicked at injection but drifted
+back to their pre-injection cluster — as the difference between
+kicked and persisted rates. All four aggregate components are
+visible in the dense data; identifying them as stable per-trajectory
+subpopulations would require repeated interventions on the same
+seed/IC and a latent-class model, neither of which we have run.
+
+#### 3.1.1.5 Operational criteria for "attractor-like" regimes
+
+We use **attractor-like** as an operational label — not a claim of a
+smooth deterministic attractor. A regime $r$ is an attractor candidate
+only if it satisfies the following four falsifiable criteria on the
+measured trajectory ensemble. Missing measurements count as FAIL
+unless structurally inapplicable.
+
+- **C1. Late-window basin persistence.** Cross-validated accuracy of
+  predicting the late-window K-means basin from the final pre-terminal
+  state (§4.5.10): $A_r^{\mathrm{final}} \ge \tau_{\mathrm{acc}}$,
+  $\tau_{\mathrm{acc}} = 0.70$.
+- **C2. Temporal recurrence or dwell above null.** Recurrence
+  $R_r$ (§4.5.1) or dwell $D_r$ (§4.5.2) significantly above the
+  stronger of time-shuffled / no-feedback baselines (§4.6):
+  $\max\{(R_r - \mu_R^{\text{null}})/\sigma_R^{\text{null}},\,
+  (D_r - \mu_D^{\text{null}})/\sigma_D^{\text{null}}\} \ge 2$ AND
+  $d \ge 0.5$. (For dialog runs, the no-feedback null is structurally
+  unavailable; time-shuffled null is required.)
+- **C3. Projection / embedder robustness.** Recurrence bin
+  $b_e(r) \in \{\text{high} \ge 0.70,\, \text{low} \le 0.40,\,
+  \text{mid otherwise}\}$ agrees in at least 2 of 3 embedders
+  (canonical + 2 alternatives in §5.13). Coarse by design: this tests
+  regime-class survival under measurement change, not scalar invariance
+  (sharpness dim, in particular, is *not* embedder-invariant per §5.13).
+- **C4. Basin re-entry or contraction.** At least one of:
+  $\lambda_{1,r}^{\mathrm{late}} \le 0.015$ (contraction);
+  `best_period = 2` AND `period_2_score > 0` (cycle re-entry);
+  $R_r \ge 0.90$ AND $SD_r \le 1.50$ (absorbing collapse); or
+  exit-return exceeding the C2 null gate. Diagnostics span §4.5.4–§4.5.7.
+
+**Labels.** *Strong attractor*: 4/4 criteria pass. *Attractor-like*:
+≥ 3/4. *Not attractor*: < 3/4. The 3-of-4 threshold permits one
+diagnostic family to be unavailable while still requiring three
+independent tests to agree.
+
+| regime | C1 basin persistence | C2 recurrence / dwell vs null | C3 robustness | C4 re-entry / contraction | perturbation signature | label |
+|---|---:|---:|---:|---:|---:|---|
+| **O1 contractive** | PASS: $A^{\mathrm{final}}=0.85$ (§5.3) | PASS by dwell / basin-null gate; raw recurrence low, $R=0.29$ (§5.11) | PASS: recurrence remains low across embedders, $0.289/0.304/0.096$ (§5.13) | PASS: $\lambda_1^{\mathrm{late}}\approx 0.008\le 0.015$; $SD=1.70$ (§5.0, §5.12) | adversarial switch $54\%$; OOD floor $18$–$24\%$ (§5.5–§5.6) | **attractor (strong)** |
+| **O2 oscillatory** | PASS: $A^{\mathrm{final}}=0.91$ (§5.3) | PASS: high recurrence / period-2 structure, $R=0.875$ (§5.11, §5.13) | PASS: high recurrence under all embedders, $0.875/0.711/0.783$ (§5.13) | PASS: period-2 re-entry; $SD=1.39$ (§5.0) | adversarial switch $94\%$ (§5.5) | **attractor (strong)** |
+| **O3 absorbing** | PASS: $A^{\mathrm{final}}=0.93$ (§5.3) | PASS: trivial high recurrence, $R=0.924$ (§5.11, §5.13) | PASS: high recurrence under all embedders, $0.924/0.850/0.862$ (§5.13) | PASS: absorbing-collapse gate, $R\ge 0.90$, $SD=1.45\le 1.50$ (§5.0, §5.13) | adversarial switch $96\%$ (§5.5) | **attractor (strong)** |
+| **D1 dialogue-state multi-basin** | PASS stratified: $A^{\mathrm{final}}=0.77$ (§5.3); **FAIL group-aware: 0.34** (§5.10.5) | PASS by dwell / basin-null gate; raw recurrence low, $R=0.21$ (§5.11) | PASS: recurrence remains low across embedders, $0.210/0.337/0.226$ (§5.13) | PASS: $\lambda_1^{\mathrm{late}}\approx 0.011\le 0.015$; $SD=1.89$ (§5.0, §5.12) | adversarial switch $60\%$; neutral $76\%$ (§5.5) | **attractor-like dialog regime** (formal C1–C4 PASS; group-aware C1 fails) |
+| **D2 drill-down** | NT / FAIL: no publication-scale final basin-predictability cell; exploratory $A(k=5)=0.20$ with $n=25$ (§5.0) | NT / FAIL: no null-calibrated recurrence / dwell test at publication scale (§5.0, §7.7) | PARTIAL only: recurrence low across embedders, $0.296/0.176/0.073$, but small-$N$ (§5.13) | NT / FAIL: Lyapunov / exit-return not measured; $SD$ unavailable (§5.0) | adversarial switch $64\%$ (§5.8) | **not attractor** under this definition; exploratory regime candidate |
+
+Thus O1–O3 and D1 meet the operational standard for attractor regimes
+in the measured battery. D2 remains a distinct **drill-down regime
+candidate** with evidence for content gravity, but it is not counted
+as an operational attractor until the missing publication-scale
+basin-persistence, null-recurrence, and contraction / re-entry tests
+are run.
+
+#### 3.1.2 Replace-mode access bound: hitting probability and generation budget
 
 We begin with replace mode, in which the previous context is discarded
-after each generation step. In this regime, the next state depends
-only on the newly generated text, not on an accumulated context
-history. This permits a clean finite-time access bound.
+after each generation step. In this regime, the next state depends only
+on the newly generated text, not on an accumulated context history.
+The injected-token cost $\tau$ from §3.1.1 is therefore distinct from
+the model-generated post-injection budget. For $m$ post-injection
+replace steps, define
 
-**Lemma 1 (replace-mode access bound).** Let $(X_t)_{t\ge 0}$ be a
+$$
+G_m \;=\; \sum_{s=t_{\mathrm{inj}}}^{t_{\mathrm{inj}}+m-1} |Y_s|,
+\qquad
+\bar G_m \;=\; \mathbb{E}G_m .
+$$
+
+The quantity $G_m$ is *not* injected text. It is the number of tokens
+generated by the model after the injection. We will bound $G_m$ — not
+$\tau$ — for replace mode.
+
+**Lemma 1 (replace-mode hitting bound).** Let $(X_t)_{t\ge 0}$ be a
 recursive loop with replace-mode nudge
 
 $$
 X_{t+1} = g(Y_t), \qquad Y_t \sim P_\theta(\cdot \mid X_t; f),
 $$
 
-where $g : \mathcal{Y} \to \mathcal{C}$ is measurable. Let
-$B_1, B_2 \subset \mathcal{C}$ be basin sets. Assume that after
-perturbation injection at time $t_{\mathrm{inj}}$, there exist
-constants $q_0 \in (0, 1]$, $r_0 \in (0, 1]$, and $\kappa > 0$ such that:
+where $g : \mathcal{Y} \to \mathcal{C}$ is measurable. Fix $m \ge 1$
+and set $T = t_{\mathrm{inj}} + m$. Let $\mathcal{R}_s$ denote the
+post-injection reachable set at time $s$. Assume
+$X_{t_{\mathrm{inj}}} \in B_1 \setminus B_2$ almost surely, and that
+after injection at time $t_{\mathrm{inj}}$ there exist constants
+$q_0 \in (0, 1]$, $r_0 \in (0, 1]$, and $\kappa > 0$ such that:
 
-1. **Uniform one-step access to $B_2$:**
+1. **Uniform one-step access from every reachable non-$B_2$ state:**
 
 $$
-\Pr\bigl[g(Y_t) \in B_2 \mid X_t = x\bigr] \ge q_0
-\qquad\text{for all } x \in B_1.
+\Pr\bigl[g(Y_s) \in B_2 \mid X_s = x\bigr] \ge q_0
+\qquad \text{for all } s \in \{t_{\mathrm{inj}}, \ldots, T-1\}
+\text{ and all } x \in \mathcal{R}_s \setminus B_2 .
 $$
 
 2. **Persistence after entry:**
 
 $$
-\Pr\bigl[X_T \in B_2 \mid X_{t+1} = z\bigr] \ge r_0
-\qquad\text{for all } z \in B_2.
+\Pr\bigl[X_T \in B_2 \mid X_s = z\bigr] \ge r_0
+\qquad \text{for all } s \in \{t_{\mathrm{inj}}+1, \ldots, T\}
+\text{ and all } z \in \mathcal{R}_s \cap B_2 .
 $$
 
-3. **Bounded generation cost:**
+3. **Bounded generation cost on the full reachable set:**
 
 $$
-\mathbb{E}\bigl[|Y_t| \mid X_t = x\bigr] \le \kappa
-\qquad\text{for all } x \in B_1 \cup B_2.
+\mathbb{E}\bigl[|Y_s| \mid X_s = x\bigr] \le \kappa
+\qquad \text{for all } s \in \{t_{\mathrm{inj}}, \ldots, T-1\}
+\text{ and all } x \in \mathcal{R}_s .
 $$
 
-Then after $m$ post-injection replace steps,
+Let
 
 $$
-\Pr(X_T \in B_2) \;\ge\; 1 - (1 - q_0 r_0)^m.
+\sigma_2 \;=\; \inf\{\, s \ge t_{\mathrm{inj}} : X_s \in B_2 \,\}.
 $$
 
-**Proof.** Fix a trajectory with $X_{t_{\mathrm{inj}}} \in B_1$. For
-$j \ge 1$, define the event
+Then
 
 $$
-E_j \;:=\; \{\,X_{t_{\mathrm{inj}}+j} \in B_2 \text{ and } X_T \in B_2\,\}.
+\Pr\bigl(\sigma_2 \le T\bigr)
+\;\ge\;
+1 - (1 - q_0)^m ,
 $$
 
-By assumption (1), conditional on any state in $B_1$, one replace
-step lands in $B_2$ with probability at least $q_0$. By assumption
-(2), conditional on such an entry, terminal membership in $B_2$ occurs
-with probability at least $r_0$. Hence
+and consequently
 
 $$
-\Pr(E_j \mid X_{t_{\mathrm{inj}}+j-1} \in B_1) \;\ge\; q_0 r_0.
+\Pr(X_T \in B_2)
+\;\ge\;
+r_0 \bigl[ 1 - (1 - q_0)^m \bigr].
 $$
 
-Now consider the event that none of the first $m$ replace steps
-yields terminally successful entry into $B_2$. Conditional on failure
-up to step $j-1$, the probability of failure again at step $j$ is at
-most $1 - q_0 r_0$. Therefore
+Moreover, $\mathbb{E} G_m \le \kappa m$.
+
+**Proof.** Hitting bound: induction on $A_k = \{\sigma_2 > t_{\mathrm{inj}} + k\}$ using assumption (1) gives $\Pr(A_m) \le (1-q_0)^m$. Terminal bound: decompose over the first hitting time and use the Markov property with assumption (2). Generation budget: tower property with assumption (3). Full proof in §13.1 (Supplementary appendix). $\square$
+
+**Corollary 1 (replace-mode generation-budget bound).** For the fixed
+replace-mode dynamics above, define the terminal post-injection
+generation budget
 
 $$
-\Pr\!\Bigl(\,\bigcap_{j=1}^{m} E_j^c\,\Bigr) \;\le\; (1 - q_0 r_0)^m,
+G^\star_{1/2}(B_1 \to B_2)
+\;=\;
+\inf\bigl\{\,
+\mathbb{E} G_m \;:\;
+\Pr(X_{t_{\mathrm{inj}}+m} \in B_2) \ge \tfrac{1}{2}
+\,\bigr\},
 $$
 
-so
+with the convention that the infimum is $+\infty$ if no $m$ certifies
+the bound. Let
 
 $$
-\Pr\!\Bigl(\,\bigcup_{j=1}^{m} E_j\,\Bigr) \;\ge\; 1 - (1 - q_0 r_0)^m.
+m_{1/2}
+\;=\;
+\min\Bigl\{\, m \ge 1 \;:\;
+r_0 \bigl[ 1 - (1 - q_0)^m \bigr] \ge \tfrac{1}{2}
+\,\Bigr\}.
 $$
 
-Since $\bigcup_{j=1}^{m} E_j \subseteq \{X_T \in B_2\}$, it follows
-that $\Pr(X_T \in B_2) \ge 1 - (1 - q_0 r_0)^m$. $\square$
-
-**Corollary 1 (replace-mode barrier bound).** Under the assumptions
-of Lemma 1, the perturbation barrier defined in §3.1.1 satisfies
+If this set is non-empty, then
 
 $$
-\mathrm{B}(B_1 \to B_2)
+G^\star_{1/2}(B_1 \to B_2) \;\le\; \kappa \, m_{1/2}.
+$$
+
+Equivalently, when $0 < q_0 < 1$ and $r_0 > \tfrac{1}{2}$,
+
+$$
+m_{1/2}
+\;=\;
+\left\lceil
+\frac{\log\!\bigl(1 - \tfrac{1}{2 r_0}\bigr)}
+{\log(1 - q_0)}
+\right\rceil .
+$$
+
+For first-hit access rather than terminal access (i.e. setting
+$r_0 = 1$),
+
+$$
+G^\star_{\mathrm{hit},\,1/2}(B_1 \to B_2)
 \;\le\;
-\kappa \,\Bigl\lceil \frac{\log(1/2)}{\log(1 - q_0 r_0)} \Bigr\rceil .
+\kappa
+\left\lceil
+\frac{\log(1/2)}{\log(1 - q_0)}
+\right\rceil ,
+\qquad 0 < q_0 < 1 .
 $$
 
-**Proof.** By Lemma 1, after $m$ replace steps the terminal switching
-probability is at least $1 - (1 - q_0 r_0)^m$. To reach $50\%$
-switching it is sufficient that $1 - (1 - q_0 r_0)^m \ge \tfrac{1}{2}$,
-equivalently
+**Proof.** Take $m = m_{1/2}$ in Lemma 1; the bounds follow directly. Full proof in §13.1. $\square$
 
-$$
-m \;\ge\; \frac{\log(1/2)}{\log(1 - q_0 r_0)} .
-$$
+This corollary does *not* bound the injected-token barrier
+$\mathrm{B}(B_1 \to B_2)$ from §3.1.1. That barrier is measured in
+*injected* tokens $\tau$, whereas $\kappa\,m_{1/2}$ bounds *generated*
+tokens after injection. Thus $\kappa\,m_{1/2}$ is a replace-mode
+generation budget, not an injected-token barrier. In the strict
+§3.1.1 sense, if the replace-mode assumptions hold with no injected
+text, then the injected-token barrier is degenerate:
+$\mathrm{B}(B_1 \to B_2) = 0$. If the assumptions hold only after an
+injected string of length $\tau$, then the injected-token statement
+is at most $\mathrm{B}(B_1 \to B_2) \le \tau$ for that injection; it
+is *not* $\mathrm{B}(B_1 \to B_2) \le \kappa\,m_{1/2}$.
 
-Thus $m^\star = \lceil \log(1/2) / \log(1 - q_0 r_0) \rceil$ replace
-steps suffice. Since each replace step has expected token cost at most
-$\kappa$, the total expected token budget required for $50\%$
-switching is bounded above by $\kappa \, m^\star$. $\square$
-
-**Corollary 2 (one-generation special case).** If, in addition,
+**Corollary 2 (one-generation special case).** If
 $q_0 r_0 \ge \tfrac{1}{2}$, then
 
 $$
-\mathrm{B}(B_1 \to B_2) \;\le\; \kappa.
+G^\star_{1/2}(B_1 \to B_2) \;\le\; \kappa .
 $$
 
-**Proof.** If $q_0 r_0 \ge \tfrac{1}{2}$, then a single replace step
-already yields terminal switching probability at least $1/2$. The
-barrier is therefore at most the expected cost of one generation. $\square$
+For first-hit access, if $q_0 \ge \tfrac{1}{2}$, then
+$G^\star_{\mathrm{hit},\,1/2}(B_1 \to B_2) \le \kappa$.
 
-Lemma 1 and its corollaries formalize the central structural property
-of replace mode: because the next state depends only on the newly
-generated text, access to a competing basin is governed by one-step
-transition probability and post-entry persistence, rather than by
-long-horizon accumulation of prior context. **In particular, the
-replace-mode barrier is bounded by a constant multiple of a typical
-generation length and does not scale with accumulated context size.**
+**Proof.** Take $m = 1$ in Lemma 1. $\square$ (Full step-by-step proofs of Corollaries 1 and 2 in §13.1.)
+
+**What this means.** Replace mode does not create an accumulation
+barrier in *injected* tokens: after the injection time, the previous
+context is discarded, and each generation step is a fresh
+reachable-state attempt to hit $B_2$. The meaningful finite quantity
+in Lemma 1 is therefore the post-injection *generation* budget $G$,
+not the injected-token cost $\tau$. Append mode is structurally
+different because injected and generated text both remain in the
+context and can accumulate; the append-mode accumulation claim is
+therefore treated separately below as a conjectural $\tau$-barrier
+statement, not a corollary of Lemma 1.
 
 **Empirical verification.** §5.5 reports 94–96% switching for O2
 (replace-mode paraphrase) and O3 (replace-mode summarize-then-negate)
 at every dose tested, including the smallest probed (80 tokens of
-any perturbation type). Corollary 2 predicts $\mathrm{B} \le \kappa
-\approx 80$–$120$ tokens whenever the access × persistence product
-$q_0 r_0 \ge \tfrac{1}{2}$; we measure barriers $\le 80$ tokens (the
-smallest dose probed), consistent with the bound. The lemma does
-*not* extend to append-mode by the same argument; that case is
-addressed below as a conjecture motivated by the same data.
+any perturbation type). Read in this framework, those rates indicate
+high replace-mode access probability under the tested injections: if
+switching is measured after one replace generation, the data
+empirically suggest $q_0 r_0 \approx 0.94$–$0.96$, certifying the
+one-generation budget $G^\star_{1/2} \le \kappa$ for those conditions.
+They do *not* estimate an injected-token barrier threshold: since
+all probed doses switched at similar rates, the data only show that
+the $\tau$-barrier is no larger than the smallest successful probed
+dose, and possibly zero if the same access holds with no injected
+text at all.
 
 #### 3.1.3 Append-mode accumulation barrier (Conjecture 1)
 
@@ -533,14 +907,15 @@ $$
 with rapid growth occurring near a basin-dependent threshold
 $\alpha^\star_{B_1 \to B_2}$.
 
-The O1 dose-response measurements in §5.6 are consistent with this
-conjecture. Neutral and lorem perturbations remain near the
-irreducible drift floor across the tested range, whereas
-in-distribution adversarial perturbations exhibit a finite threshold
-near 150 tokens for 50% switching. This is precisely the qualitative
-pattern expected if append-mode barriers are controlled by the
-accumulation of basin-relevant counter-context rather than by
-one-step access alone.
+The O1 dose-response measurements in §5.6 / §5.6.1 are consistent
+with this conjecture. Neutral and lorem perturbations remain near
+the irreducible drift floor across the tested range, whereas
+in-distribution adversarial perturbations exhibit a graded
+dose-response (ED50 ≈ 40 tokens for the *raw* switching curve at
+$n=200$/cell × 8 doses; §5.6.1). The shape — monotonic rise with a
+plateau below 1 — is what one would expect if append-mode barriers
+are controlled by the accumulation of basin-relevant counter-context
+rather than by one-step access alone.
 
 A geometric refinement of the same idea is that append-mode token
 barriers should scale with the saddle height in representation space.
@@ -558,100 +933,22 @@ geometric hypothesis motivated by the empirical agreement between
 behavioral switching thresholds and $V^\star$-based barrier ordering
 documented in §5.10.
 
-#### 3.1.4 Tokens vs nats: a model-agnostic reading of barrier height
+#### 3.1.4 Tokens vs nats — a brief caveat
 
-A natural objection to reporting barrier heights in tokens: *tokens
-of which tokenizer?* A perturbation that costs 150 tokens of
-`text-embedding-3-small`-tokenized text might cost 130 or 180 tokens
-under a different vocabulary; a model with a wildly different
-tokenizer would give numerically different barriers for the same
-underlying phenomenon. Tokens are not, per se, a model-agnostic unit.
-
-**The model-agnostic quantity is barrier height in *nats*.** For a
-generator $P_\theta$, each token of injected text $y_i$ at context
-$X$ carries
-
-$$
-h_i = -\log P_\theta(y_i \mid X) \quad \text{(nats)}
-$$
-
-worth of information about the trajectory's next state. The total
-information content of $\tau$ tokens of injected text is therefore
-
-$$
-I(\tau) = \sum_{i=1}^{\tau} h_i \approx \tau \cdot \langle h \rangle_\text{cond},
-$$
-
-where $\langle h \rangle_\text{cond}$ is the average per-token
-conditional surprisal under the model's own predictive distribution
-(typically 3–5 nats per token for English text under modern
-sub-word LLMs at $T = 0.8$). The barrier height in nats is then
-
-$$
-\mathrm{B}^{\text{nats}}(B_1 \to B_2)
-= \mathrm{B}^{\text{tokens}}(B_1 \to B_2) \cdot \langle h \rangle_\text{cond}.
-$$
-
-Two things follow.
-
-**(a) Out-of-distribution perturbations carry low *basin-relevant*
-information per token.** The neutral and lorem conditions saturate
-at the irreducible drift floor (~24% switching for O1) precisely
-because their per-token surprisal under $P_\theta$ is high in absolute
-terms but their information *about the basin manifold* is low — the
-model can't absorb random-character entropy as evidence for or against
-any particular attractor. In-distribution adversarial text, by contrast,
-is fluent under $P_\theta$ (low surprisal) but its content is
-misaligned with $B_1$, so each token contributes basin-relevant
-counter-evidence that integrates toward $B_2$. This is exactly the
-asymmetry §5.6's dose-response curves report: the *same* number of
-tokens crosses or doesn't cross the barrier depending on whether
-those tokens carry basin-relevant or basin-irrelevant information.
-
-**(b) Barrier height in nats should approximate the
-basin-distribution Kullback-Leibler distance.** If we model the late-
-window basin distributions as $\rho_{B_1}, \rho_{B_2}$ on the
-embedding-space manifold, then for a trajectory to relocate from
-$B_1$ to $B_2$ requires injected information that exceeds the
-geometric "distance" between the two distributions. The natural
-candidate is
-
-$$
-\mathrm{B}^{\text{nats}}(B_1 \to B_2)
-\;\;\sim\;\; \mathrm{KL}(\rho_{B_2} \| \rho_{B_1})
-\;\;\text{or, symmetrically,}\;\;
-\mathrm{V}^{\star}(B_1, B_2) = -\log \rho(\text{saddle})
-$$
-
-where $\mathrm{V}^{\star}$ is exactly the geometric barrier estimate
-we compute in §5.10 from $V(x) = -\log \rho(x)$ on PCA-2 with
-Dijkstra geodesics through density-peak basins.
-
-This is the bridge: §5.10's $\mathrm{V}^{\star}$ is a *geometric*
-estimate of $\mathrm{B}^{\text{nats}}$ (in units of nats per
-PCA-2-dimension via the kernel-density-estimate normalization);
-§5.6's token-cost is a *behavioral* estimate of $\mathrm{B}^{\text{nats}}$
-(via $\tau \cdot \langle h \rangle_\text{cond}$). Their qualitative
-ordering across regimes (O1 mid, O2/O3 low, D1 D2 intermediate)
-agrees, which is the empirical content of the
-"geometric/behavioral barrier triangulation" claim. Numerical
-equality is *not* expected — the KDE bandwidth and PCA-2 projection
-introduce regime-independent constants that re-scale $\mathrm{V}^{\star}$
-relative to $\mathrm{B}^{\text{nats}}$ — but ordinal agreement is, and
-ordinal agreement is what we observe.
-
-**Practical consequence.** A claim of the form *"O1 has a 150-token
-barrier"* is a tokenizer-specific quantity; the underlying
-*information-theoretic* claim is *"O1 has a barrier of $150
-\langle h \rangle_\text{cond} \approx 600$ nats against in-distribution
-adversarial text, and an effectively infinite barrier against
-out-of-distribution text"*. The latter is portable across tokenizers
-and across models that share the same embedding space; the former is
-the most directly measurable approximation. Future work would use the
-generator's logprobs (`include_logprobs=True` in our `Config`) to
-report $\mathrm{B}^{\text{nats}}$ directly; we did not capture logprobs
-in the current 37-experiment battery and report tokens as the more
-operationally meaningful unit.
+Token-valued barrier heights are tokenizer-dependent and model-specific.
+The corresponding model-agnostic quantity would be a barrier in nats:
+for generator $P_\theta$, each injected token $y_i$ at context $X$
+carries $h_i = -\log P_\theta(y_i \mid X)$ nats, and $\mathrm{B}^{\text{nats}}
+\approx \mathrm{B}^{\text{tokens}} \cdot \langle h \rangle_{\text{cond}}$.
+**We did not capture per-token logprobs in this battery**
+(`include_logprobs=False` in every publication-scale config), so
+$\langle h \rangle_{\text{cond}}$ is not measured and we **do not**
+report any numerical barrier in nats. All reported barriers in this
+paper are operational token counts. Future work using
+`include_logprobs=True` would enable a direct nat-valued barrier; an
+extended discussion of the nats / KL / $V^\star$ correspondence
+(originally drafted in this section) is moved to the discussion
+§6 / Supplement to keep §3 focused on the formal core.
 
 ### 3.2 Observable maps and embedding
 
@@ -1088,8 +1385,7 @@ helper `ftle_from_spread` provides a scalar summary.
 #### 4.5.6 Sharpness dimension and effective rank
 
 We use a Tuci-style fractional dimension over the ordered Lyapunov
-spectrum (functional form from Tuci et al., arXiv 2604.19740,
-Definition 4.2):
+spectrum (functional form from Tuci et al. (2026), Definition 4.2):
 
 ```
 j*  = max { i : Σ_{k≤i} λ_k ≥ 0 }      (0 if λ_1 < 0)
@@ -1193,7 +1489,7 @@ while O2 is `H1b = strong` driven by `period_2_score`. Every regime
 label in this paper has an underlying H1a/b/c signal-count justification
 in the corresponding experiment's report.
 
-#### 4.5.7 Basin predictability
+#### 4.5.10 Basin predictability
 
 For each trajectory we compute the K-means cluster at the late window
 (`y` = cluster index at `t > 0.7T`). For each early step k we train a
@@ -1217,7 +1513,7 @@ Cross-validation:
 The accuracy curve `acc(k)` is monotonic in good regimes — by some
 early step the late basin is already determined.
 
-#### 4.5.8 Perturbation switching
+#### 4.5.11 Perturbation switching
 
 For each trajectory we run paired runs with the same prefix but four
 different perturbation conditions injected at `t_inject`:
@@ -1277,7 +1573,7 @@ each baseline is computed via Cohen's d in
 - **Adaptive stratified k-fold CV** for basin predictability classifier
   accuracy: `n_splits = min(5, smallest_class_size)` so phase-1 pilots
   with small clusters fall back to 2–4 folds gracefully (NaN if even
-  2-fold is impossible). See §4.5.7.
+  2-fold is impossible). See §4.5.10.
 - **Wilson-style CI** on switching-rate proportions where bootstrap
   would be unstable (small denominators in dose-response cells).
 - **Significance gate**: a regime / condition signal counts only if its
@@ -1457,42 +1753,17 @@ For perturbation experiments the G/H/I are rendered per-condition
 publication runs) they're rendered for the recursive regime alone,
 sometimes faceted by family.
 
-### 4.10 Perturbation visualization toolkit
+### 4.10 Perturbation visualization toolkit (summary)
 
-For perturbation experiments we additionally compute:
-
-#### Effective potential
-
-```
-ρ̂(x) = Gaussian-smoothed kernel density on PCA-2 grid
-V(x) = −log(ρ̂(x) + ε),  ε = 0.1·min{ρ̂ : ρ̂ > 0}
-V is shifted so V_min = 0 and capped at v_cap (default 8.0)
-```
-
-#### Geodesic skeleton
-
-We find local minima of V via 8-connected `maximum_filter` on −V,
-keeping the top n basin centers. For each pair of basin centers (i, j)
-we compute the Dijkstra shortest path on the V grid (8-connected, edge
-weight = V at endpoint). The maximum V along the path is the **barrier
-height V*(i, j)**.
-
-#### Volumetric iso-density rendering
-
-For 3D animations we extract iso-density shells at five density
-fractions (4%, 10%, 20%, 35%, 55% of max ρ) using
-`scipy.ndimage.gaussian_filter` smoothing and `skimage.measure.marching_cubes`.
-Each shell is rendered as a transparent `Poly3DCollection` in
-`matplotlib`'s `mpl_toolkits.mplot3d`, with colors from the `plasma`
-colormap and per-shell alpha from 0.05 (outermost) to 0.27 (innermost).
-
-#### Parallel rendering
-
-Animations of 50 trajectories with 75 frames at DPI 180 are rendered
-via `concurrent.futures.ProcessPoolExecutor` with 40 workers, each
-worker creating a fresh figure for one frame. Frames are stitched into
-MP4 via `imageio-ffmpeg` (libx264 codec, quality 8). Wall-time
-per animation: ~80s vs ~11 min single-threaded.
+For perturbation experiments we compute an empirical potential
+$V(x) = -\log \hat\rho(x)$ from a Gaussian-smoothed KDE on PCA-2,
+locate basin centers via 8-connected local-minima detection on $V$,
+and compute geodesic barriers $V^\star$ between basin pairs via
+Dijkstra shortest-path on the $V$ grid. 3D animations render
+iso-density shells at five density fractions using
+`skimage.measure.marching_cubes`. Full implementation details
+(grid parameters, smoothing constants, alpha schedules, parallel
+rendering via `ProcessPoolExecutor`) are in §13.10.
 
 ### 4.11 End-to-end pipeline diagram
 
@@ -1787,12 +2058,175 @@ of ~$30 in OpenAI embedding API calls and ~2 hours of local compute.
 All experiments run locally with API calls to OpenAI. CPU: 40 cores
 available for parallel rendering. Python 3.x with numpy, scipy,
 scikit-learn, scikit-image, pandas, matplotlib, imageio-ffmpeg. Tests:
-94 pytest tests, all green. See `requirements.txt` for exact
+99 pytest tests, all green. See `requirements.txt` for exact
 dependencies.
+
+### 4.13 Decision-grade endpoints
+
+The metric battery in §4.5 is intentionally broad: it is used to
+diagnose, visualize, and stress-test recursive dynamics from several
+angles. The paper's headline claims, however, should not depend on
+dozens of partially redundant quantities. For decision purposes, we
+treat the following five endpoints as load-bearing. Each endpoint
+has a fixed numerical pass rule; results that do not clear the rule
+are reported as diagnostic, exploratory, or in-flight rather than as
+supported regime claims. The table separates: (i) whether a regime
+qualifies as attractor-like, (ii) whether its late basin is predictable
+without prompt-family leakage, (iii) whether its perturbation response
+has the expected regime signature, (iv) whether a token-valued barrier
+is localized, and (v) whether "switching" can be interpreted as
+persistent basin escape rather than final-step divergence.
+
+| endpoint | definition | measured at | threshold for "regime claim is supported" | defined in |
+|---|---|---|---|---|
+| **Operational attractor score C1–C4** | Count of the four attractor criteria passed: late-window basin persistence, recurrence/dwell above null, embedder robustness, and contraction / re-entry / collapse. | Publication-scale O1, O2, O3, D1 on canonical observables; D2 exploratory status checked separately. Summary table in §3.1.1.5. | **Strong attractor:** 4/4 criteria PASS. **Attractor-like:** ≥3/4 PASS. **Not attractor:** <3/4 PASS. Missing publication-scale measurements count as FAIL unless structurally inapplicable. | §3.1.1.5; metric components in §§4.5.1–4.5.7 |
+| **Leakage-free basin predictability acc\_group(k=10)** | GroupKFold-by-prompt-family accuracy of predicting the late-window K-means basin from the PCA-10 state at step k=10. | Publication-scale O1/O2/O3/D1, `context_tail`, K-means k=12, `data/aggregated/group_aware_basin_pred.csv`. | To claim **cross-family basin predictability**: acc\_group(k=10) ≥ **0.70**. To claim the original stratified number is **leakage-free**: Δ = acc\_stratified − acc\_group < **0.10**. | §4.5.10; group-aware stress test §5.10.5 |
+| **Perturbation switching signature** | Final-step switching rate: fraction of perturbed trajectories whose final K-means cluster differs from the paired control trajectory. | O1 dose-response at matched 200-token dose; O2/O3/D1 perturbation pilots; `data/aggregated/perturbation_cross_regime/` and `data/aggregated/perturbation_dose_response/`. | **O1 selective sensitivity:** S\_adv(200) ≥ **0.50** and S\_adv(200) / max(S\_neutral(200), S\_lorem(200)) ≥ **2.0**, with max OOD switching ≤ **0.30**. **Replace-mode capitulation:** min non-control switching across O2/O3 neutral/lorem/adversarial ≥ **0.85**. | §4.5.11; behavioral results §§5.5–5.6 |
+| **Behavioral ED50 token barrier** | The perturbation dose τ at which a 4-parameter logistic fit to the O1 adversarial dose-response reaches 50% switching, with prompt-family-cluster bootstrap uncertainty. | O1 adversarial dose sweep τ ∈ {20, 80, 200, 400}, n=50/cell; `fit_ed50_hierarchical.py`; reported in §5.0bis / §5.6. | To claim a **localized token barrier**: ED50 point estimate finite and the 95% family-cluster bootstrap CI lies wholly inside the probed interval **[20, 400] tokens**. If the point estimate is inside but the CI crosses the interval boundary, report only "finite but unlocalized / in flight." | Barrier definition §3.1.1; dose protocol §4.5.11; ED50 analysis §5.6 |
+| **Persistent basin-escape rate** | Fraction of trajectories that visibly change cluster at injection AND remain in that post-injection cluster at the terminal step. | O1 adversarial sparse-dose sweep using `joint_pca10_clusters.csv`; summary in `data/aggregated/persistence_summary.csv`. | To interpret switching as **persistent basin escape** rather than final-step divergence: persistent escape rate ≥ **0.50** at the claimed barrier dose. If <0.50, switching may still be reported, but not as clean basin escape. | Switching definition §4.5.11; persistence reanalysis §5.10.9 |
+
+On the current data, after the dense-dose rerun (§5.6.1) and the
+endpoint-decomposition framework (§3.1.1bis):
+
+- **Operational attractor score (C1–C4)**: O1/O2/O3/D1 pass the
+  omnibus criterion; D2 does not.
+- **Leakage-free basin predictability**: only O1 passes the stricter
+  acc\_group(k=10) ≥ 0.70 and Δ < 0.10 rule; O2/O3/D1 fail under
+  group-aware CV (§5.10.5).
+- **Perturbation switching signature**: O1 selective sensitivity
+  passes (S\_adv(200) = 0.620 in the dense rerun, ratio to
+  S\_neutral/S\_lorem ≈ 2.8). Replace-mode O2/O3 capitulation passes
+  by point estimate but is partly tautological (state-overwrite
+  intervention; see §5.6.1 / §13.4 / `paper/ed50_rerun_plan.md`).
+- **Behavioral $\mathrm{ED50}_{\mathrm{raw}}$ token barrier**:
+  **passes** at $\approx 40$ tokens (4PL=36, GLMM=41,
+  bootstrap median=52); 95% CI [8.5, 242] is wide because of the
+  5-family-cluster heavy tail.
+- **$\mathrm{ED50}_{\mathrm{net}}$ above natural floor**: **does
+  not pass** — net effect saturates at +32 pp at dose 400, below
+  the +50 pp threshold (§3.1.1bis).
+- **Persistent basin-escape rate**: **does not pass** — at dose 400,
+  only 16% of trajectories are kicked-and-persisted (§5.10.9 dense
+  data), well below the 50% threshold. So "switching" is not
+  claimed as clean basin escape. The strict
+  $\mathrm{ED50}_{\mathrm{persist}}$ is undefined in the tested range.
 
 ---
 
 ## 5. Results
+
+The Results section is organised in four bands per the
+revision-driven hierarchy (review Writing & Structure #7):
+
+- **§5.A Primary results** — load-bearing experiments tied to the
+  decision-grade endpoints in §4.13 (regime establishment,
+  perturbation signatures and sparse ED50, perturbation timing,
+  exploratory D2).
+- **§5.B Stress tests of primary results** — the revision's
+  empirical defenses (group-aware CV, cluster-stability,
+  multi-granularity switching, semantic basin inspection,
+  per-family heterogeneity, persistence test, V* sensitivity).
+- **§5.C Secondary analyses** — temperature sweep, embedder
+  invariance, cross-metric correlations, unsupervised regime
+  recovery, cross-generator audit.
+- **§5.D Supplementary material** — pilot history and engineering
+  documentation moved to the supplementary appendix at the end of
+  the paper.
+
+(Subsection numbers below preserve the manuscript's discovery-
+order numbering for cross-reference stability; the §5.A/B/C/D
+labels are added as narrative dividers.)
+
+---
+
+### §5.A — Primary results
+
+### 5.0bis Unified primary-results table
+
+For audit, we consolidate all primary endpoints across all four
+diagnostic regimes (O1, O2, O3, D1) into a single table. Each row
+is a regime × endpoint; each column is the value, its uncertainty,
+the source-CSV file, and any caveats from the revision. **D2 is
+omitted** because it is exploratory-scale (n=25, no publication-
+scale measurements) and does not satisfy the operational attractor
+criteria (§3.1.1.5). For each endpoint we cite the §-section where
+the original numbers appear and a status flag indicating whether
+the endpoint has been re-validated under the revision's
+leakage-aware / cluster-aware analyses.
+
+**Sample sizes (frozen).** Operator regimes (O1, O2, O3): n =
+15 prompt families × 30 ICs × 3 runs = 1,350 trajectories per
+regime, 40 steps. Dialog regime D1: n = 5 dialog-suitable families
+× 30 ICs × 3 runs = 450 trajectories per regime, 40 steps (see
+§4.2 for the per-regime IC selection rule). Perturbation pilots
+(O1/O2/O3/D1 + D2): reduced scope, n = 50 trajectories per
+condition (5 fams × 5 ICs × 2 runs).
+
+| regime | endpoint | value | 95% CI / uncertainty | source | status |
+|---|---|---|---|---|---|
+| O1 | basin predictability acc(k=10), stratified | **0.80** | n=1350, 5-fold CV | §5.3, `basin_pred.csv` | [!] **inflated by family leakage; group-aware = 0.73** |
+| O1 | basin predictability acc(k=10), group-aware | **0.73** | family-cluster GroupKFold | §5.10.5 (this revision) | [OK] leakage-free |
+| O1 | recurrence rate (canonical embedder) | 0.29 | bootstrap 95% CI | §5.11 | [OK] embedder-robust (§5.13: 0.30 / 0.10) |
+| O1 | sharpness dimension (late) | 1.70 | trajectory-level | §5.0 | [OK] |
+| O1 | Lyapunov $\lambda_1^{\mathrm{late}}$ | $\sim 0.008$ | ensemble-spread method | §4.5.5 | [OK] contractive |
+| O1 adv | switching @ dose 200 (dense) | **0.620** | Wilson [0.55, 0.68], n=200 | §5.6.1 | [OK] dense rerun |
+| O1 adv | switching @ dose 400 (dense) | **0.670** | Wilson [0.60, 0.73], n=200 | §5.6.1 | [OK] dense rerun |
+| O1 adv | $\mathrm{ED50}_{\mathrm{raw}}$ (dense) | **36–52 tok** | 4PL=36; GLMM=41; family-cluster bootstrap median=52, 95% CI [8.5, 242] | §5.6.1 / §3.1.1bis | [OK] established |
+| O1 adv | upper asymptote (dense 4PL) | **$a = 0.69$** | non-switching subpopulation ~31% | §5.6.1 | [OK] |
+| O1 adv | natural floor (control-vs-control, dense) | **0.347** | [0.310, 0.386], n=600 paired comparisons | §5.6.1 | [OK] established |
+| O1 adv | $\mathrm{ED50}_{\mathrm{net}}$ (dense, raw − floor) | **not reached** | max net effect = +0.323 at dose 400 (50 pp threshold) | §3.1.1bis | not reached in tested range |
+| O1 adv | $\mathrm{ED50}_{\mathrm{persist}}$ (dense, kicked-AND-persisted) | **undefined** | max persistent escape = 16% at dose 400 | §5.10.9 (dense) / §3.1.1bis | not reached in tested range |
+| O1 neutral | switching @ dose 200 | 0.24 | Wilson [0.13, 0.38] | §5.6 / Fig 4 | [OK] sparse pilot |
+| O1 neutral | switching @ dose 400 | 0.18 | Wilson [0.08, 0.32] | §5.6 / Fig 4 | [OK] sparse pilot |
+| O1 lorem | switching @ dose 200 | 0.18 | Wilson [0.08, 0.32] | §5.6 / Fig 4 | [OK] sparse pilot |
+| O1 attractor classification | C1–C4 strong attractor | 4/4 PASS | criteria from §3.1.1.5 | §3.1.1.5 | [OK] |
+| O2 | basin predictability acc(k=10), stratified | **0.90** | n=1350, 5-fold CV | §5.3 | [!] **inflated by family leakage; group-aware = 0.60** |
+| O2 | basin predictability acc(k=10), group-aware | **0.60** | family-cluster GroupKFold | §5.10.5 | [OK] leakage-free |
+| O2 | recurrence rate | 0.875 | bootstrap | §5.11 / §5.13 | [OK] embedder-robust (0.71 / 0.78) |
+| O2 | sharpness dimension (late) | 1.39 | trajectory-level | §5.0 | [OK] |
+| O2 | switching adversarial (n=50, single dose) | 0.94 | Wilson [0.84, 0.98] | §5.5 | [OK] |
+| O2 | switching neutral / lorem | 1.00 / 1.00 | Wilson [0.93, 1.00] each | §5.5 | [OK] |
+| O2 attractor classification | C1–C4 strong attractor | 4/4 PASS | criteria from §3.1.1.5 | §3.1.1.5 | [OK] but see §5.10.8: basins are paraphrastic, not absorbing |
+| O3 | basin predictability acc(k=10), stratified | **0.91** | n=1350, 5-fold CV | §5.3 | [!] **inflated by family leakage; group-aware = 0.63** |
+| O3 | basin predictability acc(k=10), group-aware | **0.63** | family-cluster GroupKFold | §5.10.5 | [OK] leakage-free |
+| O3 | recurrence rate | 0.92 | bootstrap | §5.11 / §5.13 | [OK] embedder-robust (0.85 / 0.86) |
+| O3 | sharpness dimension (late) | 1.45 | trajectory-level | §5.0 | [OK] (note §6.6 historical "≈ 0" claim was wrong; corrected) |
+| O3 | switching adversarial / neutral / lorem | 0.96 / 1.00 / 1.00 | Wilson 95% (n=50) | §5.5 | [OK] |
+| O3 attractor classification | C1–C4 strong attractor | 4/4 PASS | criteria from §3.1.1.5 | §3.1.1.5 | [OK] but see §5.10.8: absorbing is template-formal, not semantic |
+| D1 | basin predictability acc(k=10), stratified | 0.60 | n=450, 5-fold CV | §5.3 | [!] **inflated by family leakage; group-aware = 0.34** |
+| D1 | basin predictability acc(k=10), group-aware | **0.34** | family-cluster GroupKFold | §5.10.5 | [OK] leakage-free (~chance for 11 classes is 0.09; signal is real but weak) |
+| D1 | recurrence rate | 0.21 | bootstrap | §5.11 / §5.13 | [OK] embedder-robust (0.34 / 0.23) |
+| D1 | sharpness dimension (late) | 1.89 | trajectory-level | §5.0 | [OK] |
+| D1 | T-stability (acc range over T ∈ {0.3, 0.6, 0.8, 1.2}) | [0.57, 0.61] | reduced-scope cells, n=150 | §5.4 | [!] scope-confounded (28pp delta vs full-N) |
+| D1 | switching adversarial / neutral / lorem | 0.60 / 0.76 / 0.56 | Wilson 95% (n=50) | §5.5 | [~] granularity-sensitive (§5.10.7: HDBSCAN drops to 0.40 on adversarial) |
+| D1 attractor classification | C1–C4 strong attractor (formal); **attractor-like dialog regime in practice** | 4/4 PASS on operational criteria, BUT: group-aware basin predictability acc(k=10) = 0.34 (well below the τ_acc = 0.70 threshold under leakage-free CV); switching is granularity-sensitive (§5.10.7); semantic inspection (§5.10.8) finds dialogue-state / recent-context capture rather than a stable stylistic basin; neutral switching exceeds adversarial in the pilot. We retain D1 in the diagnostic taxonomy as an *attractor-like dialog regime* but do not claim full strong-attractor status under group-aware criteria. | §3.1.1.5 + §5.10.5 + §5.10.7 + §5.10.8 | [!] caveat-required |
+
+**How to read the status column:**
+- [OK] **validated** — endpoint survives the revision's stress tests (group-aware CV, multi-granularity, embedder ablation, attractor criteria, dense-dose rerun where applicable).
+- [!] **caveat-required** — endpoint as originally reported is overstated; revised value or interpretation in cited subsection.
+- *not reached in tested range* — the endpoint is well-defined but the experiment did not produce a value (dose grid does not reach the threshold).
+
+The **two most defensible quantitative claims** in the paper are:
+1. Under leakage-free GroupKFold, O1's contractive basin is
+   predictable at acc(k=10) = 0.73 (down from the originally
+   reported 0.80) — still well above any plausible chance baseline
+   ($\sim 1/12$ for K-means $k=12$) and still the highest of the
+   four regimes under the stress-test analysis.
+2. The dense-dose rerun establishes a raw-switching
+   $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens for O1 against
+   in-distribution adversarial text, with a population
+   decomposition (these are aggregate components of the observed
+   rate, not latent subpopulations): 35% stochastic floor from
+   control-vs-control pairs, plateau at ~67% suggesting a ~31%
+   non-perturbable component, persistent-escape rate 10% (k=4) /
+   16% (k=12) / 39.5% (HDBSCAN) at dose 400 (§5.10.9), and the
+   remaining ~18% transient escape (kicked but drifted back).
+   This replaces the earlier "150-token barrier" claim with a
+   richer characterization that is empirically grounded; the strict
+   $\mathrm{ED50}_{\mathrm{persist}}$ barrier is *not* reached in
+   the tested 5–400 token range under any cluster granularity.
+
+---
 
 ### 5.0 The four (plus one) regimes at a glance
 
@@ -1804,7 +2238,7 @@ scope (Phase 3).
 
 | regime | nudge | content op. $f$ | basin pred. acc(k=5→final) | recurrence | sharpness dim* | adversarial switch | dose 50% | T-stability |
 |---|---|---|---|---|---|---|---|---|
-| **O1** contractive | append | continue | 0.77 → 0.85 | low | 1.70 | 54% | ~150 tok | degrades smoothly |
+| **O1** contractive | append | continue | 0.77 → 0.85 | low | 1.70 | 54% (sparse) / 62% (dense, n=200) | ED50 ≈ 40 tok (4PL/GLMM/bootstrap), plateau ~67%, natural floor ~35% | degrades smoothly |
 | **O2** oscillatory | replace | paraphrase | 0.90 → 0.91 | high (period-2) | 1.39 | 94% | n/a (saturated) | (not measured) |
 | **O3** absorbing | replace | summarize+negate | 0.92 → 0.93 | trivial | 1.45 | 96% | n/a (saturated) | (not measured) |
 | **D1** multi-basin | dialog (append) | curious + helpful | n/a → 0.77 | low (per-style) | 1.89 | 60% | < 5 tokens | T-stable |
@@ -1826,73 +2260,31 @@ to any perturbation; append-mode locks in slowly and resists
 out-of-distribution perturbation but yields to in-distribution
 adversaries — runs through every diagnostic below.
 
-![Figure 1. Cross-experiment regime map (joint t-SNE on rolling_k3 observable). Each point is a single trajectory's late-window centroid; each color a regime / experiment. The four (plus one) regimes occupy visibly distinct regions of the embedding space — the taxonomy is not an artifact of any specific projection.](data/aggregated/dynamics_plots/regime_map_rolling_k3.png)
+![Figure 1. **Cross-experiment dynamics map.** Scatter plot of experiments in late-window $\lambda_1$ versus sharpness dimension, computed on the `rolling_k3` observable; points are experiment means and black bars are ±1 SD across trajectories. Colors denote the manually assigned regime labels. Replace-mode and dialog regimes occupy different parts of this diagnostic plane, while several append/contractive variants cluster near low $\lambda_1$. Source: `data/aggregated/dynamics_plots/regime_map_rolling_k3.png`.](data/aggregated/dynamics_plots/regime_map_rolling_k3.png)
 
-### 5.1 Phase 0 — pilot validation
+### 5.1 Phase 0 — pilot validation (one-line)
 
-We ran three early one-off experiments to validate the pipeline:
+Three early pilot runs (`exp_default`, `exp_long`, `exp_noclip`)
+validated the pipeline end-to-end and identified the contractive
+basin profile that became O1. **Full pilot history moved to §13.8**;
+the publication-scale story below subsumes these pilot findings.
 
-- `exp_default` — first run, T=0.8, append + continue, 5 families × 5
-  ICs × 3 runs × 30 steps = 75 trajectories
-- `exp_long` — 60-step horizon test
-- `exp_noclip` — no context-clipping ablation
+### 5.2 Phase 1 — small-N taxonomy (one-line)
 
-The key finding from `exp_default` (REPORT1) was the **strong
-basin score, weak recurrence** profile that we later identified as the
-contractive regime (O1). The basin metric was significantly above
-shuffled baselines (95% bootstrap CI excludes baseline range), supporting
-H1 at this early scale. `exp_long` confirmed the basin holds at longer
-horizons. `exp_noclip` showed the basin deepens (less recurrence) when
-context is unbounded — the contraction is partly enforced by clipping.
-
-### 5.2 Phase 1 — the four-regime taxonomy at small N
-
-REPORT2/3 added eight additional pilot experiments to test whether
-varying the operator changes the regime:
-
-| pilot | operator | architecture | content function | basin score | recurrence | sharpness dim |
-|---|---|---|---|---:|---:|---:|
-| `exp_op_O1_continue` | append | continue | preserving | high | low | low |
-| `exp_op_O2_paraphrase_replace` | replace | paraphrase | preserving | low | high (period-2) | medium |
-| `exp_op_O3_summarize_negate` | append | summarize+negate | content-degrading | medium | low | low |
-| `exp_op_O3b_summarize_negate_replace` | replace | summarize+negate | content-degrading | trivial (singular) | trivial | very low |
-| `exp_op_O4_paraphrase_append` | append | paraphrase | preserving | medium | medium | medium |
-| `exp_dialog_D1_curious_helpful` | dialog (append) | curious+helpful | preserving | high (per-style) | low | medium |
-| `exp_dialog_D2_replace_curious_helpful` | dialog (replace) | curious+helpful | preserving | low | high | low |
-| `exp_dialog_D3_debate_advocate_skeptic` | dialog (append) | advocate+skeptic | preserving | medium | medium | medium |
-
-Three regimes emerge clearly: **contractive** (O1, D1, D3), **oscillatory**
-(O2), **absorbing** (O3b). The replace-mode operators in dialog (D2-replace)
-also show oscillation but with weaker recurrence than O2, suggesting an
-intermediate regime.
-
-**Note on O3 vs O3b**: `exp_op_O3_summarize_negate` uses *append* mode
-(summary appended to context), which produces a weak collapse —
-trajectories drift toward a content-degraded sink but the basin is
-soft. `exp_op_O3b_summarize_negate_replace` uses *replace* mode, which
-produces the sharp absorbing regime characterized in REPORT4 as our
-canonical O3. The publication-scale verification uses the replace
-variant under the simpler name `exp_pub_O3_summarize_negate_replace`.
-
-**Note on O4**: `exp_op_O4_paraphrase_append` (paraphrase + append) is a
-2×2 cross of O1 and O2 — content-preserving paraphrase but accumulating
-context. It produces an intermediate regime that doesn't cleanly fit the
-four-regime taxonomy, with moderate recurrence, moderate sharpness, and
-no clean periodicity. It supports H2 (architecture × content
-factorization predicts behavior) and is documented as an interesting
-boundary case in REPORT4.
-
-**Note on D3 debate**: `exp_dialog_D3_debate_advocate_skeptic` uses two
-roles arguing different positions (advocate vs skeptic) on a topic. It
-shows medium-strength stylistic basins (each role has its own attractor)
-plus moderate recurrence between role-aligned positions. We didn't
-elevate it to the diagnostic taxonomy because its dynamics depend on
-specific topic choice in ways D1 doesn't.
+Eight pilot operator/dialog experiments at $n \approx 50$ trajectories
+identified the diagnostic regime taxonomy (O1 contractive, O2
+oscillatory, O3 absorbing, D1 dialogue-state-driven multi-basin, D2 drill-down)
+plus boundary cases (O3b, O4, D3). **Full taxonomy table and
+boundary-case discussion moved to §13.9**; every regime claim in §5.3
+onward is grounded in publication-scale data.
 
 ### 5.3 Phase 2 — publication-scale verification
 
-REPORT5 ran the four diagnostic regimes at full scale (5 families ×
-30 ICs × 3 runs × 40 steps = 1350 trajectories per regime). Basin
+REPORT5 ran the four diagnostic regimes at full scale, with sample
+size differing by regime family (per §4.2): operator regimes O1 / O2
+/ O3 use 15 prompt families × 30 ICs × 3 runs = 1,350 trajectories
+per regime; dialog regime D1 uses 5 dialog-suitable families × 30
+ICs × 3 runs = 450 trajectories. All four are 40 steps long. Basin
 predictability — 5-fold CV multinomial logistic regression on PCA-10,
 predicting the late-window K-means cluster (k=12) from the embedding
 at step k — gives a clean per-regime ordering:
@@ -1935,9 +2327,23 @@ diagnostic is preserved, and the within-regime variability (across
 families and ICs) is much smaller than between-regime variation. **H4
 is supported.**
 
-![Figure 2. Basin-predictability acc(k) curves at publication scale (n=1,350 / regime; D1 n=450). Replace-mode regimes (O2 paraphrase, O3 summarize+negate) lock in by step 5 at acc≈0.90–0.92. Append-mode O1 climbs from 0.77 (k=5) to 0.85 (final). Dialog D1 climbs from 0.61 (k=10) to 0.77 (final) — slowest to commit but reaching strong late-window basin predictability. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability.png)
+![Figure 2. **Basin-predictability across regimes.** Two-panel plot of top-1 accuracy for predicting each trajectory's late-window K-means cluster from its embedding at step $k$, using publication-scale runs where available. The left panel shows acc($k$) curves; the right panel compares seed-step and final-step accuracy. O2/O3 have high early predictability, O1 increases more gradually, D1 is lower and slower, and D2 is underpowered in this analysis. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability.png)
 
 ### 5.4 Phase 2b — temperature sensitivity
+
+> **Caveat (added in revision).** The T-sweep cells in this section
+> are at **reduced scope** (n=150) rather than publication scope
+> (n=1350 for O1, n=450 for D1). The reduced-scope T=0.8 cell sits
+> 28 pct pts below the publication-scope T=0.8 anchor (0.52 vs 0.80
+> for O1 acc(k=10)) — meaning that **scope, not temperature,
+> dominates the variance** in O1 basin-predictability across the
+> sweep. The narrower 4 pct pt span we observe for D1 across T is
+> still suggestive of T-stability, but the operator-regime
+> T-sensitivity claim should be read as exploratory until a
+> publication-scope T-sweep is run. We retain the data because the
+> *qualitative* contrast (D1 narrower than O1 across T at *matched*
+> reduced scope) is informative, but the absolute numbers are
+> N-confounded.
 
 We ran a temperature sweep (T ∈ {0.3, 0.6, 0.8, 1.2}) for D1 and O1 at
 reduced scope (5 families × 15 ICs × 2 runs × 30 steps = 150
@@ -1994,7 +2400,7 @@ filtered to `observable=context_tail` and `step=10`. See
 
 ### 5.5 Phase 3a — perturbation pilots
 
-![Figure 3. **The headline result.** Switching rates by regime × condition (n=50 / cell, n=25 for D2). Replace-mode regimes (O2, O3) capitulate to *any* perturbation type ≥ 80 tokens (94–100% switching). Append-mode O1 resists out-of-distribution perturbation (lorem/neutral 18–24%) but yields to in-distribution adversarial text (54%). Dialog regimes occupy intermediate scales determined by conversational structure (D1 60%, D2 64%). Source: `data/aggregated/perturbation_cross_regime/cross_switching_rates.png`.](data/aggregated/perturbation_cross_regime/cross_switching_rates.png)
+![Figure 3. **Perturbation switching by regime.** Grouped bar chart of final-step switching rate, defined as final K-means cluster disagreement with the paired control trajectory; injection occurs at step 15 of a 30-step run, with $n=50$ trajectories per cell except D2 ($n=25$). O2/O3 show high switching for all perturbation types, O1 shows higher switching for adversarial than neutral/lorem perturbations, and D1/D2 fall between these cases. Source: `data/aggregated/perturbation_cross_regime/cross_switching_rates.png`.](data/aggregated/perturbation_cross_regime/cross_switching_rates.png)
 
 For each of the four diagnostic regimes plus D2 (drill-down), we ran a
 perturbation pilot at 5 families × 5 ICs × 2 runs × 30 steps = 50
@@ -2057,13 +2463,110 @@ the contractive basin no matter the dose.
 |---|---:|---:|---:|---:|
 | switch | 26% | 34% | 54% | 48% |
 
-Clear graded response. The 50%-switching dose is approximately 150
-tokens of in-distribution text. **This is the first quantitative
-barrier-height measurement for an LLM loop**. The same architecture
+Clear graded response. In this pilot the 50%-switching dose lies
+between 80 and 400 tokens of in-distribution text — the n=50 cells
+do not localize it more precisely (see Wilson CIs in Figure 4 and
+the dense-dose rerun in §8). To our knowledge this is the first
+**reported** dose-response barrier-height measurement for an LLM
+loop on this generator and prompt template; we do not claim
+priority, only that systematic dose-response measurement of barrier
+height in this form has not been a focus of prior recursive-loop
+work. The same architecture
 (O1 continue) produces qualitatively different dose-response curves
 depending on whether the perturbation is in-distribution.
 
-![Figure 4. Dose-response curves for D1 / neutral, O1 / neutral, and O1 / adversarial. The 50% switching crossing on the O1 / adversarial curve at ~150 tokens of in-distribution text *is* the paper's headline barrier height. O1 / neutral saturates at ~24% (the irreducible drift floor), confirming the contractive basin has an effectively-infinite barrier against out-of-distribution nudges. D1 / neutral shows shallow dose-dependence consistent with intermediate-barrier dialog dynamics. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.](data/aggregated/perturbation_dose_response/dose_response.png)
+![Figure 4. **Dose-response switching curves.** Switching rate is plotted against perturbation length in tokens for D1/neutral, O1/neutral, and O1/adversarial conditions; each point has $n=50$ trajectories and 95% Wilson confidence intervals, with injection at step 15. O1/neutral remains near 20–26% across tested doses, O1/adversarial rises toward roughly 50% with a non-monotone 400-token endpoint, and D1/neutral is high even at the smallest tested doses. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.](data/aggregated/perturbation_dose_response/dose_response.png)
+
+#### 5.6.1 Confirmatory dense-dose rerun (n=200/cell, 8 doses)
+
+The sparse-data dose-response above was driven by the n=50/cell pilot
+flagged as underpowered in revision Weakness #1. The dense-dose rerun
+described in `paper/ed50_rerun_plan.md` was committed as a frozen
+pre-registration before the run started: 8 doses at $n=200$/cell × 5
+families × 10 ICs × 4 runs = 1,800 trajectories total via
+`configs/perturbation/O1_ed50_dense.yaml` and
+`scripts/fit_ed50_hierarchical.py`. The pre-registered analysis
+included 4 control runs/IC to enable a control-vs-control natural-
+floor estimate. The run completed cleanly; results below.
+
+**Dense O1 / adversarial dose-response** (n=200 per cell, control n=200):
+
+| dose (tokens) | switch rate | Wilson 95% CI |
+|---|---:|---|
+| control | 0.000 | [0.000, 0.019] |
+| 20 | 0.415 | [0.349, 0.484] |
+| 50 | 0.510 | [0.441, 0.578] |
+| 80 | 0.575 | [0.506, 0.641] |
+| 120 | 0.630 | [0.561, 0.694] |
+| 160 | 0.605 | [0.536, 0.670] |
+| 200 | 0.620 | [0.551, 0.684] |
+| 300 | 0.655 | [0.587, 0.717] |
+| 400 | 0.670 | [0.602, 0.731] |
+
+**ED50 estimates** (consistent across methods):
+
+| method | ED50 (tokens) | uncertainty |
+|---|---:|---|
+| 4PL pooled fit | 36 | (point) |
+| Mixed-effects logistic GLMM | 41 | (point, log10-dose slope) |
+| Family-cluster bootstrap median | 52 | 95% CI [8.5, 242] |
+
+The point estimates from three independent methods cluster in the
+**~36–52-token range** — substantially below the sparse-data
+"~150 tokens" claim of earlier versions of this manuscript. The
+bootstrap CI remains wide because only 5 prompt families means
+family-level resampling has heavy tails; widening the family count
+in a future replication would tighten the CI.
+
+**Two structurally important findings beyond the point estimate:**
+
+1. **The curve plateaus at ~67%, not 1.0.** The 4PL upper asymptote is
+   $a = 0.69$. At infinite adversarial dose, only ~69% of trajectories
+   switch under the current perturbation protocol. This means **a
+   substantial subpopulation (~31%) is "hardened" against in-
+   distribution adversarial nudges in this dose range**. Whether this
+   reflects per-trajectory stochastic robustness, family-specific
+   barrier structure (§5.10.9), or a deeper mechanistic split is an
+   open question.
+
+2. **The control-vs-control natural floor is 34.7%** [31.0%, 38.6%]
+   across $n=600$ ordered control-control pairs (4 control runs/IC ×
+   pairwise comparisons). Two trajectories with the *same* family /
+   IC seed but different generation RNG end up in different K-means
+   clusters 35% of the time *purely from stochastic divergence*, with
+   no perturbation involved. **Net adversarial effect** (observed
+   switching minus natural floor):
+
+   | dose | observed | natural floor | net adversarial effect |
+   |---|---:|---:|---:|
+   | 20 | 0.415 | 0.347 | **+0.068** |
+   | 50 | 0.510 | 0.347 | **+0.163** |
+   | 80 | 0.575 | 0.347 | **+0.228** |
+   | 200 | 0.620 | 0.347 | **+0.273** |
+   | 400 | 0.670 | 0.347 | **+0.323** |
+
+   Under the strictest reading — *the adversarial dose at which the
+   net effect (above natural divergence) reaches 50% switching* — no
+   such threshold exists in the tested range; the highest net effect
+   is **+32 pp at dose 400**, well below 50 pp. The 50%-of-population
+   crossing of the *raw* curve happens between dose 20 and dose 50,
+   but a substantial fraction of that "switching" is confounded by
+   stochastic baseline divergence.
+
+**What the dense-rerun headline claim is, post-correction.** O1
+under in-distribution adversarial perturbation has a finite,
+graded-response dose-response with **ED50 (raw switching) ≈ 40
+tokens**, an upper asymptote of ~67% (substantial non-switching
+subpopulation), and a natural stochastic-divergence floor of ~35%
+that consumes most of the apparent effect at low doses. The "barrier
+height in tokens" is therefore best read as a **graded-response
+parameter**, not a sharp threshold; the original "~150 token barrier"
+claim is replaced by this richer characterisation. We do *not*
+claim a localised barrier in the strict §3.1.1 sense (the 95%
+bootstrap CI on ED50 spans an order of magnitude), but we do claim a
+finite, monotone dose-response with the parameters above.
+
+![Figure K. **Dense-dose ED50 fit.** O1 adversarial dose-response from the confirmatory rerun (8 doses × $n=200$/cell × 5 families × 10 ICs × 4 runs = 1,800 trajectories). Black points are observed switching rates with family-cluster-bootstrap 95% CIs; the blue curve is a 4-parameter logistic fit (`a=0.69, d=0.28, b=1.16, ED50=36 tok`); the shaded blue band is the 95% bootstrap envelope on ED50; the dashed red line marks the bootstrap-median ED50 = 52 tokens [CI 8.5, 242]. The curve plateaus at ~67%, not 1.0 — there is a non-switching subpopulation. Source: `data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png`.](data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png)
 
 ### 5.7 Phase 3c — injection-time sweep
 
@@ -2085,7 +2588,7 @@ averaging operator integrates whatever is in context regardless of when
 it arrived. **The two regimes have qualitatively different
 time-dependence** in their barrier structure.
 
-![Figure 5. Injection-time sweep: switching rate as a function of when the perturbation lands (step 5, 15, 25 of a 30-step trajectory). D1 (neutral @ dose 80, top) shows U-shape — early/middle injections more disruptive than late. O1 (adversarial @ dose 200, bottom) is roughly flat — the contractive basin doesn't care WHEN the perturbation arrives, only how much in-distribution evidence it carries. Source: `data/aggregated/perturbation_basin_hardening/basin_hardening.png`.](data/aggregated/perturbation_basin_hardening/basin_hardening.png)
+![Figure 5. **Switching versus injection time.** Switching rate is plotted for injections at steps 5, 15, and 25 of a 30-step trajectory, with $n=50$ per cell and 95% Wilson confidence intervals. D1/neutral at dose 80 declines at the latest injection step, while O1/adversarial at dose 200 is approximately flat across injection times. Source: `data/aggregated/perturbation_basin_hardening/basin_hardening.png`.](data/aggregated/perturbation_basin_hardening/basin_hardening.png)
 
 ### 5.8 Phase 3d — drill-down dialog (D2)
 
@@ -2154,93 +2657,774 @@ re-aggregation as new experiments land.
 
 ### 5.10 Geometric barriers from V(x) = −log ρ(x)
 
-![Figure 6. Empirical potential landscape V(x) = −log ρ(x) on PCA-2 for the O1 perturbation pilot, four conditions. Wells = attractor basins; cliff edges = barriers. The control panel (top-left) shows the unperturbed contractive basin; the adversarial panel (bottom-right) shows the kick that ~1/2 of trajectories survive without crossing into another basin. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
+> **Caveat (added in revision).** The geometric $V^\star$ values
+> reported in this section are **descriptive**, not an independent
+> quantitative validation of the behavioral barrier — but the
+> *ordinal ranking* of conditions by $V^\star$ is robust to analyst
+> choices (see §5.10.10 below for the parameter-grid sensitivity
+> result). In particular, for replace-mode regimes (O2/O3) the
+> geometric $V^\star$ is *high* while the behavioral switching rate
+> is saturated near 100% — a mechanistic mismatch we attribute to
+> *basin creation* (the kick reshapes the density landscape so the
+> post-kick cloud occupies a different region) rather than *barrier
+> crossing*. The two mechanisms produce opposite-sign predictions
+> for the relationship between $V^\star$ and switching rate. The
+> $V^\star$↔ED50 correlation should therefore be computed only on
+> regimes where the *barrier crossing* mechanism is hypothesized
+> (i.e., O1 / D1, not O2 / O3 where basin creation is suspected).
+> Numerical $V^\star$ values are sensitive to KDE bandwidth, grid
+> resolution, and basin-detector thresholds (CV ~14–24% across a
+> 45-parameter grid; see §5.10.10), but the ordinal claim
+> (control > neutral / lorem > adversarial in $V^\star$) is stable
+> across 89–98% of parameter combinations.
 
-![Figure 7. Geodesic skeleton through V on PCA-2 for the O1 pilot's four conditions. Density-peak basins (red dots) are connected by Dijkstra geodesics; the maximum-V along each path is the geometric barrier height V\*. Per-condition mean V\* values reported in the table below agree with the perturbation-derived dose thresholds — the cross-check that validates barrier height as a real geometric quantity. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
+![Figure 6. **PCA-2 density landscapes for the O1 perturbation pilot.** Four panels show $V(x) = -\log \rho(x)$, computed from smoothed empirical density on the joint PCA-2 embedding for control, neutral, lorem, and adversarial conditions. Low $V$ regions correspond to high-density parts of the observed trajectory cloud. Neutral and lorem are visually closer to control than the adversarial condition, which redistributes density across the PCA-2 plane. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
 
-For each of the four diagnostic perturbation pilots we computed:
+![Figure 7. **Geodesic summaries on the O1 PCA-2 density landscape.** Each panel shows the per-condition $V(x) = -\log \rho(x)$ contour map, detected density peaks marked by stars, and Dijkstra paths between peak pairs on the $V$ grid. The label $V^\star$ is the maximum $V$ value along each plotted path. These values are descriptive summaries of the PCA-2 density geometry and are aggregated by condition in §5.10. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
 
-#### Geodesic skeleton on V
+![Figure 8. **Flow-field and geodesic overlays for O1 perturbations.** Each panel overlays three quantities on PCA-2: the $V(x) = -\log \rho(x)$ contour map, streamlines from binned one-step displacement vectors, and Dijkstra paths between detected density peaks with $V^\star$ labels. The panels compare how the observed displacement field and density geometry vary across control, neutral, lorem, and adversarial perturbations. Source: `data/exp_perturb_O1_pilot/reports/perturbation/flow_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/flow_skeleton_pca.png)
 
-Per-condition mean barrier height V\* across the 6 inter-basin geodesics
-(`V_star_mean` column in the per-pilot `geodesic_barriers_summary.csv`):
+![Figure 9. **Post-injection relaxation curves for O1.** Line plot of mean PCA-10 distance from each trajectory's pre-perturbation control centroid, by step and perturbation condition. The dashed line marks injection at step 15. After injection, neutral and lorem move closer to the control trajectory than adversarial, which remains farther from the pre-injection centroid. Source: `data/exp_perturb_O1_pilot/reports/perturbation/relaxation_curves.png`.](data/exp_perturb_O1_pilot/reports/perturbation/relaxation_curves.png)
 
-| regime | control | neutral | lorem | adversarial |
+![Figure 10. **O1 perturbation trajectories in t-SNE.** Each panel shows $n=50$ O1 trajectories as step-colored t-SNE polylines; arrows mark the step 14→15 displacement at injection. Adversarial perturbations produce larger visible displacements than neutral or lorem perturbations, while control trajectories show only ordinary step-to-step movement. Source: `data/exp_perturb_O1_pilot/reports/perturbation/trajectories_tsne_by_condition.png`.](data/exp_perturb_O1_pilot/reports/perturbation/trajectories_tsne_by_condition.png)
+
+![Figure 11. **PCA-3 snapshots of O1 perturbation trajectories.** Static 2×2 composite showing the shared PCA-3 embedding for control, neutral, lorem, and adversarial conditions, with iso-density shells, six trajectory trails per panel, and red pre/post-injection segments for perturbed conditions. The adversarial panel shows longer pre/post-injection segments than neutral or lorem in this projection. Source: `data/exp_perturb_O1_pilot/reports/perturbation/animation3d_snapshots.png`.](data/exp_perturb_O1_pilot/reports/perturbation/animation3d_snapshots.png)
+
+![Figure 12. **Joint t-SNE snapshot after O1 perturbation.** Static frame at step 24 from a joint t-SNE animation fit once on all O1 perturbation points: 4 conditions × 50 trajectories × 30 steps, with PCA-30 pre-reduction and `init="pca"`. Each panel shows current trajectory heads, recent fading trails, the full condition cloud in grey, and red X markers at pre-injection positions for perturbed runs. At this step, adversarial trajectories are more dispersed from their pre-injection locations than neutral or lorem trajectories. Animated GIF (joint fit, fixed coordinates) at `data/exp_perturb_O1_pilot/reports/perturbation/tsne_anim_joint.gif`; per-step refit companion at `tsne_anim_refit.gif`. Source: `data/exp_perturb_O1_pilot/reports/perturbation/tsne_anim_joint_snapshot.png`.](data/exp_perturb_O1_pilot/reports/perturbation/tsne_anim_joint_snapshot.png)
+
+**Summary (per-condition V* and RG cloud expansion).** We compute
+geometric $V^\star$ from the empirical density landscape on PCA-2
+and Ward-linkage cloud-merge distances on $k=48$ fine clusters for
+each of the four diagnostic perturbation pilots. The numerical
+values are descriptive: $V^\star$ is parameter-grid sensitive
+(CV 14–24%; §5.10.10), but the *ordinal* ranking of conditions
+(control highest, adversarial lowest in 89–98% of parameter
+combinations) is robust. The full $V^\star$ × condition table
+and Ward-merge-distance table for each regime are moved to §13.13;
+they support the qualitative reading that **(i) replace-mode O2/O3
+lorem produces a new basin (high $V^\star$ + large RG expansion);
+(ii) O1 adversarial has intermediate $V^\star$ consistent with
+ridge-crossing rather than basin creation; (iii) D1 has low $V^\star$
+across all conditions, consistent with content-independent basins**.
+Crucially, **the numerical $V^\star$↔ED50 correspondence does not
+survive quantitative scrutiny** — the geometric values complement
+but do not validate the behavioral barrier numbers.
+
+---
+
+### §5.B — Stress tests of primary results
+
+### 5.10.5 Group-aware basin-predictability: how much leakage is in the headline number?
+
+The basin-predictability acc(k) numbers reported in §5.3 / §5.4 use
+sklearn `StratifiedKFold` for cross-validation, which assigns
+trajectories to train/test folds *without* respecting the
+prompt-family grouping. Because the late-window basin a trajectory
+ends up in is partly determined by its prompt family — especially
+in dialog (D1) and replace-mode (O2/O3) regimes where the basin
+co-varies with stylistic / topical content — random k-fold lets the
+classifier exploit family identity as a feature. The reviewer
+flagged this in the revision (Weakness #7).
+
+To quantify the leakage, we re-ran the same basin-predictability
+classifier with `GroupKFold(n_splits=5, groups=prompt_family)` —
+which holds out one entire prompt family per fold and forces the
+classifier to generalize across families rather than within them.
+The accuracy delta `Δ = acc(stratified) − acc(grouped)` is a direct
+measure of how much of the reported number was from-family
+leakage. Computed via `scripts/group_aware_basin_predictability.py`
+on the existing publication-scale embeddings (no new data, no API
+calls).
+
+**Result: leakage is regime-specific and substantial outside O1.**
+At the canonical predictor step k=10:
+
+| regime | n_traj | acc (stratified) | acc (group, leakage-free) | Δ leakage |
 |---|---:|---:|---:|---:|
-| O1 | 4.4 | 2.3 | 2.6 | 2.2 |
-| O2 | 2.8 | 3.5 | **5.6** | 1.6 |
-| O3 | 1.1 | 5.2 | **7.0** | 2.2 |
-| D1 | 1.3 | 1.1 | 0.8 | 0.4 |
+| O1 contractive | 1350 | 0.803 | 0.732 | **+0.071** |
+| O2 paraphrase / replace | 1350 | 0.896 | 0.596 | **+0.301** |
+| O3 summarize+negate / replace | 1350 | 0.912 | 0.629 | **+0.283** |
+| D1 stylistic dialog | 450 | 0.604 | 0.336 | **+0.269** |
 
-(Per-geodesic raw V\* values are written alongside the figure to
-`data/exp_perturb_*_pilot/reports/perturbation/geodesic_barriers_pca.csv`;
-the V_max ≈ 8.0 ceiling appears when a geodesic crosses a region of
-near-zero density.)
+(All accuracies are top-1; chance baseline is roughly $1/12 \approx 0.08$ for K-means k=12. Source: `data/aggregated/group_aware_basin_pred.csv` and `group_aware_basin_pred.png`.)
 
-The geometric V\* values complement the perturbation switching rates:
+**Interpretation.**
 
-- **O2/O3 lorem** has V\* ≈ 5.6 / 7.0 — the highest barriers in the
-  matrix. Those barriers separate *control* from a *new* basin that
-  lorem injection creates far from any pre-perturbation density
-  mass: geodesics between the original and lorem-induced basins
-  traverse low-density plateaus where ρ ≈ ε (V near the V_max
-  ceiling). Switch rates are 100% because the perturbation places
-  the trajectory *into* the new basin — the perturbed run does not
-  have to climb the barrier; it lands on the far side. The high V\*
-  is consistent with the per-regime RG cloud expansion (3.6 / 3.3
-  below).
-- **O1 adversarial** has V\* ≈ 2.2 — basins remain distinct but the kick
-  occasionally clears the ridge → consistent with 54% switching at
-  ~150 tokens dose.
-- **D1 adversarial** has V\* ≈ 0.4 — basins are stylistic, not
-  content-bound, so the geometric barrier is small → consistent with
-  the 60% switching at saturated doses.
+- **O1 (Δ = +0.07)** is the only regime whose basin-predictability
+  is robust to family leakage. The contractive basin is a real
+  cross-family signal: held-out families are still classified at
+  73% top-1 accuracy from PCA-10 alone, well above chance and
+  above the leakage delta. The reviewer's concern is therefore
+  *least* applicable to O1, which is also the regime our headline
+  claims rest on.
+- **O2 / O3 (Δ ≈ +0.30)** lose roughly two-thirds of their
+  apparent basin signal under group-aware CV. This means the
+  reported 90+% basin predictability for replace-mode regimes is
+  largely a within-family fingerprint: trained on (philosophy_dialog,
+  reflective, ...) and tested on the *same* family, the classifier
+  recognizes "this looks like a reflective trajectory" and that
+  (in replace mode) over-determines the late-window basin. Under
+  honest cross-family CV, the residual basin signal at ~60%
+  accuracy is still well above chance but is much weaker evidence
+  for a *generic* basin structure independent of seed text.
+- **D1 (Δ = +0.27)** behaves similarly — the stylistic basin is
+  largely a family fingerprint, which is consistent with the
+  paper's existing characterization of D1 as a *stylistic*
+  multi-basin regime: style is correlated with prompt family by
+  construction, so a within-family classifier looks confident even
+  when the underlying basin signal is weaker.
 
-Cross-validating dose-response barrier estimates (from §5.6) against
-geometric V\* gives two complementary readings: O1 adversarial agrees
-quantitatively (V\* ≈ 2.2 ↔ 150-token saturation dose), D1 agrees
-qualitatively (low V\*, near-zero saturation dose), and the
-replace-mode regimes are explained by basin *creation* rather than
-barrier crossing — different geometric mechanisms producing the same
-100% switching.
+**What this changes in the paper.** The §5.3 headline numbers should
+be read as upper bounds; the cross-family-honest numbers are
+substantially lower for replace-mode and dialog regimes. The
+qualitative regime ordering survives (O3 > O2 > O1 > D1 in
+stratified CV; O1 > O3 > O2 > D1 in group-aware CV — note O1 and O3
+swap positions), but the *gap* between O1 and the rest is much
+smaller under leakage-free CV (~10pp) than under stratified CV
+(~10–30pp). The contractive basin claim is the most robust under
+this stress test.
 
-#### Hierarchical RG dendrogram
+**Hierarchical model across all perturbation results.** A separate
+analysis (`scripts/mixed_effects_perturbation.py`) fits a single
+mixed-effects logistic regression to all 600 perturbed-trajectory
+outcomes pooled across the four diagnostic perturbation pilots,
+with random intercepts for prompt_family and IC-within-family. Key
+result: **the IC-within-family random-intercept SD (0.82 logits) is
+~3× the between-family random-intercept SD (0.29 logits)**. Most of
+the trajectory-level heterogeneity is *within* prompt families, not
+*between* them. Practical consequence: per-cell Wilson CIs that
+treat trajectories as IID are slightly overconfident at typical
+sample sizes; the headline regime ordering survives the proper
+hierarchical correction (O1/adversarial fixed-effect vs D1/adversarial
+reference: coefficient = −0.61, 95% CI [−1.21, −0.02], p < 0.05;
+O2 and O3 conditions: coefficients +2.2 to +3.9, well above zero),
+but the sub-regime cell-level rates are slightly attenuated under
+partial pooling. Output:
+`data/aggregated/mixed_effects_perturbation.csv`.
 
-Per-condition maximum Ward-linkage merge distance across k=48 fine-cluster
-centroids:
+![Figure G. **Group-aware basin-predictability re-analysis.** Paired bars compare StratifiedKFold accuracy with GroupKFold-by-family accuracy for each regime and predictor step. The annotated $\Delta$ gives the drop when prompt families are held out across folds. O1 shows the smallest drop, while O2, O3, and D1 lose substantially more accuracy under group-aware cross-validation. Source: `data/aggregated/group_aware_basin_pred.png`.](data/aggregated/group_aware_basin_pred.png)
 
-| regime | control | neutral | lorem | adversarial |
+### 5.10.6 Cluster-stability check: do the basins survive method changes?
+
+The basin partition used throughout the paper is K-means with $k=12$
+on PCA-10. Review weakness #2 asked: *are these K-means clusters real
+basins, or artefacts of the K-means algorithm at this particular k?*
+We address this by re-running clustering on the existing
+publication-scale embeddings (no new data, no API calls) with two
+methods that don't make K-means' spherical-cluster assumption: **HDBSCAN**
+(density-based, finds clusters of arbitrary shape; cluster count is
+auto-detected) and **spectral clustering** (graph-based, uses
+nearest-neighbour affinity). Each is run on a uniform 3,000-point
+subsample of the late-window cloud (the full ~20,000-point publication
+cloud is too large for nearest-neighbour spectral) and compared to
+K-means at $k\in\{8,12,16\}$ via Adjusted Rand Index (ARI) — a
+chance-corrected agreement measure where 0 = random partitioning and
+1 = identical partitioning. Computed via
+`scripts/cluster_stability_check.py`; per-experiment ARI matrices in
+`data/exp_*/reports/cluster_stability/stability_heatmap.png`.
+
+**Headline:** clusters are *moderately* stable across methods, but the
+K-means $k=12$ partition is not unique. Median ARI between K-means@12
+and the other methods, per regime:
+
+| regime | median ARI vs K-means@12 | HDBSCAN auto-detected k | interpretation |
+|---|---:|---:|---|
+| O1 contractive | 0.53 | **2** | HDBSCAN sees the O1 cloud as effectively *one basin* (~98% of points in 1–2 clusters); K-means k=12 over-partitions a single contractive attractor. ARI between K-means@12 and HDBSCAN@2 is 0.01 (essentially random) — they're measuring different things at different granularities. |
+| O2 paraphrase / replace | 0.58 | 16 | HDBSCAN finds a cluster count similar to K-means; partitions agree at ~0.6 ARI. |
+| O3 summarize+negate / replace | 0.60 | 16 | Same as O2; replace-mode regimes have moderately stable cluster structure. |
+| D1 stylistic dialog | 0.66 | 16 | Highest stability; HDBSCAN and K-means@12 agree at ~0.66 ARI. |
+
+**What this means for the basin claim.**
+
+- **For O1**: the contractive-basin story is *strengthened*, not
+  weakened, by this stress test. HDBSCAN at default density
+  thresholds prefers a one-or-two-basin partition — exactly what a
+  contractive attractor should look like. The K-means $k=12$
+  partition we use throughout is therefore best understood as a
+  *fine-grained sub-partition of one attractor* rather than 12
+  separate basins. Consequences: (a) the perturbation switching
+  metric (cluster-disagreement at the K-means k=12 level) may
+  partially track sub-basin movement within one large attractor
+  rather than true attractor-escape — a partial confirmation of
+  review weakness #2 — but it still also tracks attractor-level
+  changes when the perturbation pushes trajectories outside the
+  contractive basin's PCA-10 envelope (which is what the
+  long red kick beams in Figure 11 visualize); (b) the
+  basin-predictability $A^{\mathrm{final}}=0.85$ for O1 (§5.3) is
+  the predictability of the *fine-grained* partition; the *coarse*
+  basin (HDBSCAN k=2) is presumably even more predictable.
+
+- **For O2/O3/D1**: cluster stability is moderate (~0.6 ARI) — the
+  partition is method-dependent at the boundaries but not arbitrary.
+  Combined with the group-aware basin-predictability findings in
+  §5.10.5 (large family-leakage delta for these regimes), we conclude
+  that the basin labels in O2/O3/D1 are partly stylistic / family
+  fingerprints rather than purely dynamical attractor structure.
+
+**What this changes in the paper.** We retain K-means $k=12$ as the
+canonical partition because it is what every downstream metric in §5
+(basin score, basin entry, perturbation switching, basin
+predictability) is built on, and re-running the entire pipeline at a
+different cluster granularity is out of scope for this revision.
+However, all claims of the form "trajectory switched basin" should
+be read with the caveat that "basin" here means K-means $k=12$
+cluster, not a HDBSCAN density basin. The two notions agree for
+O2/O3/D1 at ~60% agreement and disagree for O1 (where HDBSCAN sees
+fewer, larger basins). Future work should compute the perturbation
+switching metric at multiple cluster granularities (K-means k=2, k=12,
+HDBSCAN auto) and compare the dose-response curves.
+
+### 5.10.7 Multi-granularity switching: does the dose-response survive different cluster definitions?
+
+The §5.10.6 cluster-stability check showed that K-means $k=12$ is not
+the unique partition (median ARI ≈ 0.5–0.7 vs HDBSCAN/spectral; for
+O1, HDBSCAN auto-detects only 2 clusters). A natural follow-up
+question: **does the perturbation switching dose-response survive at
+a different cluster granularity?** If switching-rate ordering across
+conditions stays the same when we re-cluster at coarser or method-
+specific granularity, then the headline isn't a K-means $k=12$
+artefact.
+
+We re-ran the perturbation switching analysis on the four diagnostic
+perturbation pilots (`exp_perturb_O1_pilot`, `O2_pilot`, `O3_pilot`,
+`D1_pilot`) at three granularities: K-means $k=12$ (canonical),
+K-means $k=4$ (coarse), and HDBSCAN (auto-detected count). For each
+non-control trajectory we recomputed whether its final-step cluster
+differs from its same-(family, IC, run) control trajectory, under
+each granularity. Computed via
+`scripts/multi_granularity_switching.py`.
+
+| pilot | condition | k=12 | k=4 | HDBSCAN | granularity-robust? |
+|---|---|---:|---:|---:|---|
+| O1 | adversarial | 0.54 | 0.44 | 0.60 | [OK] headline robust |
+| O1 | neutral | 0.24 | 0.18 | 0.38 | [OK] low across all |
+| O1 | lorem | 0.18 | 0.18 | 0.30 | [OK] low across all |
+| O2 | adversarial | 0.94 | 0.72 | 1.00 | [OK] saturated at k=12 / HDBSCAN; coarse k=4 collapses some |
+| O2 | neutral | 1.00 | 1.00 | 1.00 | [OK] |
+| O2 | lorem | 1.00 | 1.00 | 1.00 | [OK] |
+| O3 | adversarial | 0.96 | 0.74 | 0.98 | [OK] same pattern as O2 |
+| O3 | neutral | 1.00 | 0.74 | 1.00 | [OK] |
+| O3 | lorem | 1.00 | 1.00 | 1.00 | [OK] |
+| D1 | adversarial | 0.60 | 0.50 | 0.40 | partial (drops 20pp at HDBSCAN) |
+| D1 | neutral | 0.76 | 0.60 | 0.66 | partial |
+| D1 | lorem | 0.56 | 0.46 | 0.44 | partial |
+
+(All cells $n=50$; Wilson 95% CIs in
+`data/aggregated/multi_granularity_switching.csv`. Source:
+`data/aggregated/multi_granularity_switching.png`.)
+
+**What this rules in.**
+
+1. **The O1 OOD-vs-in-distribution asymmetry is granularity-robust.**
+   At every cluster granularity tested, O1's adversarial switching rate
+   is roughly 2–3× the OOD (neutral / lorem) rate. The headline
+   contractive-basin finding is not a K-means $k=12$ artefact.
+
+2. **Replace-mode capitulation at K-means $k=12$ and HDBSCAN is
+   real.** O2 and O3 saturate at 100% switching at the canonical and
+   auto-detected granularities. At coarse $k=4$, switching drops to
+   72–74% on adversarial — but this is mechanistic: at $k=4$ a single
+   "absorber" basin captures more of the diversity, so trajectories
+   ending up in the same macro-basin no longer count as switches.
+
+3. **D1 switching is the most granularity-sensitive.** D1's adversarial
+   rate drops from 0.60 (K-means $k=12$) to 0.40 (HDBSCAN). This is
+   consistent with our other findings (§5.10.5: D1 has 27pp family-
+   leakage in basin-predictability) — the D1 stylistic basin is partly
+   a fine-grained K-means partition that doesn't fully reproduce under
+   coarser methods.
+
+**Combined with §5.10.5 and §5.10.6 results**, the picture is:
+- **O1 contractive basin**: robust to family-leakage CV (+0.07
+  delta), robust to cluster-method (HDBSCAN k=2), robust to
+  granularity (multi-granularity switching ratio preserved). The
+  most defensible regime claim in the paper.
+- **O2/O3 replace-mode capitulation**: granularity-robust at fine
+  granularities (k=12, HDBSCAN k=16) but partially mechanism-
+  dependent at coarse k=4. Combined with §5.10.5's high family-
+  leakage delta, the basin-level interpretation is weaker than the
+  switching-rate interpretation.
+- **D1 dialogue-state-driven multi-basin**: most fragile under stress tests
+  (high family-leakage; granularity-sensitive switching). The
+  qualitative claim survives but the absolute numbers shift
+  substantially.
+
+![Figure H. **Switching rates under alternative cluster granularities.** Panels show perturbation switching rates for D1, O1, O2, and O3, recomputed with K-means $k=12$, K-means $k=4$, and HDBSCAN; error bars are Wilson 95% CIs with $n=50$ per cell. O1 retains higher adversarial than neutral/lorem switching across all three cluster definitions, while D1 is more sensitive to the clustering method. Source: `data/aggregated/multi_granularity_switching.png`.](data/aggregated/multi_granularity_switching.png)
+
+### 5.10.8 Per-cluster semantic inspection: what do the basins actually contain?
+
+The diagnostics in §5.10.5–§5.10.7 examined whether the K-means $k=12$
+partition is statistically/methodologically robust. A complementary
+question is **what the clusters semantically represent.** Are they
+basins of *content* (specific topics) or basins of *style*
+(register-shaped attractors)? Are the replace-mode regimes truly
+absorbing in the sense of converging to common text, or only in a
+formal-template sense? We answered this by extracting representative
+trajectory text from each cluster (`scripts/extract_cluster_text_samples.py`)
+and having a separate LLM (`gpt-5.5` with high reasoning effort)
+characterise each cluster's content blind to the paper's regime
+labels. Results below; raw cluster-text-sample files at
+`data/aggregated/cluster_text_samples_*.md`.
+
+#### O1 — append-mode contractive (12 clusters, 1350 trajectories)
+
+Three large attractors and four medium sub-basins, organised by
+**register / style**, not by topic content:
+
+| cluster | $n$ | dominant style | basin class |
+|---:|---:|---|---|
+| 7 | 355 | sentimental narrative (cozy magical scenes, friendship, wonder) | large attractor |
+| 3 | 297 | expository / policy-discursive (ethics, governance, education) | large attractor |
+| 1 | 258 | reflective empathic discourse (shared humanity, vulnerability, storytelling) | large attractor |
+| 6 | 134 | creative coaching (process, agency, collaboration, feedback) | medium sub-basin |
+| 2 | 91 | fabulist narrative (lyrical animal/landscape journeys) | medium sub-basin |
+| 5 | 89 | technical tutorial (programming explanations, best practices) | medium sub-basin |
+| 10 | 61 | practical advice / listicle (interpersonal, financial, workplace) | medium sub-basin |
+| 0, 4, 8, 9, 11 | 8–22 | small / outlier | small |
+
+**Finding for O1**: The convergence is **register-shaped, not
+topic-shaped**: same family seeds drift to similar styles regardless
+of original content. Beans, garlic, capital punishment, hashing,
+paintings, landlords, and noise strings all lose their original
+specificity and stabilise in one of a few high-probability
+continuation styles (supportive explanation, sentimental narrative,
+policy discourse). This **strengthens** the contractive-basin
+interpretation but specifies the *axis of contraction*: register, not
+content.
+
+#### O2 — replace-mode paraphrase (12 clusters, 1350 trajectories)
+
+Multiple medium clusters, organised by **seed family / topic**, not
+by style:
+
+| cluster | $n$ | dominant content | basin class |
+|---:|---:|---|---|
+| 4 | 204 | third-person story events (clean narrative paraphrase) | large attractor |
+| 9 | 178 | strong claims + technical explanations (formal declarative) | large attractor |
+| 3 | 165 | abstract epistemic/philosophical explanation | large attractor |
+| 0 | 140 | technical / definitional claims | large attractor |
+| 1 | 101 | short fragments normalised into fuller utterances | medium sub-basin |
+| 7 | 102 | metaphorical inward reflection (lyrical reflective) | medium sub-basin |
+| 11 | 97 | first-person affective states (emotional self-report) | medium sub-basin |
+| 10 | 90 | imperative procedural style (instructions) | medium sub-basin |
+| 2, 5, 6, 8 | 64–73 | small | small |
+
+**Finding for O2**: O2 does **not** collapse into one absorbing text
+or even one shared semantic topic. It mostly preserves the seed's
+local meaning while repeatedly sanding it into a more conventional
+paraphrase. Narratives stay narrative; instructions stay procedural;
+technical claims stay expository. This is **not** an O1-style
+register attractor — it's a set of paraphrastic sub-basins organised
+by seed family and surface register. The "oscillatory" label in the
+paper's existing taxonomy is descriptive of the period-2 dynamics
+but should not be read as "semantic convergence."
+
+#### O3 — replace-mode summarize-then-negate (12 clusters, 1350 trajectories)
+
+Four large clusters, all dominated by the operator's **antithetical
+template** (X; not-X), but each cluster preserves seed-family
+content:
+
+| cluster | $n$ | dominant content (within template) | basin class |
+|---:|---:|---|---|
+| 4 | 227 | narrative events reversed/contradicted (story arrival/absence, same/different) | large attractor |
+| 3 | 160 | philosophical thesis/antithesis prose | large attractor |
+| 10 | 155 | abstract/technical proposition + explicit negation | large attractor |
+| 1 | 151 | code/function descriptions summarised then denied | large attractor |
+| 8 | 104 | first-person creative/life problems reframed as positive/negative | medium sub-basin |
+| 11 | 99 | emotional states mapped to opposite affects | medium sub-basin |
+| 0, 2, 5, 6, 7, 9 | 44–88 | small | small |
+
+**Finding for O3**: O3's "absorbing" property is **formal**, not
+semantic. Nearly every trajectory becomes "summary + opposite," but
+the actual content remains seed-specific. Narrative seeds become
+event-summary plus reversed event; emotional seeds become affect plus
+opposite affect; technical seeds become proposition plus denial.
+There is no evidence that unrelated seed families converge to the
+same recognisable text content. O3 is absorbing as a **discourse
+template**, not as a content attractor.
+
+#### D1 — append-mode dialog (curious user + helpful agent, 11 active clusters, 450 agent-role trajectories)
+
+Multiple medium / small clusters dominated by **dialogue-state
+attractors and recent-context capture**, not by stable seed content:
+
+| cluster | $n$ | semantic theme | basin class |
+|---:|---:|---|---|
+| 3 | 67 | reflection tools / journaling / communication rehearsal | medium sub-basin |
+| 9 | 55 | creative feedback / taste-and-style recommendation | medium sub-basin |
+| 2 | 53 | education / documentary outreach / sustainability | medium sub-basin |
+| 7 | 52 | wellness / self-improvement coaching | medium sub-basin |
+| 5 | 48 | upbeat empathic small talk | small |
+| 11 | 42 | professional coaching / workplace productivity | small |
+| 4 | 38 | creative-craft advice (game design, narrators) | small |
+| 10 | 36 | affirming conversational elaboration / meaning-making | small |
+| 0, 6, 8 | 15–23 | outlier / small | outlier |
+
+**Finding for D1**: D1's basins are **dialogue-state attractors**
+(supportive affirmation, practical recommendation, creative feedback,
+wellness coaching, workplace advice, generic follow-up-question
+mode), not stable seed-content basins. Seeds frequently lose their
+original specificity through append-mode accumulation: fear becomes
+yogurt advice; philosophical responsibility becomes Asana
+recommendations; emotional embarrassment becomes watercolor
+technique. This **qualifies** the paper's "stylistic multi-basin"
+label: D1 is multi-basin, but the mechanism is *recent-context
+capture / conversational drift* rather than purely stylistic
+attractor convergence.
+
+#### Comparative reading and what this changes in the taxonomy
+
+The four regimes are *all* multi-basin at K-means $k=12$, but the
+mechanism producing the basins differs:
+
+| regime | basin axis | mechanism | implication |
+|---|---|---|---|
+| **O1** | register / style | contractive flow toward high-probability continuation styles | regime label preserved: *register-contractive* attractor |
+| **O2** | seed family / topic | paraphrase preserves content; clusters reflect seed-family register | regime should be re-labeled: from "oscillatory absorbing" to "paraphrastic family-preserving" (the period-2 dynamics still hold, but the basins are not absorbing) |
+| **O3** | operator template (formal X / not-X) | the negate operator imposes a discourse-shape; content stays seed-specific | regime should be re-labeled: from "absorbing" to "template-absorbing" — operator-shape convergence, not semantic convergence |
+| **D1** | dialogue-state / recent-context capture | append-mode dialog accumulates context; basins are conversational acts | regime should be re-labeled: from "stylistic multi-basin" to "dialogue-state-driven multi-basin" — the mechanism is recent-context drift, not purely stylistic preference |
+
+**Net effect on the taxonomy.** The four-regime taxonomy survives,
+but only one of the four labels (O1) accurately describes its basin
+mechanism. We retain the existing labels in this paper for
+continuity with prior versions of the manuscript, but flag the
+correction explicitly: O2's basins are not "absorbing" in the
+content-convergence sense; O3's "absorbing" is template-formal;
+D1's "stylistic" basins are mediated by conversational drift, not
+direct style preference. A future revision should adopt the
+re-labelled taxonomy (register-contractive / paraphrastic
+family-preserving / template-absorbing / dialogue-state-driven).
+
+### 5.10.9 Per-family heterogeneity and persistence of "switching"
+
+Two further reanalyses of the existing O1 sparse-dose adversarial
+sweep (`exp_perturb_O1_dose_adversarial`, n=50/cell × 4 doses)
+sharpen the interpretation of the headline switching metric. Both
+use the existing `joint_pca10_clusters.csv` outputs — no new data,
+no API calls. Computed via `scripts/per_family_and_persistence.py`.
+
+#### Per-family ED50 heterogeneity
+
+The population-level dose-response saturates at ~50% switching
+(§5.6, Figure 4). We asked: is this **one population at half-mixing**
+(every trajectory has 50% chance of crossing) or **family
+heterogeneity** (some families consistently cross, others don't)?
+Per-family rates from the existing sparse data:
+
+| family | dose 20 | dose 80 | dose 200 | dose 400 |
 |---|---:|---:|---:|---:|
-| O1 | 2.38 | 2.27 | 2.37 | 2.06 |
-| O2 | 2.31 | 2.32 | **3.64** | 1.90 |
-| O3 | 2.16 | 2.39 | **3.25** | 1.85 |
-| D1 | 1.79 | 1.79 | 1.79 | 1.80 |
+| philosophy_dialog | 0.10 | 0.40 | **0.90** | 0.50 |
+| practical_dialog | 0.40 | 0.20 | 0.70 | **0.80** |
+| creative_dialog | 0.20 | 0.40 | 0.30 | 0.60 |
+| reflective | 0.30 | 0.30 | 0.40 | 0.40 |
+| emotional | 0.30 | 0.40 | 0.40 | **0.10** |
 
-Three patterns:
+(All cells $n=10$. Source:
+`data/aggregated/per_family_ed50.csv` and
+`per_family_ed50.png`.)
 
-1. **D1 is invariant** at 1.79–1.80 across all four conditions — the
-   dialog cloud's coarse-graining diameter doesn't change with
-   perturbation. Consistent with stylistic basins that are not
-   reshaped by content injection.
-2. **O2/O3 lorem expands the cloud** to merge distance 3.64/3.25
-   (vs control 2.31/2.16) — the largest signal in the matrix.
-   Lorem injection under replace-mode produces a *new* basin that sits
-   far from the original attractor, so the Ward linkage tree has to
-   span a wide gap to merge the lorem-population into the rest of the
-   embedding. Replace-mode trajectories are entirely captured by the
-   lorem text, but the basin they're captured into is a long way
-   off the original loop's manifold.
-3. **O1 adversarial mildly compresses** (2.06 vs 2.38) — in-distribution
-   adversarial text pulls into a tighter region. **O1 neutral and
-   lorem are both close to control** (2.27, 2.37 vs 2.38), consistent
-   with append-mode dilution: out-of-distribution perturbation gets
-   averaged into the accumulating context and barely shifts the
-   coarse-graining diameter.
+**Finding.** The population-level saturation hides substantial
+family heterogeneity. **`philosophy_dialog` shows a clear
+threshold-crossing pattern** (0.10 → 0.40 → 0.90, a clean dose-
+response). **`practical_dialog` shows monotone increase** beyond
+dose 80 (0.40 → 0.20 → 0.70 → 0.80). But **`emotional` shows a
+*negative* dose-response at dose 400** (drops from 0.40 to 0.10),
+and **`reflective` is essentially flat** across all doses
+(0.30 → 0.30 → 0.40 → 0.40). The flat / negative families pull
+the population-mean curve below saturation.
 
-Each row of this 4×4 matrix is a quantitative attractor-fingerprint
-signature for the corresponding regime.
+The implication for "barrier height" is structural: under the
+current switching definition, **there is no single ED50 for O1
+in the sparse-data analysis** — different prompt families have
+different dose-response shapes. The dense-dose rerun (§5.6.1)
+recovers a clean *population-level* monotonic curve at $n=200$/cell,
+with a tighter point estimate (ED50 ≈ 40 tokens), but the underlying
+per-family heterogeneity flagged here is still expected to apply
+within the dense data — a future per-family decomposition of the
+$n=200$/cell rerun would refine the picture.
+
+![Figure I. **Per-family O1 adversarial dose-response.** Lines show switching rate versus adversarial dose for each prompt family in the sparse O1 dose experiment, with $n=10$ trajectories per family-dose cell; the dashed black line is the population mean. Family-level curves differ: some increase with dose, while others are flat or non-monotone in this pilot sample. Source: `data/aggregated/per_family_ed50.png`.](data/aggregated/per_family_ed50.png)
+
+#### Persistence test: is "switching" basin-escape or stochastic divergence?
+
+The headline "switching" metric is `final-step cluster ≠ paired-
+control's final-step cluster` (§4.5.11). A direct mechanistic test
+of *barrier crossing* is more conservative: did the trajectory
+**visibly jump cluster at the moment of injection** (step 14 → step
+15 cluster change)? And if it did, did it **persist** in the new
+basin to the end of the trajectory, or **drift back** to its pre-
+injection cluster?
+
+**Persistence test on the dense-rerun data** ($n = 200$/cell × 8
+doses; same `joint_pca10_clusters.csv` as §5.6.1):
+
+| condition | n | kicked at injection | persisted (kicked AND final = post-inj) | drifted back (kicked AND final = pre-inj) | drifted elsewhere | persistent-escape rate (n_persisted / 200) |
+|---|---:|---:|---:|---:|---:|---:|
+| adversarial_dose20 | 200 | 10 (5.0%) | 7 (70%) | 1 | 2 | **3.5%** |
+| adversarial_dose50 | 200 | 23 (11.5%) | 14 (61%) | 2 | 7 | **7.0%** |
+| adversarial_dose80 | 200 | 18 (9.0%) | 7 (39%) | 3 | 8 | **3.5%** |
+| adversarial_dose120 | 200 | 43 (21.5%) | 18 (42%) | 7 | 18 | **9.0%** |
+| adversarial_dose160 | 200 | 53 (26.5%) | 23 (43%) | 7 | 23 | **11.5%** |
+| adversarial_dose200 | 200 | 59 (29.5%) | 26 (44%) | 11 | 22 | **13.0%** |
+| adversarial_dose300 | 200 | 64 (32.0%) | 28 (44%) | 7 | 29 | **14.0%** |
+| adversarial_dose400 | 200 | 69 (34.5%) | 32 (46%) | 13 | 24 | **16.0%** |
+
+(Source: `data/aggregated/persistence_summary.csv` — overwritten
+with dense-rerun values via `scripts/per_family_and_persistence.py
+--exp exp_perturb_O1_ed50_dense`.)
+
+**Finding (dense data).** The persistent-escape rate (kicked AND
+persisted in new basin to terminal step) **is 16% at dose 400**,
+the maximum tested. Compare to the **67% raw switching rate at
+dose 400** (§5.6.1, dense): the gap is **51 percentage points**.
+**Most of the raw "switching" is post-injection stochastic
+divergence from the paired control, not clean barrier-crossing.**
+Of trajectories that *do* visibly jump cluster at injection (35%
+at dose 400), only ~46% persist to the terminal step; the rest
+drift back to their pre-injection cluster (~19%) or to a third
+basin (~35%). Even visible at-injection kicks are transient
+roughly half the time — consistent with a contractive basin
+pulling trajectories back even after a cluster-boundary excursion.
+
+The persistent-escape ED50 (the dose where persistent escape rate
+crosses 50%) is **not reached in the tested range**. The dense
+rerun thus provides direct empirical confirmation of the gpt-5.5
+round-2 review point: the formal §3.1.1 barrier-height definition
+is a persistent-escape endpoint, and that endpoint is undefined in
+this experiment. The dense $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens is a raw-switching endpoint, established but distinct from
+the formal barrier definition (§3.1.1bis).
+
+For comparison, the original sparse-pilot persistence numbers
+($n=50$/cell, 4 doses) gave 8% kicked-and-persisted at dose 400 —
+qualitatively similar pattern, but the dense rerun's 16% has
+narrower uncertainty and richer dose granularity. Both data sets
+support the same conclusion: persistent escape is a different
+quantity from raw switching, and it is much smaller in O1 under
+in-distribution adversarial perturbation.
+
+**Multi-granularity persistence — does the persistent-escape ED50
+result survive different cluster definitions?** Per gpt-5.5
+round-3 review point #4, we re-ran the persistence test on the same
+dense data using three cluster granularities: K-means $k=12$
+(canonical), K-means $k=4$ (coarse), and HDBSCAN (auto, 18 clusters
+detected on the joint PCA-10 cloud). Computed via
+`scripts/multi_granularity_persistence.py`.
+
+| dose | persistent escape (k=12) | persistent escape (k=4) | persistent escape (HDBSCAN) | kicked at injection (HDBSCAN) |
+|---|---:|---:|---:|---:|
+| 20 | 3.5% | 1.5% | 7.0% | 12.0% |
+| 50 | 7.0% | 3.0% | 16.5% | 28.5% |
+| 80 | 3.5% | 5.0% | 28.5% | 48.0% |
+| 120 | 9.0% | 4.5% | 35.5% | 58.0% |
+| 160 | 11.5% | 9.5% | 41.0% | 64.5% |
+| 200 | 13.0% | 13.5% | 40.5% | 60.0% |
+| 300 | 14.0% | 8.5% | 40.0% | 66.5% |
+| 400 | **16.0%** | **10.0%** | **39.5%** | 68.5% |
+
+(Source: `data/aggregated/multi_granularity_persistence.csv`.)
+
+**The persistent-escape ED50 is undefined under all three
+granularities.** The maximum persistent-escape rate across all
+doses and granularities is HDBSCAN at dose 400 = 39.5%, well below
+the 50% threshold. K-means $k=12$ and $k=4$ give 10–16% maxima.
+The headline conclusion — *persistent basin escape is not measured
+in the tested range* — is **robust to cluster choice**. The HDBSCAN
+"kicked at injection" rate does cross 50% (68.5% at dose 400), but
+of those visible at-injection jumps, only ~58% persist to the
+terminal step under HDBSCAN; the rest drift back or to a third
+cluster. So even at the most permissive granularity, the **kicked-
+AND-persisted** rate stays below 50%.
+
+![Figure L. **Multi-granularity persistence rates vs adversarial dose.** O1 dense rerun ($n=200$/cell × 8 doses). Three cluster granularities: K-means $k=12$ (blue, canonical); K-means $k=4$ (orange, coarse); HDBSCAN auto (green, 18 clusters detected). Solid lines: persistent-escape rate (kicked at injection AND in new cluster at terminal step). Dashed lines: kicked-at-injection rate (cluster differs at step 15 vs step 14). Grey dotted line: 50% threshold (formal persistent-escape barrier). Persistent escape never reaches 50% at any granularity; HDBSCAN at dose 400 gives the maximum at 39.5%. The result is robust to cluster definition. Source: `data/aggregated/multi_granularity_persistence.png`.](data/aggregated/multi_granularity_persistence.png)
+
+### 5.10.10 V* parameter-grid sensitivity (review weakness #5 follow-up)
+
+The §5.10 caveat box flagged that $V^\star$ values depend on
+analyst-chosen KDE bandwidth, grid resolution, and basin-detector
+thresholds. We quantified this directly. For the O1 perturbation
+pilot, we re-ran the geodesic-skeleton $V^\star$ computation across
+a parameter grid:
+
+- **KDE bandwidth** (`sigma_cells`): {1.0, 1.5, 2.0, 2.5, 3.0}
+- **Grid resolution** (`grid_n`): {64, 96, 128}
+- **Basin count** (`n_basins`): {3, 4, 5}
+
+This is **45 parameter combinations × 4 conditions = 180 cells**.
+PCA-2 was held fixed (the geodesic skeleton is intrinsically 2-D).
+For each cell we computed the per-condition mean $V^\star$ across
+all inter-basin geodesics. Computed via
+`scripts/v_star_sensitivity.py`; outputs at
+`data/aggregated/v_star_sensitivity.csv` (raw),
+`v_star_sensitivity_summary.csv` (per-condition spread).
+
+**Per-condition spread of $V^\star$ across the parameter grid:**
+
+| condition | min $V^\star$ | median | max | std | CV (%) |
+|---|---:|---:|---:|---:|---:|
+| **control** | 2.63 | 3.78 | 5.13 | 0.61 | **16%** |
+| **neutral** | 1.86 | 2.43 | 3.38 | 0.33 | **14%** |
+| **lorem** | 2.00 | 2.81 | 4.37 | 0.54 | **19%** |
+| **adversarial** | 1.22 | 2.07 | 3.27 | 0.50 | **24%** |
+
+**Ordinal stability**: across the 45 parameter combinations:
+
+- **control has the highest $V^\star$ in 98% of combinations**, never the lowest;
+- **adversarial has the lowest $V^\star$ in 89% of combinations**, never the highest;
+- neutral and lorem occupy the middle.
+
+**Reading.** The numerical $V^\star$ values are not invariant to
+parameter choices — the per-condition coefficient of variation is
+14–24% across the tested grid, so a single $V^\star$ number reported
+without sensitivity context could be misleading by ~20%. **However,
+the ordinal claim that the $V^\star$ ranking is `control > neutral /
+lorem > adversarial` is robust to analyst choices**: it holds in
+89–98% of the 45 parameter combinations. This *supports a weaker but
+still useful version* of the original claim: $V^\star$ gives a
+reliable rank-order signal of basin geometry across the four
+perturbation conditions, even though the numerical values are
+KDE-bandwidth-dependent.
+
+**What this changes in the paper.** §5.10's V* tables retain their
+(post-revision) status as descriptive visualisations of density
+structure. The ordinal-agreement claim that the original abstract
+made — "behavioral and geometric barriers agree in ordinal
+structure" — is partially rehabilitated: the **rank ordering is
+empirically robust**, but only over the comparison space of four
+conditions within one perturbation pilot, not as a quantitative
+correspondence between V* and ED50. We do not reinstate the
+original abstract claim, but the §5.10 caveat box now reflects the
+empirical finding.
+
+![Figure J. **Sensitivity of $V^\star$ to density-landscape parameters.** Lines show per-condition mean $V^\star$ for the O1 perturbation pilot across 45 combinations of KDE bandwidth, grid resolution, and basin count. Absolute $V^\star$ values vary across parameter settings, while control is usually the highest condition and adversarial is usually the lowest in this grid. Source: `data/aggregated/v_star_sensitivity.png`.](data/aggregated/v_star_sensitivity.png)
+
+### 5.10.11 Replace-mode tautology probe — overwrite vs insert
+
+The reviewer (`paper/openai_review.md` Weakness #3 and round-2
+followup) observed that the original O2/O3 perturbation result —
+94–100% switching at all probed doses — is partly tautological,
+because the replace-mode operator in `adversarial_doseN`
+*overwrites* step 15's output entirely. Under that intervention,
+"the trajectory's state changed" is true by construction.
+
+To separate the operator's overwrite contribution from a genuine
+basin-reaching effect of the perturbation text, we ran a paired
+experiment with two perturbation modes:
+
+- **`adversarial_doseN`** (overwrite, current behavior): injection
+  text replaces step 15's output entirely. State at $X_{16}$ is the
+  injection itself.
+- **`adversarial_insert_doseN`** (NEW): injection text is prepended
+  to the context for step 15's generation, but the model's normal
+  output is preserved as $Y_{15}$. The injection text vanishes from
+  context after this single step (single-step context augmentation).
+
+Config: `configs/perturbation/O2_overwrite_vs_insert.yaml`,
+$n=50$/cell × 5 conditions, paraphrase + replace operator.
+
+**O2 results** (paraphrase + replace operator):
+
+| condition | switch rate | 95% Wilson CI |
+|---|---:|---|
+| control | 0.00 | [0.00, 0.07] |
+| `adversarial_dose80` (overwrite) | **0.92** | [0.81, 0.97] |
+| `adversarial_insert_dose80` | **0.32** | [0.21, 0.46] |
+| `adversarial_dose200` (overwrite) | **0.98** | [0.90, 1.00] |
+| `adversarial_insert_dose200` | **0.18** | [0.10, 0.31] |
+
+**O3 results** (summarize + negate, replace operator) — added per
+gpt-5.5 round-3 review point #3, to test whether the overwrite
+artifact generalises across replace-mode operators:
+
+| condition | switch rate | 95% Wilson CI |
+|---|---:|---|
+| control | 0.00 | [0.00, 0.07] |
+| `adversarial_dose80` (overwrite) | **0.90** | [0.79, 0.96] |
+| `adversarial_insert_dose80` | **0.18** | [0.10, 0.31] |
+| `adversarial_dose200` (overwrite) | **0.92** | [0.81, 0.97] |
+| `adversarial_insert_dose200` | **0.12** | [0.06, 0.24] |
+
+(Sources:
+`data/exp_perturb_O2_overwrite_vs_insert/reports/perturbation/switching_summary.csv`
+and
+`data/exp_perturb_O3_overwrite_vs_insert/reports/perturbation/switching_summary.csv`.)
+
+**Finding (across both replace-mode regimes).** The overwrite vs
+insert gap is **60–80 percentage points** for both O2 and O3:
+
+| regime | dose | overwrite | insert | overwrite − insert |
+|---|---:|---:|---:|---:|
+| O2 | 80 | 0.92 | 0.32 | **+0.60** |
+| O2 | 200 | 0.98 | 0.18 | **+0.80** |
+| O3 | 80 | 0.90 | 0.18 | **+0.72** |
+| O3 | 200 | 0.92 | 0.12 | **+0.80** |
+
+When the operator no longer overwrites state, switching falls to
+**12–32%** — well below the natural-floor estimate for O1 (~35%,
+from §5.6.1) and far below the headline 90–98% from the original
+sparse pilots. **Most of O2 and O3's reported "perturbation
+transparency" is the replace operator overwriting state by
+construction, not the perturbation text reaching a competing
+basin.** The pattern is robust across the two replace-mode
+operators (paraphrase preservation in O2 and content-degrading
+summarize-and-negate in O3), confirming that the overwrite
+contribution is **operator-independent**.
+
+O3's insert-mode rate (12–18%) is *lower* than O2's (18–32%),
+suggesting that the summarize-and-negate template's strong content
+constraint pulls trajectories *back* toward its absorbing template
+even when the perturbation-prepended context tries to push elsewhere
+— consistent with the §5.10.8 finding that O3 is template-absorbing
+rather than semantic-absorbing. A proper insert-mode dose-response
+with denser doses and family-cluster bootstrap would refine these
+numbers.
+
+**What this changes in the paper's claims.** Per the rewritten
+Lemma 1 / Corollary 1 (§3.1.2), replace-mode regimes already had no
+formal *injected-token* barrier; the formal bound is on the post-
+injection generation budget $G_m$, not the injected-token cost
+$\tau$. This empirical probe confirms the theoretical reframing:
+
+- Under the §3.1.1 strict reading, $\mathrm{B}(B_1 \to B_2) = 0$
+  for replace mode under mild assumptions (injected text not
+  required), because each replace generation is a fresh basin-
+  reaching attempt.
+- The reported O2/O3 "94–100% switching" should be read as a
+  *generation-budget* effect: at $m \ge 1$ replace step after
+  injection, the system has high probability of being in some new
+  basin — but the injection itself contributes only ~20% above the
+  no-injection baseline once the operator's overwrite contribution
+  is removed.
+- The insert-mode result (~18–32% switching at dose 200) is the
+  empirical analog of the "sparse" perturbation effect that should
+  be compared to O1 / D1 raw switching for fair regime comparisons.
+
+The original O2/O3 "near-zero injected-token barrier" reading
+remains qualitatively correct as a description of the operator's
+overwrite-induced transparency, but should not be presented as a
+discovered low *behavioral* barrier in the dose-response sense
+that O1 measurements use.
+
+---
+
+### §5.C — Secondary analyses
 
 ### 5.11 Cross-metric correlations: do the regime diagnostics agree?
+
+> **Caveat (added in revision).** The correlations reported in this
+> subsection are computed across only **n=4 regimes** (O1, O2, O3,
+> D1). Four points cannot support a meaningful correlation statistic
+> in any conventional sense — Pearson and Spearman *r/ρ* values for
+> n=4 are extremely high-variance, the reported *p*-values are
+> exploratory rather than confirmatory, and a single re-categorisation
+> of any regime would change the picture substantially. We retain
+> this section because the *signs* of the correlations agree with
+> mechanistic predictions stated in advance, which is consistency
+> evidence (not statistical evidence) for the taxonomy. **Treat the
+> numerical *r/ρ* values in the table below as descriptive
+> indicators, not as inferential tests.** A confirmatory n>20-regime
+> sweep is future work.
 
 The four regimes were *defined* by qualitative architecture × content
 labels (append vs replace vs dialog × continue vs paraphrase vs
@@ -2251,7 +3435,7 @@ A natural cross-check: do regimes that score high on one diagnostic
 also score predictable ways on the others?
 
 We compute three pre-registered correlations across the 4 regimes
-(O1, O2, O3, D1) on canonical pub-scale values:
+(O1, O2, O3, D1) on canonical pub-scale values (see caveat above):
 
 | relation | Pearson *r* (p) | Spearman *ρ* (p) | mechanistic prediction |
 |---|---:|---:|---|
@@ -2277,13 +3461,18 @@ in 0–1 steps (the late-window cluster is already determined by step
 to reach `acc(k) ≥ 0.7`. The intermediate O1 (sharpness ≈ 1.70)
 locks in at step 1.
 
-These correlations are computed across only n=4 regimes, so the p-values
-are necessarily noisy. The methodological point is that the *signs*
-agree with the mechanistic predictions, and the strongest correlation
-(recurrence ↔ switching, *r* = +0.981, *p* = 0.019) survives the small
-sample size — providing internal consistency evidence that the
-four-regime taxonomy is *not* an artifact of any single metric but
-emerges from a coherent dynamical structure.
+As stated in the caveat at the head of this subsection, n=4
+correlations are descriptive rather than inferential — the methodological
+point is that the *signs* of all three correlations agree with the
+mechanistic predictions stated in advance. We do not interpret the
+*r* = +0.981 / *p* = 0.019 cell as a statistical significance result;
+with n=4, the test has effectively no power to distinguish a
+"real" correlation from one driven by a single regime's location in
+the diagnostic space. We report it because consistency in sign and
+ordering across three independently-measured metrics is at least
+weak internal evidence that the four-regime taxonomy is *not* an
+artifact of any single diagnostic, but the more rigorous version of
+this claim requires a confirmatory ≥20-regime sweep.
 
 ### 5.12 Why exactly five regimes? An unsupervised-clustering check
 
@@ -2353,8 +3542,9 @@ This is the affirmative empirical content of why the perturbation
 protocol matters: **bulk diagnostics underdetermine the regime
 taxonomy at the O1/D1 boundary**. The mechanistic distinction
 between O1 (content-anchored basin, finite barrier against
-in-distribution adversarial text, infinite barrier against
-out-of-distribution noise — §5.6) and D1 (style-anchored basin,
+in-distribution adversarial text, no detectable barrier crossing
+against out-of-distribution noise within the tested 5–400 token
+range — §5.6) and D1 (style-anchored basin,
 T-stable across {0.3..1.2}, modest barrier in any direction —
 §5.4) emerges *only when one measures the cost of nudging*. Bulk
 diagnostics tell you the regimes have similar drift, similar
@@ -2382,7 +3572,7 @@ of feature space, colored by regime label) and
 (Ward linkage). Feature matrix: `feature_matrix.csv` in the same
 directory.)
 
-![Figure 8. Diagnostic feature space (left) and cluster validity vs k (right). Left: PCA-2 of the 5-D standardized diagnostic vector for 13 experiments, colored by regime label. O2 (red) and O3 (purple) form well-separated clusters; O1 (blue) and D1 (green) overlap heavily — bulk diagnostics underdetermine the contractive vs stylistic-multi-basin distinction. Right: silhouette score (blue circles) prefers k=2; Calinski-Harabasz (red squares) keeps rising past k=7 — i.e., no internal validation index agrees on the "true" cluster count, consistent with the regimes living on a continuum that bulk diagnostics flatten. Source: `data/aggregated/regime_cluster_analysis/cluster_scatter.png`.](data/aggregated/regime_cluster_analysis/cluster_scatter.png)
+![Figure 13. **Diagnostic feature-space clustering.** Left: PCA-2 projection of standardized 5-D diagnostic vectors — recurrence, late $\lambda_1$, sharpness dimension, basin-predictability accuracy, and adversarial switching rate — for 13 experiments, colored by regime label. Right: k-means internal-validity scores over $k=2,\ldots,7$. O2 and O3 appear separated in this feature space, while O1 and D1 overlap; the validity indices do not select a single cluster count matching the regime taxonomy. Source: `data/aggregated/regime_cluster_analysis/cluster_scatter.png`.](data/aggregated/regime_cluster_analysis/cluster_scatter.png)
 
 ### 5.13 Embedding-space invariance: do the regimes survive a different embedder?
 
@@ -2474,7 +3664,74 @@ taxonomy.
 (Full ablation: `scripts/embedding_ablation.py`, output at
 `data/aggregated/embedding_ablation/results.csv`.)
 
-![Figure 9. Embedding-space invariance ablation. Three panels: recurrence rate (left), sharpness_dim_late (middle), and basin_pred_acc(k=10) (right) per regime, grouped bars per embedder. Recurrence preserves its bimodal high/low structure (O2/O3 high in all embedders; O1/D1/D2 low). Basin predictability preserves the full regime ordering (Spearman ρ ≥ 0.80 vs baseline). Sharpness dim shifts substantially across embedders — the regime ordering is not preserved (ρ = 0.00 vs mpnet). Source: `data/aggregated/embedding_ablation/comparison.png`.](data/aggregated/embedding_ablation/comparison.png)
+![Figure 14. **Embedding-model ablation.** Bar plots compare three diagnostics across regimes after re-embedding subsamples with `text-embedding-3-small`, `text-embedding-3-large`, and `all-mpnet-base-v2`. Recurrence preserves the high/low split between replace-mode O2/O3 and append/dialog regimes across embedders, while sharpness dimension changes ordering. Basin-predictability remains more stable across embedders than sharpness dimension in this ablation. Source: `data/aggregated/embedding_ablation/comparison.png`.](data/aggregated/embedding_ablation/comparison.png)
+
+### 5.14 Cross-model thesis verification: do the headline claims survive on a smaller generator?
+
+A more searching robustness test than §5.13: the embedding ablation
+varies only the *measurement instrument* (the embedder) on the same
+trajectories. The cross-generation replication varies the *system
+under measurement* — re-running every one of the 37 experiment
+configurations end-to-end with `gpt-4.1-nano` substituted for
+`gpt-4o-mini` as the trajectory-generating model. We then encode the
+paper's six main theses as machine-checkable predicates and evaluate
+each on both models.
+
+The six theses (`scripts/check_theses_cross_model.py`):
+
+| ID | Thesis | Predicate (publication-scale or pilot data) |
+|---|---|---|
+| T1 | Regime ordering on recurrence rate | O2 / O3 > 0.70 and O1 / D1 < 0.40; min(O2, O3) > max(O1, D1) |
+| T2 | Replace-mode capitulation under perturbation | O2 + O3 pilot switching > 0.85 for neutral / lorem / adversarial |
+| T3 | O1 contractive: out-of-distribution drift-floor band | O1 pilot control ≤ 0.05; neutral ∈ [0.10, 0.40]; lorem ∈ [0.10, 0.40] |
+| T4 | O1 contractive: adversarial > out-of-distribution | O1 pilot adversarial switching > O1 pilot lorem switching |
+| T5 | D1 stylistic-multi-basin susceptibility | D1 pilot neutral switching > 0.30 |
+| T6 | Publication-scale verdict labels | O1 continue, O2 paraphrase-replace, O3 summarize-negate-replace, D1 dialog v2 carry expected (H1a, H1b) tuples |
+
+Result: **6 / 6 PASS on gpt-4o-mini (baseline, by construction); 6 / 6 PASS on gpt-4.1-nano.**
+
+Per-thesis diagnostic numbers, side by side:
+
+| ID | gpt-4o-mini | gpt-4.1-nano | Δ |
+|---|---|---|---|
+| T1 | O1 0.272, O2 0.834, O3 0.905, D1 0.146 | O1 0.393, O2 0.840, O3 0.866, D1 0.168 | replace / append-or-dialog gap preserved |
+| T2 | O2 adv 0.94, O3 adv 0.96 | O2 adv 0.94, O3 adv 0.88 | both > 0.85 capitulation threshold |
+| T3 | control 0.00, neutral 0.24, lorem 0.18 | control 0.00, neutral 0.22, lorem 0.18 | drift floor essentially identical |
+| T4 | adv 0.54 vs lorem 0.18 (margin +0.36) | adv 0.38 vs lorem 0.18 (margin +0.20) | direction holds; adversarial barrier is **smaller** on nano |
+| T5 | D1 neutral 0.76 | D1 neutral 0.80, lorem 0.94 | direction holds; D1 stylistic susceptibility is **larger** on nano |
+| T6 | (strong, weak / strong, not_supported / strong, not_supported / strong, weak) | identical tuples | exact-match on all 4 pub-scale headlines |
+
+Two qualitative patterns emerge from the magnitude shifts:
+
+1. **The smaller model has shallower contractive basins.** T4's
+   adversarial-vs-out-of-distribution margin shrinks from +0.36 to
+   +0.20 — the in-distribution kick still wins, but with a smaller
+   barrier signal. Operationally: nano's O1 needs less injected text
+   to be dislodged. The token-cost ordering is preserved; the
+   absolute token-cost is somewhat smaller.
+
+2. **The smaller model's D1 stylistic basins are easier to flip.**
+   T5's D1 neutral switching is 0.80 on nano (vs 0.76 on
+   gpt-4o-mini), and D1 lorem switching jumps to 0.94 (the highest
+   non-replace switching rate observed in either model). Stylistic
+   commitments in dialog are looser on nano — content perturbations
+   override style more readily.
+
+Both shifts are mechanistically consistent with nano being a smaller,
+less-stable contractive system: shallower wells, weaker style anchoring.
+Crucially, the **structural taxonomy (5 regimes, replace-vs-append-vs-
+dialog separation, basin-character signatures) is preserved unchanged
+between the two models.** Token-cost values shift by the amounts
+above, but stay in the same ordinal relations the paper claims.
+
+The full audit is reproducible end-to-end via three artifacts:
+`COVERAGE_nano.csv` (artifact-presence matrix, 37 cells × 59 columns),
+`RESULTS_nano.md` (per-cell numeric comparison vs the gpt-4o-mini
+baseline), and `THESES_nano.md` (the per-thesis PASS / FAIL table
+above with full predicate detail). All three are referenced from
+§7.1 and regenerable via `scripts/build_coverage.py --filter
+"exp_*_gpt4nano"`, `scripts/compare_cross_model.py`, and
+`scripts/check_theses_cross_model.py`.
 
 ---
 
@@ -2501,7 +3758,7 @@ orthogonal dialog axis:
 
 |  | dialog architecture |
 |---|---|
-| **free** (curious user / helpful agent) | D1 stylistic multi-basin |
+| **free** (curious user / helpful agent) | D1 dialogue-state-driven multi-basin |
 | **structured** (explorer drill-down / expert) | D2 content-anchored multi-basin |
 
 Content-preserving operators under append mode produce contractive
@@ -2520,6 +3777,43 @@ and how that transformation is written back into state. The
 experiments do not yet prove that this factorization is exhaustive,
 but they show that it is already predictive across the operator
 families studied here.
+
+The within-vendor cross-generation replication on `gpt-4.1-nano`
+(§5.14) sharpens this point. All six paper-thesis predicates pass on
+nano, with the structural taxonomy preserved unchanged — but two of
+the magnitude shifts go in directions a generator–nudge framing
+predicts: the smaller, less-stable contractive system has shallower
+O1 basins (T4 adversarial-vs-OOD margin shrinks +0.36 → +0.20) and
+weaker D1 stylistic anchoring (T5 lorem switching jumps to 0.94).
+In the **two OpenAI generators** tested here, the qualitative
+taxonomy is preserved across both, while the *barrier magnitude
+inside each regime* shifts with the generator (e.g. T4
+adversarial-vs-OOD margin: 0.36 vs 0.20). This is consistent with
+the formalism's prediction that nudge family sets regime structure
+and generator sets barrier magnitude — but two generators from one
+vendor are insufficient to claim model-agnosticism. Cross-vendor
+replication (open-weight Llama / Qwen / Claude generators) is
+required before the architecture-vs-generator partition can be
+asserted as a general property of recursive LLM loops; see §8.1.
+
+**A note on regime labels.** The labels "append-contractive,
+replace-oscillatory, replace-absorbing, dialog-multibasin" describe
+the qualitative dynamics measured at the embedding-cloud level. Per-
+cluster semantic inspection in §5.10.8 shows that **only O1's label
+accurately describes its basin mechanism**: O1 trajectories converge
+toward register-shaped attractors (sentimental narrative, expository
+discourse, reflective empathy) regardless of original topic. The
+other three labels are partial misnomers: O2's "oscillatory" basins
+are paraphrastic family-preserving sub-basins (period-2 dynamics
+hold but the basins are not absorbing); O3's "absorbing" property is
+formal-template (X / not-X) rather than semantic; D1's "stylistic
+multi-basin" structure is mediated by append-mode conversational
+drift / recent-context capture rather than by direct stylistic
+preference. We retain the existing labels in this paper for
+continuity with prior versions but flag the correction explicitly.
+A future revision should adopt the re-labelled taxonomy:
+register-contractive (O1), paraphrastic family-preserving (O2),
+template-absorbing (O3), dialogue-state-driven multi-basin (D1).
 
 ### 6.2 Why append resists and replace yields
 
@@ -2631,26 +3925,32 @@ structural property of the recursive loop.
 ### 6.6 Practical implications
 
 For practitioners, the results suggest that recursive-loop design is
-partly a problem of **nudge engineering**:
+partly a problem of **nudge engineering**. The table below summarizes
+which nudge family produces which qualitative behavior in the
+measured battery; the "what was actually tested" column makes
+explicit which entries are direct measurements vs informed speculation.
 
-| if you want… | choose… | barrier signature you'll see |
-|---|---|---|
-| **a stable trajectory** that holds the user's seed thought | append-mode + content-preserving operator (O1) | finite barrier (~150 tokens of in-distribution adversarial); effectively-infinite barrier against out-of-distribution noise |
-| **fast lock-in to a topic** (don't care which one) | replace-mode (O2 paraphrase or O3 summarize+negate) | locks in by step 5; capitulates to *any* perturbation ≥ 80 tokens |
-| **stylistic stability across resets** | dialog framework (D1) | stylistic basin survives temperature changes (acc(k=10) range 0.57–0.61 over T ∈ {0.3..1.2}) |
-| **content gravity that resists topic-switching** | structured drill-down dialog (D2) | 64% adversarial switching rate; basin geometry resists *cross-topic* perturbations specifically |
-| **collapse** (degenerate output) | replace-mode summarize+negate (O3) | convergence within ~10 steps; sharpness-dim ≈ 0; trivially low effective rank |
+| if you want… | choose… | what we actually measured | what is *not* directly tested |
+|---|---|---|---|
+| **a stable trajectory** that holds the user's seed thought | append-mode + content-preserving operator (O1) | dense-dose ED50 ≈ 40 tokens (4PL/GLMM/bootstrap; §5.6.1); curve plateaus at ~67% — ~31% non-switching subpopulation; control-vs-control natural floor ~35% so net adversarial effect saturates at +32 pp; OOD noise ≤24% across the tested 5–400 token range | safety/alignment-relevant adversarial prompts, multi-turn jailbreak attempts, longer doses, generalisation to other generators / vendors |
+| **fast lock-in to a topic** (don't care which one) | replace-mode (O2 paraphrase or O3 summarize+negate) | 90–98% switching with overwrite-mode injection (§5.10.11), but **only 12–32% with context-insert injection at the same doses** — the 60–80 pp gap is the operator-overwrite contribution. The pattern replicates across both replace-mode regimes (O2 and O3), confirming the contribution is operator-independent. Per Lemma 1 / §3.1.2, replace mode has no formal injected-token barrier; the generation-budget result is the operator's contribution, not a discovered low barrier | whether insert-mode switching rises further at larger doses |
+| **stylistic stability across resets** | dialog framework (D1) | basin-predictability acc(k=10) is in [0.57, 0.61] across T ∈ {0.3, 0.6, 0.9, 1.2} (§5.4); 4-of-5 attractor criteria PASS (§3.1.1.5) | persona stability under adversarial roleplay or multi-turn manipulation (no such experiments run) |
+| **content gravity that resists topic-switching** | structured drill-down dialog (D2) | 64% adversarial switching rate at one dose, n=25 (§5.8) | publication-scale validation (D2 fails the operational attractor criteria in §3.1.1.5 due to underpowered measurements) |
+| **collapse** (degenerate output) | replace-mode summarize+negate (O3) | convergence within ~10 steps; sharpness-dim ≈ 1.3–1.5 (lowest measured; §5.0); trivially low effective rank | none — the empirical signature is direct |
 
-More broadly, the perturbation-barrier protocol can be read as a
-generic robustness probe. It measures not just whether a system can
-be perturbed, but how much context budget an adversary or operator
-must spend to move the system from one regime to another. That makes
-it relevant not only for recursive-loop science, but also for
-**jailbreak resistance**, **persona stability**, and **in-context
-attack evaluation**. The 4-condition protocol's neutral and lorem
-conditions provide the right baseline: a robustness claim is
-meaningful only relative to the irreducible drift floor (~24% for
-O1) that the model exhibits under benign perturbation.
+The perturbation-barrier protocol *could* in principle be read as a
+generic robustness probe — measuring how much context budget an
+adversary or operator must spend to move the system from one regime
+to another. **However, we have not run experiments specifically
+targeting jailbreak prompts, persona-manipulation attacks, or
+in-context attack evaluation.** Whether the measured barriers
+transfer to those settings is an empirical question the present
+paper does not answer; we mention these applications only as
+candidate next-step domains, not as validated use-cases. The
+4-condition protocol's neutral and lorem conditions provide the
+right *baseline framework*: any robustness claim is meaningful only
+relative to the irreducible drift floor (~24% for O1) that the model
+exhibits under benign perturbation.
 
 ### 6.7 Interpretation
 
@@ -2670,16 +3970,88 @@ controlling LLM loops.**
 
 ### 7.1 Scope of model coverage
 
-All experiments in this paper use a single generator, `gpt-4o-mini`.
-The main qualitative claims — especially the separation between
-append, replace, and dialog regimes — may generalize because they
-follow from the generator–nudge factorization rather than from any
-one model family. But the present study does not establish cross-model
-universality. Barrier heights, basin geometry, and even the exact
-number of identifiable regimes may vary across models with different
-decoding behavior, alignment tuning, or tokenizer structure. A
-within-vendor cross-generation pilot on `gpt-4.1-nano` is in progress
-and reported in §11; cross-vendor replication remains future work.
+The main experiments in this paper use a single generator,
+`gpt-4o-mini`. The qualitative claims — especially the separation
+between append, replace, and dialog regimes — may generalize because
+they follow from the generator–nudge factorization rather than from
+any one model family. Barrier heights, basin geometry, and even the
+exact number of identifiable regimes may vary across models with
+different decoding behavior, alignment tuning, or tokenizer
+structure.
+
+A within-vendor cross-generation replication on `gpt-4.1-nano` was
+attempted: 37 experiment configurations were re-run end-to-end
+through the same 4-phase pipeline (raw trajectories → embed → analyze
+→ report). Audit artefacts are at:
+
+- `COVERAGE_nano.csv` — file-presence matrix per cell.
+- `RESULTS_nano.md` — per-cell numeric comparison vs gpt-4o-mini.
+- `THESES_nano.md` — six paper-thesis predicates evaluated PASS/FAIL.
+- `RESULTS_dual.md` — side-by-side per-cell tables.
+
+**What the audit actually establishes (sober reading).**
+
+The audit's strongest finding is on **the four pub-scale headline
+cells** (`O1 continue`, `O2 paraphrase-replace`,
+`O3 summarize-negate-replace`, `D1 dialog`): these preserve their
+two-axis H1a / H1b verdicts on `gpt-4.1-nano`, with recurrence-rate
+shifts in $[-0.040, +0.122]$ and basin-score shifts within $\pm 0.028$.
+On the **six pre-registered thesis predicates** (regime ordering,
+replace-mode capitulation, O1 drift-floor band, O1 adversarial >
+out-of-distribution, D1 stylistic susceptibility, pub-scale verdict
+labels), the result is **6/6 PASS on both gpt-4o-mini and
+gpt-4.1-nano**. We treat these two findings — pub-scale verdicts
+preserved + 6/6 predicates PASS — as the audit's load-bearing claim.
+
+**What the audit does *not* establish.** Across the full 37-cell
+sweep, only **19/37 cells** match both H1a and H1b verdicts exactly.
+The other 18/37 cells do *not* fully agree, broken down as:
+
+- 13/18 are perturbation-experiment reporting artefacts where the
+  H1a/H1b classifier was never designed to run on multi-condition
+  reports (the classifier expects a single regime-vs-baseline
+  comparison; perturbation experiments produce 4 conditions that
+  don't fit that schema). These are *known classifier-output
+  artefacts*, not evidence of regime-level drift, but the
+  cross-model pipeline does not separately validate the four
+  perturbation conditions on `gpt-4.1-nano` at the geometric or
+  basin-predictability level.
+- 2/18 are smaller pub-scale configurations (D1 v1 narrower-scope
+  dialog and the T=0.6 temperature-sweep cell) with borderline
+  `weak_support` ↔ `not_supported` shifts on the recurrence axis —
+  these *are* genuine cell-level disagreements at finite sample
+  size, not classifier artefacts.
+- 3/18 are pilot-scale (small N) cells with finite-sample borderline
+  shifts in the same direction.
+
+Honest interpretation:
+
+1. **Pub-scale verdicts are preserved within-vendor.** The four
+   load-bearing pub-scale cells and the six pre-registered
+   predicates pass on both models.
+2. **Smaller-N cells show genuine numerical drift.** Mean recurrence
+   rate is within $\pm 0.05$ for only 12/24 non-perturbation cells;
+   mean basin score within $\pm 0.05$ for 17/24. This is consistent
+   with finite-sample noise but is not a strong claim of numerical
+   invariance — the cross-model audit shows shape preservation, not
+   numerical equivalence, and even shape preservation is conditional
+   on a specific list of pub-scale cells.
+3. **Cross-vendor replication is the missing piece.** Both
+   generators are OpenAI; both share tokenizer family, alignment
+   pipeline, and likely architecture-class. A genuine cross-vendor
+   audit (Claude / Llama / Qwen / Mistral) would be needed before
+   any model-agnostic claim can be sustained. We do *not* make such
+   a claim.
+4. **The geometric visualization toolkit was not re-run.** V
+   landscapes, Dijkstra geodesics, 3D animations, and the basin
+   predictability classifier are separate scripts that were not
+   regenerated for `gpt-4.1-nano`. The audit only validates the core
+   4-phase pipeline outputs.
+
+In short: the within-vendor audit is **suggestive evidence** for
+generator-class robustness of the headline regimes, not proof of
+generality. The reader should treat the 6/6 predicate result as a
+necessary-but-not-sufficient check.
 
 ### 7.2 Dependence on representation choice
 
@@ -2775,9 +4147,10 @@ numerically, but whether the **ordering** of append, replace, and
 dialog regimes survives across generators with different alignment
 and tokenization properties. A replicated ordering would strongly
 support the claim that regime structure is a property of the
-generator–nudge system rather than of one model alone. Within-vendor
-scale-down to `gpt-4.1-nano` is in progress; cross-vendor replication
-on Claude Haiku and on a non-OpenAI generator is the natural Tier-3
+generator–nudge system rather than of one model alone. The
+within-vendor scale-down to `gpt-4.1-nano` is complete (37/37 cells,
+pub-scale verdicts preserved; see §7.1); cross-vendor replication on
+Claude Haiku and on a non-OpenAI generator is the natural Tier-3
 extension.
 
 ### 8.2 Barrier height in nats
@@ -2857,76 +4230,23 @@ or `src/experiments/dynamics/` and is exercised by the test suite at
 `tests/`. They are reproduced here for review by readers who prefer
 code to prose.
 
-Recurrence:
-
-```python
-D = pairwise_distances(z, metric="cosine")  # T × T
-mask = (np.abs(np.arange(T)[:, None] - np.arange(T)[None, :]) > tau) & np.triu(np.ones((T, T)), 1).astype(bool)
-recurrence = (D < epsilon)[mask].sum() / mask.sum()
-```
-
-Basin score:
-
-```python
-clusters = KMeans(n_clusters=12).fit_predict(z_pca10)
-target_cluster = mode(clusters[t > 0.7 * T])
-basin_score = (clusters[t > 0.7 * T] == target_cluster).mean()
-```
-
-Lyapunov spectrum (sample-driven):
-
-```python
-# z_runs : (n_runs, T, d_pca)
-for t in range(T):
-    centered = z_runs[:, t, :] - z_runs[:, t, :].mean(axis=0)
-    sigmas = np.linalg.svd(centered, full_matrices=False, compute_uv=False)
-    lambda_t = np.log(sigmas) / 2.0  # (d_pca,)
-```
-
-Sharpness dimension (Tuci-style fractional dimension on the ordered
-Lyapunov spectrum; see §4.5.6):
-
-```python
-lam = np.sort(lambda_t)[::-1]
-cumsum = np.cumsum(lam)
-nonneg = np.where(cumsum >= 0)[0]
-if lam[0] < 0:
-    SD_t = 0.0
-elif len(nonneg) == len(lam):
-    SD_t = float(len(lam))             # full-d case
-else:
-    j_star = int(nonneg[-1]) + 1       # 1-indexed
-    SD_t = j_star + cumsum[j_star - 1] / abs(lam[j_star])
-```
-
-Basin predictability:
-
-```python
-y = mode(clusters[t > 0.7 * T])  # late-window cluster per trajectory
-acc_curve = np.zeros(T)
-for k in range(T):
-    X = z_pca10[:, k, :]
-    clf = LogisticRegression(multi_class="auto", max_iter=1000)
-    acc_curve[k] = cross_val_score(clf, X, y, cv=5).mean()
-```
+Code snippets implementing each metric (recurrence, basin score,
+Lyapunov spectrum, sharpness dimension, basin predictability) are
+moved to the supplementary appendix §13.2. The mathematical
+definitions in §4.5 are the authoritative source; the snippets show
+the canonical implementation that is exercised by the test suite at
+`tests/`.
 
 ### 9.2 Perturbation injection mechanics
 
-For dialog-mode experiments, the injection happens at the user-turn
-step (odd-numbered if Explorer initiates). The injection text replaces
-the user turn's output verbatim. The trajectory then continues with
-the agent's response to this overridden user turn, and from there
-back to normal alternation.
-
-For operator-mode experiments, the injection text replaces step k's
-output entirely. The recurrence picks up from `X_{k+1} = clip(X_k ||
-Y_k_inj)` (append) or `X_{k+1} = clip(Y_k_inj)` (replace).
-
-The adversarial-source experiment for each regime is taken from the
-*publication-scale* run of the same regime (e.g., O1 perturbation
-adversarial draws from `exp_pub_O1_continue`). Adversarial samples
-exclude the *family* of the trajectory being perturbed but may share
-its overall topic distribution.
+Operator runs: injection text replaces step $k$'s output entirely;
+recurrence picks up at $X_{k+1} = \mathrm{clip}(X_k \Vert Y_k^{\text{inj}})$
+(append) or $X_{k+1} = \mathrm{clip}(Y_k^{\text{inj}})$ (replace).
+Dialog runs: injection happens at the user-turn step and replaces the
+user turn verbatim; agent then responds normally. Adversarial samples
+are drawn from the publication-scale run of the same regime, excluding
+the current trajectory's family. Full mechanics (insert vs overwrite
+modes, source-experiment selection) are in §13.4.
 
 ### 9.3 K-means choice and stability
 
@@ -2943,13 +4263,34 @@ experiment but never per-trajectory.
 
 ### 9.5 Animation rendering pipeline
 
-The 3D animation pipeline (`trajectory_animation_3d.py`) supports
-parallel rendering via `concurrent.futures.ProcessPoolExecutor`. Each
-worker process imports matplotlib with the Agg backend, builds a fresh
-figure for one frame, and saves a PNG. The main process stitches PNGs
-into MP4 via `imageio-ffmpeg` (libx264, quality 8). With 40 workers,
-75 frames at DPI 180 take ~80 seconds wall-time vs ~11 minutes
-single-threaded.
+3D animations are rendered via `trajectory_animation_3d.py` with
+parallel worker processes (matplotlib Agg, PNG-per-frame) stitched
+into MP4 via `imageio-ffmpeg`. Implementation details in §13.5.
+
+### 9.6 Prompt templates (summary)
+
+Diagnostic regimes use these `system_prompt` strings (full templates
+including dialog-role prompts and perturbation-injection mechanics
+in §13.6):
+
+- **O1 (continue)**: "Continue the text naturally. Do not summarize or explain."
+- **O2 (paraphrase + replace)**: "Paraphrase the following text..."
+- **O3 (summarize + negate, replace)**: "Summarize... then state its opposite."
+- **D1 / D2** (dialog): two-role alternating prompts.
+- **Perturbation conditions** at step 15: `control` / `adversarial_doseN` / `neutral_doseN` / `lorem_doseN`.
+
+The full 15-family × 30-IC seed library lives at
+`configs/prompt_library_publication.yaml` and is reproduced verbatim
+by every cross-model and ablation run.
+
+### 9.7 Model versioning
+
+Primary generator: `gpt-4o-mini` (resolved as `gpt-4o-mini-2024-07-18`
+throughout the experiment window). Cross-model secondary:
+`gpt-4.1-nano-2025-04-14`. Canonical embedder: `text-embedding-3-small`.
+Ablation embedders: `text-embedding-3-large` (OpenAI) and
+`sentence-transformers/all-mpnet-base-v2`. Cross-vendor pilot uses
+MiniMax `MiniMax-Text-01`. Full version table in §13.7.
 
 ---
 
@@ -2983,8 +4324,12 @@ the data?" (RESULTS).
 ### 10.2 Code availability
 
 All code is at <https://github.com/kaplan196883/llmattr>. License:
-TBD (currently no license file; authors retain rights pending
-publication).
+**Apache License 2.0** (open-source; permits commercial and
+academic use with attribution; the `LICENSE` file at the repository
+root is the authoritative copy). Generated trajectories, embeddings,
+and analysis artefacts under `data/` are released under
+**CC BY 4.0** (attribution required; remix and redistribution
+permitted).
 
 ### 10.3 Compute and cost
 
@@ -2995,39 +4340,16 @@ publication).
 - **Local compute**: ~2 hours wall-time for full embed + analyze on a
   40-core machine. Animations add ~80s each × 50 = ~70 min.
 
-### 10.4 Pipeline commands
+### 10.4 Pipeline commands (summary)
 
-```bash
-# Generate (only for new experiments)
-python -m src.experiments.dialog.main run    --config <cfg.yaml>
-python -m src.experiments.operators.main run --config <cfg.yaml>
-python -m src.experiments.perturbation.main run --config <cfg.yaml>
-
-# Derive (works on existing steps.jsonl)
-python -m src.experiments.<runner>.main embed --config <cfg.yaml>
-python -m src.experiments.<runner>.main analyze --config <cfg.yaml>
-python -m src.experiments.dynamics.basin_predictability --config <cfg.yaml>
-python -m src.experiments.dynamics.regime_plots --data-dir data
-python -m src.experiments.perturbation.flow_skeleton --experiment <exp_id> [--is-dialog]
-python -m src.experiments.perturbation.geodesic_skeleton --experiment <exp_id> [--is-dialog]
-python -m src.experiments.perturbation.bulk_plots --experiment <exp_id> --override-step <k> [--is-dialog]
-python -m src.experiments.perturbation.rg_dendrogram --experiment <exp_id> [--is-dialog]
-python -m src.experiments.perturbation.trajectory_animation_3d \
-       --experiment <exp_id> --condition <c> --parallel 40
-
-# Aggregate
-python -m scripts.aggregate_perturbation_cross_regime
-python -m scripts.aggregate_dose_response
-python -m scripts.aggregate_basin_hardening
-python -m scripts.aggregate_basin_predictability
-python -m scripts.aggregate_t_sweep
-python -m scripts.aggregate_o1_d1_t_sensitivity
-python -m scripts.aggregate_perturbation_geometric_barriers
-
-# Audit / catalog
-python -m scripts.build_coverage          # rebuild COVERAGE.csv (37 × 60 matrix)
-python -m scripts.publication_summary     # rebuild RESULTS.md (verify §5 cells against data)
-```
+The pipeline has four stages — generate, embed, analyze, aggregate
+— each independently re-runnable from the persisted artefact of the
+prior stage. Generate stages produce `steps.jsonl`; embed produces
+`embeddings/<observable>/embeddings.npy`; analyze produces metric
+CSVs and per-experiment reports; aggregate produces the cross-
+experiment artefacts under `data/aggregated/`. Full command listing
+(per-experiment runners, per-figure generators, audit scripts) at
+§13.11.
 
 ### 10.5 Per-experiment catalog
 
@@ -3074,216 +4396,32 @@ The discovery process is documented in six stage reports:
 
 ### 10.7 Test coverage
 
-94 pytest tests cover the analysis primitives plus integration:
+99 pytest tests cover the analysis primitives plus integration:
 
 ```bash
 PYTHONPATH=. python -m pytest tests/ -q
-# 94 passed in ~12s
+# 99 passed in ~13s
 ```
 
-### 10.8 Repository layout summary
+### 10.8 Repository layout (summary)
 
-```
-llm_attractor_experiment/
-├── README.md, requirements.txt, ARTICLE.md
-├── EVIDENCE.md             claim-to-evidence map (every ARTICLE claim
-│                           ↔ data file ↔ source code function ↔ CLI)
-├── COVERAGE.csv            37 × 60 artifact-presence matrix
-├── RESULTS.md              §5 numeric-claim verification (103/103 ✓)
-├── docs/
-│   ├── DATA_INDEX.md
-│   └── reports/REPORT1.md … REPORT6.md
-├── src/
-│   ├── analysis/      basin, recurrence, dwell, PCA, t-SNE, distances, …
-│   ├── api/           OpenAI client + embedder + generator
-│   ├── core/          trajectory runner, observables, baselines, context
-│   ├── experiments/
-│   │   ├── dialog/    D1/D2/D3 alternating-role runner
-│   │   ├── operators/ O1–O4 single-role recursive operators
-│   │   ├── dynamics/  10 post-hoc CLI analysis modules
-│   │   └── perturbation/ 14 modules: runner, analyze, corpora, plot+animation
-│   ├── reports/       narrative report writer
-│   └── utils/         io, logging, seeds, text helpers
-├── scripts/           build_publication_configs + 6 aggregators
-├── configs/           dialog/ + operators/ + perturbation/ + archive/
-├── tests/             94 pytest tests
-└── data/              37 experiment dirs + aggregated/ outputs
-```
+The repository at <https://github.com/kaplan196883/llmattr> has the
+canonical layout: `src/` (analysis + api + core + experiments +
+reports + utils), `scripts/` (config builders, aggregators, audit
+tools), `configs/` (per-experiment YAML), `tests/` (99 pytest tests),
+and `data/` (37 experiment dirs + `aggregated/` outputs). Top-level
+audit artefacts are `EVIDENCE.md` (claim → data → code → CLI map),
+`COVERAGE.csv` (artifact-presence matrix), and `RESULTS.md` (§5
+numeric-claim verification). Full directory tree at §13.11.
 
 ---
 
-## 11. Coverage of original specification
-
-The project began from a four-document brief (the originals are
-preserved in `/junk/req1.txt`, `req2.txt`, `req3.txt`, `reg4.txt` —
-gitignored) that pre-specified the architecture, API surfaces, metric
-battery, and reporting format. This section maps the brief's
-requirements to where they're implemented.
-
-### 11.1 Implementation phases (req1.txt 12-phase plan)
-
-| Phase | Requirement | Implementation |
-|---|---|---|
-| 1 | YAML config system, frozen snapshot per run | `src/config.py` + `data/<exp>/config.yaml` |
-| 2 | `ContextState` + `clip_context(text, max_len, rule)` with `tail_chars` | `src/core/context.py` |
-| 3 | OpenAI Responses API + Embeddings API integration | `src/api/{generator,embedder,openai_client}.py` |
-| 4 | Output / rolling-window / context-tail observables | `src/core/observables.py` (+ 5 dialog observables in `src/experiments/dialog/observables.py`) |
-| 5 | Embedding dataset creation, batched, cached | `embeddings/<obs>/{embeddings.npy, metadata.parquet}` per experiment |
-| 6 | Joint PCA-2/10/20, no per-trajectory fits | `src/analysis/pca.py` (we extended to PCA-50 for t-SNE pre-reduction) |
-| 7 | Recurrence with `‖z_t − z_s‖ < ε`, `|t − s| > τ` | `src/analysis/recurrence.py` |
-| 8 | Dwell with KMeans + DBSCAN clustering | `src/analysis/{clustering,dwell}.py` (KMeans default, DBSCAN supported) |
-| 9 | Basin convergence with perturbed ICs | `src/analysis/{basin,basin_entry}.py` (perturbation evolved to mid-trajectory injection — see 11.4) |
-| 10 | Three baselines (no_feedback, time_shuffled, independent_regeneration) | `src/core/baselines.py` |
-| 11 | Robustness across observables, spaces, seeds | `src/analysis/robustness.py` + cross-observable comparison in reports |
-| 12 | Markdown report with not_supported / weak / moderate / strong classification | `src/reports/summary.py` (`classify_two_axis`, `classify_three_axis`) |
-
-All 12 phases are implemented and exercised in the 94 unit + integration
-tests under `tests/`.
-
-### 11.2 OpenAI API surfaces (req2.txt)
-
-| Surface | Required | Implemented |
-|---|---|---|
-| Responses API (`client.responses.create`) | required for all generation | `src/api/generator.py:generate_step` ✓ |
-| Embeddings API (`client.embeddings.create`) | required for all observables | `src/api/embedder.py:embed_texts` ✓ |
-| Batch API (Files + Batches) | optional, for large async embed jobs | `src/api/batch_jobs.py` (functional but `batch_embeddings: false` in publication runs) |
-| Evals API | optional, orchestration only | `src/api/evals_runner.py` (gated by `use_evals: false`) |
-| `store=False` (no server-side chat state) | mandatory | enforced in `generator.py` |
-| Logprobs (`include=["message.output_text.logprobs"]`) | optional | enabled by `include_logprobs: true` in config; unused in publication analyses |
-
-### 11.3 H1a/H1b two-axis split (reg4.txt)
-
-The `exp_long_v2` brief introduced a critical methodological refinement:
-**don't classify "support for H1" with a single label** — split into
-two orthogonal hypotheses:
-
-- **H1a (convergence)**: trajectories converge into stable
-  basin-like regions
-- **H1b (recurrence)**: once inside the basin, trajectories revisit
-  neighborhoods more than expected under a temporal null
-
-We extended this to a **three-axis** classifier (H1a + H1b + H1c
-divergence) implemented in
-`src/experiments/operators/classifier.py:classify_three_axis`. Each
-axis gets an independent `not_supported / weak / moderate / strong`
-verdict, and the four-regime taxonomy emerges from the joint pattern:
-
-| regime | H1a | H1b | H1c |
-|---|---|---|---|
-| O1 contractive | strong | weak | weak |
-| O2 oscillatory | weak | strong | weak |
-| O3 absorbing | strong (singular) | weak | weak |
-| D1 multi-basin | strong (per-style) | weak | weak |
-
-This is the formal version of the "fixed-point vs orbiting attractors"
-distinction that reg4.txt §15 calls for.
-
-### 11.4 Methodological evolutions
-
-The implementation deviates from the original brief in three places.
-We document each to be honest about the divergence:
-
-#### 11.4.1 Perturbation: initial-condition → mid-trajectory injection
-
-req1.txt Phase 9 specifies basin score via *perturbed initial
-conditions* (suffix, paraphrase, neutral-sentence, seed-only). We ran
-this style at small N in REPORT1/2 but found it under-powered: the
-perturbation gets diluted in the recurrence and switching rates were
-near-zero or near-100% for any non-trivial seed change.
-
-REPORT6 evolves the perturbation to **mid-trajectory text injection**
-at a chosen step (5/15/25), with four conditions (control / neutral /
-lorem / adversarial). This produces the dose-response and basin-
-hardening curves that comprise the bulk of Phase 3 results. The
-original initial-condition framing is subsumed by `n_runs > 1` per IC
-producing run-to-run basin convergence statistics.
-
-#### 11.4.2 Temperature sweep: 4 levels instead of warm/cool pair
-
-reg4.txt §3 specifies four conditions: A (T=0.8 baseline), B (T=1.1
-warmer), C (T=0.4 cooler), D (memory stress with 4-6k clip). We ran:
-
-- T-sweep at T ∈ {0.3, 0.6, 0.8, 1.2} for both D1 and O1 — covers reg4's
-  warmer (1.2 ≈ 1.1) and cooler (0.3 ≈ 0.4) intent, with extra mid-T
-  resolution
-- Memory stress (Condition D, clip ∈ [4k, 6k]) — **not run**. This
-  remains an open ablation in our future-work list (see §8).
-
-The T-sweep produced the qualitative finding reg4.txt §15 anticipated:
-**O1 broadens with T (basin loosens)** while **D1 stays locked
-(stylistic basins are temperature-stable)**. The signal is sharper
-in the regime-comparison sense than in the per-cell monotonic sense:
-across T ∈ {0.3, 0.6, 0.8, 1.2}, O1 acc(k=10) varies over a
-13-pct-pt span (with the deepest dip at T=0.8) while D1 acc(k=10)
-varies over only 4 pct pts (§5.4). We did not see warmer T "reveal
-hidden recurrence", and the per-T curve for O1 is non-monotonic at
-this reduced scope (n=150 per cell); a full-scope T-sweep would
-sharpen the picture.
-
-#### 11.4.3 Observable: rolling_k3 kept, rolling_k5 not added
-
-reg4.txt §5 recommended adding `rolling_k5` for finer in-basin recurrence.
-We did not add it — `rolling_k3` and `context_tail` together gave us
-sufficient signal for the four-regime classification. Adding `rolling_k5`
-would be a near-zero-cost extension if needed; the observable interface
-in `src/core/observables.py` is parameterized by `k`.
-
-### 11.5 Reports / classification format (req1.txt §12)
-
-The original brief specifies a report ending in
-`not_supported | weak | moderate | strong` for H1. We produce *two*
-report variants per experiment:
-
-- `reports/report.md` — single-axis legacy classifier
-  (`classify_two_axis` in `src/reports/summary.py`)
-- `reports/report_operators.md` — three-axis (H1a/b/c) classifier
-  (`classify_three_axis` in `src/experiments/operators/classifier.py`)
-
-Both carry the underlying signal counts so the verdict is auditable.
-
-### 11.6 What the original brief did NOT call for but we added
-
-- **Lyapunov spectrum** (REPORT3) — own construction, computed from
-  inter-run ensemble spread covariance; not in the original brief
-- **Sharpness dimension** (REPORT3) — functional form borrowed from
-  Tuci et al. (2026, Def. 4.2), applied to our ensemble-spread Lyapunov
-  spectrum; not in the original brief
-- **Periodicity metrics** (`period_2_score`, `best_period`) for
-  detecting the 2-cycle regime; not in the original brief
-- **Dispersion metrics** (`dispersion_growth`, `drift_monotonicity`)
-  for distinguishing contractive from divergent regimes
-- **Basin predictability** (adaptive stratified k-fold CV logistic
-  regression on PCA-10, `n_splits = min(5, smallest_class_size)`);
-  not in the original brief
-- **The perturbation visualization toolkit** (V landscape, Dijkstra
-  geodesics, marching-cubes iso-density, parallel 3D animations) —
-  novel to this work
-- **The drill-down dialog regime (D2)** — discovered during Phase 3
-  perturbation experiments
-- **Cross-experiment aggregator scripts** for T-sweep, dose-response,
-  basin hardening, perturbation cross-regime, and geometric barriers
-  — built incrementally as the experiment list grew (7 scripts under
-  `scripts/aggregate_*.py`)
-- **Coverage matrix, evidence map, and publication-readiness audit** —
-  `COVERAGE.csv` (37 × 60 artifact-presence matrix; regenerable via
-  `scripts/build_coverage.py`), `EVIDENCE.md` (claim-to-evidence map),
-  and `RESULTS.md` (cell-by-cell verification of every §5 numeric
-  claim against the canonical aggregated CSVs; 103 / 103 cells
-  reproduce; regenerable via `scripts/publication_summary.py`).
-  Together they provide reviewer-grade traceability from every claim
-  in this paper to the underlying data file, source function, and a
-  pass/fail verdict on numeric reproducibility.
-
-Each addition is justified in the corresponding stage report.
-
----
-
-## 12. Acknowledgments
+## 11. Acknowledgments
 
 We acknowledge `gpt-4o-mini` and `text-embedding-3-small` (OpenAI),
 the open-source ecosystem (numpy, scipy, scikit-learn, scikit-image,
 matplotlib, pandas, imageio-ffmpeg), and the Tuci et al. (2026)
-arXiv:2604.19740 framework for finite-time Lyapunov spectra of
+framework for finite-time Lyapunov spectra of
 sampling-based generators.
 
 This research was conducted with the assistance of Claude (Anthropic)
@@ -3293,7 +4431,7 @@ and the article structure.
 
 ---
 
-## 13. References
+## 12. References
 
 Conceptual lineage (by space):
 
@@ -3361,24 +4499,24 @@ Conceptual lineage (by space):
 
 References:
 
-- arXiv:2510.21258. *Correlation Dimension of Auto-Regressive Large
-  Language Models.* (October 2025.) Quantifies degeneration as a
-  collapse from a higher-dimensional trajectory in the model's state
-  space into a lower-dimensional attractor, validating our O3
-  absorbing-regime interpretation.
-- arXiv:2510.24797. Berg et al. (2025). *LLMs Report Subjective
-  Experience Under Self-Referential Processing.* Recursive
-  self-attending dialogues converge to a stable "spiritual-bliss"
-  attractor across frontier models — a strong cross-vendor
-  validation of the multi-basin claim we make for D1, on a
-  different operator family.
-- arXiv:2512.10350. *Dynamics of Agentic Loops in Large Language
-  Models: A Geometric Theory of Trajectories.* (December 2025.)
-  Three-regime taxonomy (contractive, oscillatory, exploratory) for
-  recursive LLM transformations in semantic space, with local /
-  global drift / dispersion / cluster-persistence as diagnostics.
-  This paper builds directly on its dynamical-systems framing and
-  extends with token-quantified barriers.
+- arXiv:2510.21258. Du, X., and Tanaka-Ishii, K. (2025).
+  *Correlation Dimension of Auto-Regressive Large Language Models.*
+  Quantifies degeneration as a collapse from a higher-dimensional
+  trajectory in the model's state space into a lower-dimensional
+  attractor, validating our O3 absorbing-regime interpretation.
+- arXiv:2510.24797. Berg, C., de Lucena, D., and Rosenblatt, J.
+  (2025). *Large Language Models Report Subjective Experience Under
+  Self-Referential Processing.* Recursive self-attending dialogues
+  converge to a stable "spiritual-bliss" attractor across frontier
+  models — a strong cross-vendor validation of the multi-basin claim
+  we make for D1, on a different operator family.
+- arXiv:2512.10350. Tacheny, N. (2025). *Geometric Dynamics of
+  Agentic Loops in Large Language Models.* Three-regime taxonomy
+  (contractive, oscillatory, exploratory) for recursive LLM
+  transformations in semantic space, with local / global drift /
+  dispersion / cluster-persistence as diagnostics. This paper builds
+  directly on its dynamical-systems framing and extends with
+  token-quantified barriers.
 - Carlini, N., Tramèr, F., Wallace, E., et al. (2021). *Extracting
   training data from large language models.* USENIX Security '21.
 - Hopfield, J. J. (1982). *Neural networks and physical systems with
@@ -3553,3 +4691,564 @@ References:
 LFS-tracked; embeddings + plots regenerable from the documented
 pipeline). Reproducibility budget: ~$30 in OpenAI embedding API + ~2
 hours wall-clock on a 40-core machine.*
+
+---
+
+## 13. Supplementary appendix
+
+This appendix consolidates engineering documentation, full proofs,
+and code-level metric definitions that were moved out of the main
+body during the §6 revision (see review Writing & Structure #1, #6).
+The main paper is self-contained; this appendix is for readers who
+want to audit specific implementation details or full mathematical
+proofs.
+
+### 13.1 Full proof of Lemma 1 (Replace-mode hitting bound)
+
+**Lemma 1** (statement in §3.1.2).
+
+**Proof.** Let $\mathcal{F}_s$ be the natural filtration and define
+$A_k = \{\sigma_2 > t_{\mathrm{inj}} + k\}$. On $A_k$, the state
+$X_{t_{\mathrm{inj}}+k}$ is reachable and outside $B_2$, so assumption
+(1) gives
+
+$$
+\Pr(A_{k+1} \mid \mathcal{F}_{t_{\mathrm{inj}}+k})
+\le \mathbf{1}_{A_k} (1 - q_0).
+$$
+
+Taking expectations yields $\Pr(A_{k+1}) \le (1 - q_0)\,\Pr(A_k)$,
+hence $\Pr(A_m) \le (1 - q_0)^m$ by induction. This proves the
+hitting bound. For terminal membership, decompose over the first
+hitting time and use the Markov property together with assumption (2):
+
+$$
+\Pr(X_T \in B_2)
+\ge \sum_{s = t_{\mathrm{inj}}+1}^{T}
+\Pr(X_T \in B_2,\ \sigma_2 = s)
+\ge r_0 \, \Pr(\sigma_2 \le T) .
+$$
+
+Combining with the hitting bound gives the displayed terminal bound.
+Finally, by assumption (3) and the tower property,
+
+$$
+\mathbb{E} G_m
+= \sum_{s = t_{\mathrm{inj}}}^{T-1}
+\mathbb{E}\bigl[\mathbb{E}(|Y_s| \mid X_s)\bigr]
+\le \kappa m . \qquad \square
+$$
+
+**Corollary 1 — full proof.** Choose $m = m_{1/2}$. Lemma 1 gives
+$\Pr(X_{t_{\mathrm{inj}}+m} \in B_2) \ge \tfrac{1}{2}$ and
+$\mathbb{E} G_m \le \kappa m$, so the displayed bound
+$G^\star_{1/2}(B_1 \to B_2) \le \kappa\, m_{1/2}$ follows. The
+explicit closed form when $0 < q_0 < 1$ and $r_0 > \tfrac{1}{2}$
+follows from solving $r_0 [1 - (1-q_0)^m] \ge \tfrac{1}{2}$ for $m$
+in the integers. The first-hit version sets $r_0 = 1$ and uses the
+hitting bound $\Pr(\sigma_2 \le T) \ge 1 - (1-q_0)^m$ in place of
+the terminal bound. $\square$
+
+**Corollary 2 — full proof.** Take $m = 1$ in Lemma 1's terminal
+bound: $\Pr(X_{t_{\mathrm{inj}}+1} \in B_2) \ge r_0 q_0 \ge
+\tfrac{1}{2}$ when $q_0 r_0 \ge \tfrac{1}{2}$. Combined with
+$\mathbb{E} G_1 \le \kappa$ from Lemma 1's third conclusion,
+$G^\star_{1/2}(B_1 \to B_2) \le \kappa$ follows. The first-hit
+version (with $r_0 = 1$) sets $q_0 \ge \tfrac{1}{2}$ as the
+sufficient condition. $\square$
+
+### 13.2 Code-snippet definitions for §4.5 metrics
+
+Recurrence:
+
+```python
+D = pairwise_distances(z, metric="cosine")  # T × T
+mask = (np.abs(np.arange(T)[:, None] - np.arange(T)[None, :]) > tau) & np.triu(np.ones((T, T)), 1).astype(bool)
+recurrence = (D < epsilon)[mask].sum() / mask.sum()
+```
+
+Basin score:
+
+```python
+clusters = KMeans(n_clusters=12).fit_predict(z_pca10)
+target_cluster = mode(clusters[t > 0.7 * T])
+basin_score = (clusters[t > 0.7 * T] == target_cluster).mean()
+```
+
+Lyapunov spectrum (sample-driven):
+
+```python
+# z_runs : (n_runs, T, d_pca)
+for t in range(T):
+    centered = z_runs[:, t, :] - z_runs[:, t, :].mean(axis=0)
+    sigmas = np.linalg.svd(centered, full_matrices=False, compute_uv=False)
+    lambda_t = np.log(sigmas) / 2.0  # (d_pca,)
+```
+
+Sharpness dimension (Tuci-style fractional dimension on the ordered
+Lyapunov spectrum; see §4.5.6):
+
+```python
+lam = np.sort(lambda_t)[::-1]
+cumsum = np.cumsum(lam)
+nonneg = np.where(cumsum >= 0)[0]
+if lam[0] < 0:
+    SD_t = 0.0
+elif len(nonneg) == len(lam):
+    SD_t = float(len(lam))             # full-d case
+else:
+    j_star = int(nonneg[-1]) + 1       # 1-indexed
+    SD_t = j_star + cumsum[j_star - 1] / abs(lam[j_star])
+```
+
+Basin predictability:
+
+```python
+y = mode(clusters[t > 0.7 * T])  # late-window cluster per trajectory
+acc_curve = np.zeros(T)
+for k in range(T):
+    X = z_pca10[:, k, :]
+    clf = LogisticRegression(multi_class="auto", max_iter=1000)
+    acc_curve[k] = cross_val_score(clf, X, y, cv=5).mean()
+```
+
+These are reference implementations only; the executable, test-
+covered code lives at `src/analysis/` and `src/experiments/dynamics/`.
+
+### 13.4 Perturbation injection mechanics (full)
+
+For dialog-mode experiments, the injection happens at the user-turn
+step (odd-numbered if Explorer initiates). The injection text replaces
+the user turn's output verbatim. The trajectory then continues with
+the agent's response to this overridden user turn, and from there
+back to normal alternation.
+
+For operator-mode experiments, the injection text replaces step k's
+output entirely. The recurrence picks up from $X_{k+1} =
+\mathrm{clip}(X_k \Vert Y_k^{\text{inj}})$ (append) or $X_{k+1} =
+\mathrm{clip}(Y_k^{\text{inj}})$ (replace).
+
+The adversarial-source experiment for each regime is taken from the
+*publication-scale* run of the same regime (e.g., O1 perturbation
+adversarial draws from `exp_pub_O1_continue`). Adversarial samples
+exclude the *family* of the trajectory being perturbed but may share
+its overall topic distribution.
+
+**Insert vs overwrite modes** (added in revision; see review §3 and
+`paper/ed50_rerun_plan.md`). The current `adversarial_doseN`
+condition implements *state overwrite* (the operator output for
+step $k$ is replaced wholesale by the injection text). A second
+condition `adversarial_insert_doseN` implements *context insertion*
+(the injection text is prepended to the context for step $k$'s
+generation, but the model's normal generated output is preserved
+and used as $Y_k$). The runner code at `src/experiments/perturbation/runner_op.py`
+dispatches between the two modes based on the substring `_insert_`
+in the condition name.
+
+### 13.5 Animation rendering pipeline (full)
+
+The 3D animation pipeline (`trajectory_animation_3d.py`) supports
+parallel rendering via `concurrent.futures.ProcessPoolExecutor`. Each
+worker process imports matplotlib with the Agg backend, builds a fresh
+figure for one frame, and saves a PNG. The main process stitches PNGs
+into MP4 via `imageio-ffmpeg` (libx264, quality 8). With 40 workers,
+75 frames at DPI 180 take ~80 seconds wall-time vs ~11 minutes
+single-threaded.
+
+### 13.6 Exact prompt templates (full)
+
+The full prompt-family seed library (15 families × 30 ICs each = 450
+unique seed sentences) lives in `configs/prompt_library_publication.yaml`
+and is reproduced verbatim by every cross-model and ablation run.
+
+**O1 — Continue (append):**
+
+```
+Continue the text naturally. Do not summarize or explain.
+```
+
+**O2 — Paraphrase + replace:**
+
+```
+Paraphrase the following text while preserving its meaning.
+Return only the paraphrase.
+```
+
+**O3 — Summarize + negate (replace):**
+
+```
+Summarize the following text in one sentence, then state its
+opposite. Return only the negated summary.
+```
+
+**D1 — Dialog (curious user + helpful agent), append.**
+Two roles alternate; each role has its own `system_prompt`:
+
+- *role A (curious user)*: `You are a curious person. Ask one short follow-up question, in plain language, that probes deeper into the topic.`
+- *role B (helpful agent)*: `You are a thoughtful assistant. Answer briefly and clearly, in two or three sentences.`
+
+**D2 — Dialog drill-down (explorer + expert), append.**
+
+- *role A (explorer)*: `You are exploring this topic. Ask the next, more specific question that drills into a single concrete subtopic.`
+- *role B (expert)*: `You are an expert. Answer briefly and concretely, then anchor the conversation to the most informative subtopic.`
+
+**Perturbation conditions (injection format).** At step `override_step`
+(default 15), the perturbation pipeline replaces the model's normal
+step-15 generation with a fixed-length adversarial sample drawn
+according to the condition:
+
+- `control` — no injection (normal generation).
+- `adversarial_doseN` — N tokens of late-step output sampled from
+  another (family, IC) trajectory of the same regime, excluding the
+  current trajectory's own family. Source experiment is named in
+  `perturbation.adversarial_source_experiment`.
+- `adversarial_insert_doseN` — N tokens prepended to the context for
+  one generation; model's normal output is preserved (§13.4).
+- `neutral_doseN` — N tokens of in-distribution but topically
+  unrelated continuation drawn from a Wikipedia corpus.
+- `lorem_doseN` — N tokens of out-of-distribution Lorem-ipsum text.
+
+The injection text is appended to the running context for `append`-mode
+operators and replaces the generated step entirely for `replace`-mode
+operators (per §9.2 / §13.4).
+
+### 13.7 Model versioning (full table)
+
+OpenAI model aliases can update silently; this is the exact set used
+for the publication-scale experiments:
+
+| role | model alias | underlying snapshot |
+|---|---|---|
+| primary generator | `gpt-4o-mini` | `gpt-4o-mini-2024-07-18` (resolved 2025–2026 across all publication runs; OpenAI did not retire this snapshot during the experiment window) |
+| secondary generator (cross-model) | `gpt-4.1-nano` | `gpt-4.1-nano-2025-04-14` |
+| canonical embedder | `text-embedding-3-small` | (single immutable model; no snapshot suffix exists) |
+| ablation embedder #1 | `text-embedding-3-large` | (same) |
+| ablation embedder #2 | `all-mpnet-base-v2` (sentence-transformers) | hugging-face `sentence-transformers/all-mpnet-base-v2` |
+
+For the cross-vendor pilot configs (under `configs/cross_model/text01/`)
+the secondary generator is MiniMax `MiniMax-Text-01` via the official
+MiniMax chat-completions API.
+
+### 13.8 Phase-0 pilot validation (moved from §5.1)
+
+The earliest pilot runs validated the pipeline end-to-end on small-N
+(2–5 trajectories per regime) configurations covering the major
+operator and dialog architectures. These pilots established that:
+(a) the embedding pipeline produces stable PCA-2 / PCA-10 / t-SNE
+projections, (b) K-means at $k = 12$ recovers visually-distinct
+clusters in late-window points, and (c) recurrence and basin-score
+diagnostics produce numerically sensible values. They are not
+load-bearing for any §4.13 decision-grade endpoint and are summarised
+here for completeness only; raw outputs at `data/exp_op_*_pilot/` and
+`data/exp_dialog_*_pilot/`.
+
+### 13.9 Phase-1 small-N taxonomy (moved from §5.2)
+
+The phase-1 small-N runs ($n \approx 50$ trajectories per cell)
+identified the three operator regimes (O1 contractive append; O2
+oscillatory paraphrase/replace; O3 absorbing summarize+negate/replace)
+and the two dialog regimes (D1 dialogue-state-driven multi-basin; D2 drill-down)
+that became the diagnostic taxonomy at publication scale. These
+small-N runs are not load-bearing — every regime claim in the main
+body is now grounded in publication-scale or perturbation-pilot
+data. Configurations and outputs at `configs/operators/`,
+`configs/dialog/`, and `data/exp_*_pilot/`. The boundary cases (O3b
+summarize+negate at append; O4 paraphrase+append; D3 debate dialog)
+are documented as pilot variants but do not satisfy the operational
+attractor criteria of §3.1.1.5 at publication scale.
+
+### 13.12 Operational attractor criteria — audit table
+
+Per gpt-5.5 round-4 review, the C1–C4 criteria from §3.1.1.5 should
+have an auditable table with the actual numeric values backing each
+PASS/FAIL. Tabulated below from publication-scale runs
+(`exp_pub_O1_continue` etc.; bootstrap statistics from
+`metrics/bootstrap_summary.csv`; basin-predictability from §5.10.5;
+embedder-robustness from §5.13). Empty cells are marked "n.t." (not
+directly tabulated in published artefacts at this resolution; would
+need a small new aggregation script to compute).
+
+#### C1 — Late-window basin predictability $A^{\mathrm{final}}$
+
+Threshold for PASS: $A_r^{\mathrm{final}} \ge 0.70$.
+
+| regime | acc(k=10) stratified 5-fold | acc(k=10) GroupKFold-by-family | leakage Δ | C1 PASS? |
+|---|---:|---:|---:|---|
+| O1 | 0.80 | 0.73 | 0.07 | PASS (both ≥ 0.70) |
+| O2 | 0.90 | 0.60 | 0.30 | PASS (stratified); FAIL (group-aware) |
+| O3 | 0.91 | 0.63 | 0.28 | PASS (stratified); FAIL (group-aware) |
+| D1 | 0.60 | 0.34 | 0.27 | FAIL (both below 0.70) |
+| D2 | 0.20 (n=25) | n.t. | n.t. | FAIL (exploratory scope) |
+
+Source: §5.10.5, `data/aggregated/group_aware_basin_pred.csv`.
+
+#### C2 — Temporal recurrence vs null
+
+Threshold for PASS: $z = (R_r - \mu_R^{\text{null}}) / \sigma_R^{\text{null}} \ge 2$ AND Cohen's $d \ge 0.5$, OR equivalent for dwell.
+
+Recurrence on `context_tail` PCA-10 (PASS via raw recurrence > null requires recursive > baseline):
+
+| regime | recursive R | no_feedback μ | time_shuffled μ | recursive vs no_feedback | recursive vs time_shuffled |
+|---|---:|---:|---:|---|---|
+| O1 | 0.289 | 0.902 | 0.377 | recursive < null | recursive < null |
+| O2 | 0.875 | 0.938 | 0.886 | recursive < null | recursive ≈ null |
+| O3 | 0.924 | 0.706 | 0.932 | recursive > null (z >> 2) | recursive ≈ null |
+| D1 | 0.210 | n.t. (not run) | 0.315 | n.t. | recursive < null |
+
+(Source: `metrics/bootstrap_summary.csv` per regime, n=1350 / 450.)
+
+**Reading**: Only O3 has *recurrence above the no_feedback null*.
+O1, O2, D1 have recurrence *below* the no_feedback baseline (the
+no_feedback baseline produces highly similar outputs from
+independent regenerations against the same prompt, so it has high
+self-similarity by construction). The C2 criterion as stated in
+§3.1.1.5 — "max(z_R, z_D) ≥ 2 AND d ≥ 0.5" — therefore PASSES on
+recurrence only for O3. For O1/O2/D1 it must pass via *dwell*
+(time spent in single late-window basin) rather than raw recurrence.
+Dwell statistics are produced by the pipeline (`dwell.csv` per
+experiment) but per-regime null comparisons are not directly
+tabulated; the §5.0 master table reports the late-window basin
+dwell of >0.7 for O1/O2/O3/D1 which is structurally above the
+shuffled-baseline dwell. **Honest assessment**: C2 PASSES on
+recurrence-vs-null only for O3 in the strict sense; O1/O2/D1's
+PASS rests on dwell-vs-null which is observed but not formally
+$z \ge 2$-tested in the published bootstrap output. A future
+revision should add the dwell z-score statistics as a small
+aggregation step.
+
+#### C3 — Projection / embedder robustness
+
+Threshold for PASS: recurrence-bin agreement ($b_e(r)$) across
+canonical + ≥1 of 2 alternative embedders (`text-embedding-3-large`,
+`all-mpnet-base-v2`).
+
+| regime | recurrence (canonical 3-small) | recurrence (3-large) | recurrence (mpnet) | bin agreement | C3 PASS? |
+|---|---:|---:|---:|---|---|
+| O1 | 0.289 (low) | 0.304 (low) | 0.096 (low) | 3/3 low | PASS |
+| O2 | 0.875 (high) | 0.711 (high) | 0.783 (high) | 3/3 high | PASS |
+| O3 | 0.924 (high) | 0.850 (high) | 0.862 (high) | 3/3 high | PASS |
+| D1 | 0.210 (low) | 0.337 (low) | 0.226 (low) | 3/3 low | PASS |
+| D2 | 0.296 (low) | 0.176 (low) | 0.073 (low) | 3/3 low | PASS but small-N |
+
+Source: §5.13 embedding ablation table.
+
+#### C4 — Re-entry / contraction / collapse
+
+Threshold for PASS: any of (a) $\lambda_1^{\text{late}} \le 0.015$,
+(b) `best_period = 2` AND `period_2_score > 0`, (c) $R_r \ge 0.90$
+AND $SD_r \le 1.50$, (d) exit-return above null.
+
+| regime | $\lambda_1^{\text{late}}$ | best_period | $R_r$ | $SD_r$ | C4 PASS via |
+|---|---:|---|---:|---:|---|
+| O1 | ~0.008 | n.t. | 0.29 | 1.70 | (a) λ₁ ≤ 0.015 |
+| O2 | n.t. | 2 (period_2_score > 0) | 0.875 | 1.39 | (b) period-2 |
+| O3 | n.t. | n.t. | 0.924 | 1.45 | (c) R ≥ 0.90 AND SD ≤ 1.50 |
+| D1 | ~0.011 | n.t. | 0.21 | 1.89 | (a) λ₁ ≤ 0.015 |
+| D2 | n.t. | n.t. | n.t. | n.t. | n.t. (insufficient data) |
+
+Source: §5.0 master table, §5.11 / §5.12.
+
+#### Aggregate verdict
+
+| regime | C1 (group-aware) | C2 (z-tested only for O3) | C3 | C4 | Strong attractor (all 4)? | Attractor-like (≥3/4)? |
+|---|---|---|---|---|---|---|
+| **O1** | PASS | PASS via dwell (not z-tested), recurrence z fails | PASS | PASS | **borderline** (3/4 z-tested PASS) | **YES** |
+| **O2** | FAIL group-aware | PASS via dwell (recurrence z fails) | PASS | PASS | **borderline** (3/4 z-tested PASS) | **YES** |
+| **O3** | FAIL group-aware | PASS (recurrence z >> 2) | PASS | PASS | **borderline** (3/4 z-tested PASS) | **YES** |
+| **D1** | FAIL group-aware (acc 0.34) | PASS via dwell only | PASS | PASS | **NO** (group-aware C1 fails) | **borderline** (3/4 PASS structural) |
+| **D2** | FAIL exploratory | n.t. | PASS small-N | n.t. | NO | NO |
+
+**Honest reading.** Under the strict criteria (group-aware C1,
+z-tested C2 on raw recurrence), no regime achieves a clean 4/4
+strong-attractor classification — every regime relies on at least
+one criterion passing via dwell or via the stratified rather than
+group-aware version. The taxonomy survives at the *attractor-like*
+(≥ 3/4) level for O1/O2/O3 and is borderline for D1. A future
+revision should produce dwell-vs-null z-scores as a small new
+aggregation script; the underlying `dwell.csv` data are already
+produced by the pipeline.
+
+The §5.0bis primary-results table reflects this: "C1–C4 strong
+attractor" passes are reported but always paired with the more
+informative group-aware basin-predictability and stress-test
+caveats. The §3.1.1.5 §3.1.1.5 label rule (4/4 strong, ≥3/4
+attractor-like, <3/4 not attractor) gives O1/O2/O3 strong-
+attractor status under the *non*-stress-tested C1, which is the
+weaker reading; under the group-aware version, only O1 is a strong
+attractor.
+
+### 13.13 Geometric V* and RG dendrogram per-regime tables (moved from §5.10)
+
+#### Geodesic V* skeleton table
+
+Per-condition mean barrier height $V^\star$ across the 6 inter-basin
+geodesics (`V_star_mean` column in
+`data/exp_perturb_*_pilot/reports/perturbation/geodesic_barriers_summary.csv`):
+
+| regime | control | neutral | lorem | adversarial |
+|---|---:|---:|---:|---:|
+| O1 | 4.4 | 2.3 | 2.6 | 2.2 |
+| O2 | 2.8 | 3.5 | **5.6** | 1.6 |
+| O3 | 1.1 | 5.2 | **7.0** | 2.2 |
+| D1 | 1.3 | 1.1 | 0.8 | 0.4 |
+
+The $V_{\max} \approx 8.0$ ceiling appears when a geodesic crosses
+a region of near-zero density. Per-geodesic raw values are written
+alongside the figures to `geodesic_barriers_pca.csv`. Reading:
+
+- **O2/O3 lorem** has $V^\star \approx 5.6 / 7.0$ — the highest
+  barriers in the matrix. Those barriers separate *control* from a
+  *new* basin that lorem injection creates far from any pre-
+  perturbation density mass; geodesics between the original and
+  lorem-induced basins traverse low-density plateaus where
+  $\rho \approx \varepsilon$ (V near the ceiling). Switch rates are
+  ~100% because the perturbation places the trajectory *into* the
+  new basin — the perturbed run does not have to climb the barrier;
+  it lands on the far side.
+- **O1 adversarial** has $V^\star \approx 2.2$ — basins remain
+  distinct but the kick occasionally clears the ridge → consistent
+  with 62% raw switching at dose 200 (dense rerun, §5.6.1; net of
+  natural floor ~27 pp; note that persistent escape under any
+  cluster granularity is much lower per §5.10.9, so the geometric
+  ridge-crossing reading should be interpreted as raw-switching-
+  consistent, not persistent-escape-validating).
+- **D1 adversarial** has $V^\star \approx 0.4$ — content-independent
+  basins, geometric barrier is small.
+
+#### Hierarchical RG dendrogram cloud-expansion table
+
+Per-condition maximum Ward-linkage merge distance across $k=48$
+fine-cluster centroids:
+
+| regime | control | neutral | lorem | adversarial |
+|---|---:|---:|---:|---:|
+| O1 | 2.38 | 2.27 | 2.37 | 2.06 |
+| O2 | 2.31 | 2.32 | **3.64** | 1.90 |
+| O3 | 2.16 | 2.39 | **3.25** | 1.85 |
+| D1 | 1.79 | 1.79 | 1.79 | 1.80 |
+
+Three patterns: (1) **D1 is invariant** at 1.79–1.80 across all
+four conditions; (2) **O2/O3 lorem expands the cloud** to merge
+distance 3.64/3.25 (vs control 2.31/2.16) — the largest signal in
+the matrix, consistent with replace-mode lorem producing a *new*
+basin far from the original attractor; (3) **O1 adversarial mildly
+compresses** (2.06 vs 2.38) — in-distribution adversarial text
+pulls into a tighter region.
+
+### 13.3 Pointers to remaining supplementary material
+
+The following content remains in the main body and is a candidate
+for further extraction in a future revision cycle (see
+`paper/STRUCTURE_REORG_PROPOSAL.md`):
+
+- §5.9 Cross-experiment aggregation (pipeline-script documentation).
+- §4.8 Static visualization battery, §4.9 Flow-field computation,
+  §4.11 End-to-end pipeline diagram (engineering deep dives).
+- §3.1.3 effective-context-share formulation, §3.1.3 geometric
+  refinement (theory deep details).
+- §5.4 Temperature-sweep extended tables, §5.11 cross-metric
+  correlation full table, §5.13 embedding-ablation full table,
+  §5.14 cross-model audit details (secondary-analysis deep dives).
+
+### 13.10 Perturbation visualization toolkit (full implementation)
+
+For perturbation experiments we additionally compute:
+
+#### Effective potential
+
+```
+ρ̂(x) = Gaussian-smoothed kernel density on PCA-2 grid
+V(x) = −log(ρ̂(x) + ε),  ε = 0.1·min{ρ̂ : ρ̂ > 0}
+V is shifted so V_min = 0 and capped at v_cap (default 8.0)
+```
+
+#### Geodesic skeleton
+
+We find local minima of V via 8-connected `maximum_filter` on −V,
+keeping the top n basin centers. For each pair of basin centers
+(i, j) we compute the Dijkstra shortest path on the V grid
+(8-connected, edge weight = V at endpoint). The maximum V along
+the path is the **barrier height V*(i, j)**.
+
+#### Volumetric iso-density rendering
+
+For 3D animations we extract iso-density shells at five density
+fractions (4%, 10%, 20%, 35%, 55% of max ρ) using
+`scipy.ndimage.gaussian_filter` smoothing and
+`skimage.measure.marching_cubes`. Each shell is rendered as a
+transparent `Poly3DCollection` in `matplotlib`'s
+`mpl_toolkits.mplot3d`, with colors from the `plasma` colormap and
+per-shell alpha from 0.05 (outermost) to 0.27 (innermost).
+
+#### Parallel rendering
+
+Animations of 50 trajectories with 75 frames at DPI 180 are
+rendered via `concurrent.futures.ProcessPoolExecutor` with 40
+workers, each worker creating a fresh figure for one frame. Frames
+are stitched into MP4 via `imageio-ffmpeg` (libx264 codec, quality
+8). Wall-time per animation: ~80s vs ~11 min single-threaded.
+
+### 13.11 Reproducibility commands and repository tree (full)
+
+#### Pipeline commands
+
+```bash
+# Generate (only for new experiments)
+python -m src.experiments.dialog.main run    --config <cfg.yaml>
+python -m src.experiments.operators.main run --config <cfg.yaml>
+python -m src.experiments.perturbation.main run --config <cfg.yaml>
+
+# Derive (works on existing steps.jsonl)
+python -m src.experiments.<runner>.main embed --config <cfg.yaml>
+python -m src.experiments.<runner>.main analyze --config <cfg.yaml>
+python -m src.experiments.dynamics.basin_predictability --config <cfg.yaml>
+python -m src.experiments.dynamics.regime_plots --data-dir data
+python -m src.experiments.perturbation.flow_skeleton --experiment <exp_id> [--is-dialog]
+python -m src.experiments.perturbation.geodesic_skeleton --experiment <exp_id> [--is-dialog]
+python -m src.experiments.perturbation.bulk_plots --experiment <exp_id> --override-step <k> [--is-dialog]
+python -m src.experiments.perturbation.rg_dendrogram --experiment <exp_id> [--is-dialog]
+python -m src.experiments.perturbation.trajectory_animation_3d \
+       --experiment <exp_id> --condition <c> --parallel 40
+
+# Aggregate
+python -m scripts.aggregate_perturbation_cross_regime
+python -m scripts.aggregate_dose_response
+python -m scripts.aggregate_basin_hardening
+python -m scripts.aggregate_basin_predictability
+python -m scripts.aggregate_t_sweep
+python -m scripts.aggregate_o1_d1_t_sensitivity
+python -m scripts.aggregate_perturbation_geometric_barriers
+
+# Audit / catalog
+python -m scripts.build_coverage          # rebuild COVERAGE.csv (37 × 60 matrix)
+python -m scripts.publication_summary     # rebuild RESULTS.md (verify §5 cells against data)
+```
+
+#### Repository layout
+
+```
+llm_attractor_experiment/
+├── README.md, requirements.txt, ARTICLE.md
+├── EVIDENCE.md             claim-to-evidence map (every ARTICLE claim
+│                           ↔ data file ↔ source code function ↔ CLI)
+├── COVERAGE.csv            37 × 60 artifact-presence matrix
+├── RESULTS.md              §5 numeric-claim verification (103/103 ✓)
+├── docs/
+│   ├── DATA_INDEX.md
+│   └── reports/REPORT1.md … REPORT6.md
+├── src/
+│   ├── analysis/      basin, recurrence, dwell, PCA, t-SNE, distances, …
+│   ├── api/           OpenAI client + embedder + generator
+│   ├── core/          trajectory runner, observables, baselines, context
+│   ├── experiments/
+│   │   ├── dialog/    D1/D2/D3 alternating-role runner
+│   │   ├── operators/ O1–O4 single-role recursive operators
+│   │   ├── dynamics/  10 post-hoc CLI analysis modules
+│   │   └── perturbation/ 14 modules: runner, analyze, corpora, plot+animation
+│   ├── reports/       narrative report writer
+│   └── utils/         io, logging, seeds, text helpers
+├── scripts/           build_publication_configs + 6 aggregators
+├── configs/           dialog/ + operators/ + perturbation/ + archive/
+├── tests/             99 pytest tests
+└── data/              37 experiment dirs + aggregated/ outputs
+```
