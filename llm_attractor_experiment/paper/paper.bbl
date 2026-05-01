@@ -1,9 +1,16 @@
-\begin{thebibliography}{10}
+\begin{thebibliography}{11}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Kaplanski(2026)]{kaplanski2026}
+P~Kaplanski.
+\newblock Code, configurations, and raw trajectories for "perturbation dose
+  responses in recursive llm loops".
+\newblock \url{https://github.com/kaplan196883/llmattr}, 2026.
+\newblock Public archive.
 
 \bibitem[Tacheny(2025)]{arxiv251210350}
 N~Tacheny.

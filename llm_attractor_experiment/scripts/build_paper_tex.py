@@ -117,26 +117,7 @@ PREAMBLE = r"""\documentclass{article}
 \usepackage{array}    % \arraybackslash
 \newcolumntype{Y}{>{\raggedright\arraybackslash}X}
 
-% Code / ASCII-art verbatim wrappers — font-only (no background, no
-% border). codeblock = \footnotesize for typical code; asciiblock =
-% \scriptsize for wide ASCII diagrams whose 80-100 char layouts only
-% fit the 6.5in textwidth at smaller sizes. Both support an optional
-% [caption] argument rendered as italic small-caps above the block.
 \usepackage{etoolbox}    % for \ifstrempty
-\newenvironment{codeblock}[1][]{%
-  \par\addvspace{4pt}%
-  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
-  \footnotesize%
-}{%
-  \par\addvspace{4pt}%
-}
-\newenvironment{asciiblock}[1][]{%
-  \par\addvspace{4pt}%
-  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
-  \scriptsize%
-}{%
-  \par\addvspace{4pt}%
-}
 
 % Pipeline / flow-diagram boxes (tcolorbox + TikZ).
 % Used for §4.11 end-to-end pipeline and similar phase-structured
@@ -145,6 +126,47 @@ PREAMBLE = r"""\documentclass{article}
 \usepackage[most]{tcolorbox}
 \usepackage{tikz}
 \usetikzlibrary{positioning, arrows.meta, fit, calc, matrix}
+
+% Code / ASCII-art verbatim wrappers — defined AFTER tcolorbox is
+% loaded. codeblock and asciiblock both render at \footnotesize with
+% a thin left rule and a subtle gray background. The visual styling
+% uses tcolorbox in `breakable` mode so blocks can split across pages.
+% Both support an optional [caption] argument rendered as italic
+% small-caps above the block.
+\definecolor{codebg}{gray}{0.965}
+\definecolor{coderule}{gray}{0.55}
+\tcbset{codeblockstyle/.style={
+  enhanced,
+  breakable,
+  colback=codebg,
+  colframe=coderule,
+  boxrule=0pt,
+  leftrule=2pt,
+  arc=0pt,
+  outer arc=0pt,
+  left=8pt,
+  right=4pt,
+  top=4pt,
+  bottom=4pt,
+  before skip=4pt,
+  after skip=4pt,
+  fontupper=\footnotesize
+}}
+\newenvironment{codeblock}[1][]{%
+  \par\addvspace{2pt}%
+  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
+  \begin{tcolorbox}[codeblockstyle]%
+}{%
+  \end{tcolorbox}\par%
+}
+\newenvironment{asciiblock}[1][]{%
+  \par\addvspace{2pt}%
+  \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
+  \begin{tcolorbox}[codeblockstyle]%
+}{%
+  \end{tcolorbox}\par%
+}
+
 \tcbset{
   pipelinephase/.style={
     enhanced, breakable, colback=gray!4, colframe=black!55,
@@ -335,7 +357,7 @@ PREAMBLE = r"""\documentclass{article}
 
 % `\\{}` (with the empty group) prevents \\ from parsing the next
 % line-content as its optional vertical-space argument.
-\author{Paweł Kapłański~\orcidlink{0000-0003-2223-0870}\\{}Kaplanski Ai Lab\\\texttt{pawel@kaplanski.ai}}
+\author{Pawel Kaplanski~\orcidlink{0000-0003-2223-0870}\\{}Kaplanski Ai Lab\\\texttt{pawel@kaplanski.ai}}
 \date{April 30, 2026}
 
 % PDF metadata (per Kourgeorge template best-practice). Helps reference
@@ -343,7 +365,7 @@ PREAMBLE = r"""\documentclass{article}
 \hypersetup{
   pdftitle={Perturbation Dose Responses in Recursive LLM Loops},
   pdfsubject={cs.AI, cs.LG, cs.CL},
-  pdfauthor={Paweł Kapłański},
+  pdfauthor={Pawel Kaplanski},
   pdfkeywords={recursive LLM loops, perturbation dose response,
     attractor-like regimes, context-update rules, basin switching,
     dialog dynamics},
@@ -1199,13 +1221,24 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
         if bibkey.startswith("0000") or len(bibkey) < 5:
             bibkey = _slugify_bibkey(first_author_last + year + title[:8])
 
-    # 7. Venue (between *Title*. and end)
+    # 7. Venue + URL (between *Title*. and end). Extract any explicit
+    # http(s) URL first, since URLs contain dots that would otherwise
+    # truncate the venue regex below at e.g. ".com" or ".org".
     venue = ""
+    url = ""
     if title_m:
         after_title = body[title_m.end():].lstrip(". ")
-        venue_m = re.match(r"^([^.]+)", after_title)
-        if venue_m:
-            venue = venue_m.group(1).strip()
+        url_m = re.search(r"https?://[^\s<>]+", after_title)
+        if url_m:
+            url = url_m.group(0).rstrip(">.,;)")
+            before_url = after_title[:url_m.start()].rstrip().rstrip("<,.; ")
+            venue_m = re.match(r"^([^.]+)", before_url)
+            if venue_m:
+                venue = venue_m.group(1).strip().rstrip(",")
+        else:
+            venue_m = re.match(r"^([^.]+)", after_title)
+            if venue_m:
+                venue = venue_m.group(1).strip()
 
     # 8. Build BibTeX
     if arxiv_id:
@@ -1219,6 +1252,17 @@ def _entry_to_bibtex(entry: str) -> tuple[str | None, str | None]:
                f"  eprint = {{{arxiv_id}}},\n"
                f"  archivePrefix = {{arXiv}},\n"
                f"  url = {{https://arxiv.org/abs/{arxiv_id}}}\n"
+               f"}}\n")
+    elif url:
+        # Non-arxiv reference with an explicit URL (e.g. code archive).
+        # Use @misc + howpublished so unsrtnat renders the URL as a
+        # clickable link rather than truncating mid-domain.
+        bib = (f"@misc{{{bibkey},\n"
+               f"  title = {{{title}}},\n"
+               f"  author = {{{authors_chunk}}},\n"
+               f"  year = {{{year}}},\n"
+               f"  howpublished = {{\\url{{{url}}}}},\n"
+               f"  note = {{{venue}}}\n"
                f"}}\n")
     else:
         bib = (f"@article{{{bibkey},\n"
