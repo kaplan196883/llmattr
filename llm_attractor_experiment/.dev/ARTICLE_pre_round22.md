@@ -213,9 +213,6 @@ Recursive LLM systems increasingly feed model outputs back into future prompts: 
 
 We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
 
-![Fig 1. **Headline perturbation dose response.** Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.](data/aggregated/perturbation_dose_response/dose_response.png)
-
-
 The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
 
 The state-generator-update view makes this distinction explicit: the state is the prompt-visible memory at the current step, the generator is the stochastic language model, and the update rule maps state and output into the next state. If the term context-update nudge is used, it denotes this update operation, not a separate intervention inside the model.
@@ -1056,17 +1053,11 @@ Three independent ED50 estimates agree on the raw-switching scale:
 | Mixed-effects logistic GLMM | 41 | point estimate, log10-dose slope |
 | Family-cluster bootstrap median | 52 | 95% CI [8.5, 242] |
 
-![Fig 2. **Dense O1 adversarial ED50 fit.** O1 append-mode adversarial dose response from the dense confirmatory rerun, with 8 doses x $n=200$ per cell. Black points are observed switching rates with family-cluster bootstrap 95% CIs; the blue curve is a 4-parameter logistic fit (`a=0.69, d=0.28, b=1.16, ED50=36 tok`); the dashed red line marks the bootstrap-median ED50 = 52 tokens [CI 8.5, 242]. Source: `data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png`.](data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png)
-
-
 The point estimates cluster in the 36-52 token range, substantially below the earlier sparse-grid estimate near 150 tokens. The family-cluster bootstrap interval remains wide because only five prompt families are available for resampling.
 
 Two structural findings matter more than the exact ED50 point estimate. First, the raw curve plateaus near 67%, not near 100%. The 4-parameter logistic upper asymptote is $a = 0.69$, implying a substantial non-switching subpopulation under the present protocol. Second, the persistent-escape endpoint is much smaller than raw switching. At dose 400, raw switching is 67%, but persistent escape is 16% under K-means $k=12$. Most raw switching is therefore not clean barrier crossing. It is final-step divergence from the paired control, often without a durable at-injection jump into a new basin.
 
 The persistence decomposition on the dense rerun confirms this interpretation. At dose 400, 69 of 200 trajectories visibly changed cluster at injection. Of those, 32 persisted in the post-injection cluster, 13 drifted back to the pre-injection cluster, and 24 drifted elsewhere. Even among trajectories that visibly jump at injection, roughly half do not remain in the post-injection basin.
-
-![Fig 4. **Post-perturbation relaxation and recovery.** Relaxation curves after perturbation show that many trajectories move transiently but do not remain in the injected post-jump basin. The curves support the distinction between raw switching and durable escape. Source: `data/aggregated/perturbation_cross_regime/cross_relaxation_curves.png`.](data/aggregated/perturbation_cross_regime/cross_relaxation_curves.png)
-
 
 Because persistence is cluster-defined, we also recomputed it under three granularities: K-means $k=12$, K-means $k=4$, and HDBSCAN. The formal persistent-escape ED50, the dose at which persistent escape reaches 50%, is not reached under any of the three definitions.
 
@@ -1081,12 +1072,11 @@ Because persistence is cluster-defined, we also recomputed it under three granul
 | 300 | 14.0% | 8.5% | 40.0% | 66.5% |
 | 400 | 16.0% | 10.0% | 39.5% | 68.5% |
 
-![Fig 3. **Persistent escape under cluster granularity.** Persistent-escape rates recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. No clustering convention reaches the 50% persistent-escape threshold up to 400 injected tokens. Source: `data/aggregated/multi_granularity_persistence.png`.](data/aggregated/multi_granularity_persistence.png)
-
-
 HDBSCAN is the most permissive definition and gives the largest persistent-escape values, but even there the maximum is 39.5%, below the 50% threshold. The conclusion is therefore robust to cluster granularity: O1 adversarial append perturbations create a finite raw-switching dose response, but persistent basin escape is not demonstrated up to 400 injected tokens.
 
 The sparse dose-response pilot remains useful for the qualitative contrast among perturbation contents. In that pilot, D1 neutral switching was already high at 5 tokens and stayed high across the grid, O1 neutral switching stayed near 22-26% from 20 to 400 tokens, and O1 adversarial switching rose from 26% to roughly 50%. The dense rerun shows that the O1 adversarial pattern is real, but it also shows why the endpoint must be named carefully. The defensible headline is **raw ED50 ≈ 40 tokens**, not a persistent-escape barrier height.
+
+![Figure K. **Dense-dose ED50 fit.** O1 adversarial dose-response from the confirmatory rerun, with 8 doses × $n=200$ per cell and one control cell. Black points are observed switching rates with family-cluster-bootstrap 95% CIs; the blue curve is a 4-parameter logistic fit (`a=0.69, d=0.28, b=1.16, ED50=36 tok`); the dashed red line marks the bootstrap-median ED50 = 52 tokens [CI 8.5, 242]. Source: `data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png`.](data/exp_perturb_O1_ed50_dense/reports/perturbation/ed50_curve.png)
 
 ### 5.2 Replace-mode fragility is primarily a memory-policy effect
 
@@ -1154,15 +1144,11 @@ At first exposure we report both the original stratified cross-validation accura
 | `exp_pub_O3_summarize_negate_replace` | O3, absorbing replace | 0.92 | 0.912 | 0.629 | +0.283 | 0.92 | 0.93 |
 | `exp_pub_D1_dialog_curious_helpful_v2` | D1, dialogue-state multi-basin | n/a | 0.604 | 0.336 | +0.269 | 0.69 | 0.77 |
 
-![Fig 6. **Leakage-aware basin predictability.** Group-aware basin-predictability with prompt families held out across folds. O1 remains the strongest leakage-free predictability result, while O2, O3, and D1 drop substantially under family-held-out validation. Source: `data/aggregated/group_aware_basin_pred.png`.](data/aggregated/group_aware_basin_pred.png)
-
-
 The stratified values reproduce the original regime ordering: O2 and O3 lock in very early, O1 is slower but still strongly predictable, and D1 remains the least predictable at early steps. The group-aware analysis changes the interpretation. O1 loses only 7 percentage points when prompt families are held out, while O2, O3, and D1 lose 27-30 percentage points. Thus O1's basin predictability is the most cross-family robust result. For O2, O3, and D1, a substantial part of the original predictability is a family or style fingerprint.
 
 The qualitative regime separation survives. O3 and O2 remain high-recurrence replace-mode regimes, O1 remains a cross-family contractive append regime, and D1 remains a slower, more family-sensitive dialog regime. The main correction is evidential: stratified accuracies should be read as upper bounds, and the leakage-aware columns are the relevant values for cross-family generalization.
 
-![Fig 7. **Cross-experiment dynamics map.** Regime-level map in late-window $\lambda_1$ versus sharpness-dimension space, showing broad separation of replace, append, and dialog regimes. The plot is diagnostic rather than endpoint-defining. Source: `data/aggregated/dynamics_plots/regime_map_rolling_k3.png`.](data/aggregated/dynamics_plots/regime_map_rolling_k3.png)
-
+![Figure 2. **Basin-predictability across regimes.** Top-1 accuracy for predicting each trajectory's late-window K-means cluster from its embedding at step $k$, using publication-scale runs where available. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability.png)
 
 ### 5.4 Perturbation pilots separate append from replace
 
@@ -1176,10 +1162,9 @@ The cross-regime perturbation pilots used 5 families × 5 ICs × 2 runs × 30 st
 | D1, dialogue-state dialog | 0% [0-7] | 76% [62-86] | 54% [40-67] | 60% [46-73] |
 | D2, drill-down dialog | 0% [0-13] | n/a | n/a | 64% [44-80] |
 
-![Fig 5. **Cross-regime perturbation switching.** Final-cluster switching rates across append, replace, and dialog perturbation pilots. Replace-mode O2/O3 saturation should be read as overwrite-protocol sensitivity, not as a clean injected-token barrier. Source: `data/aggregated/perturbation_cross_regime/cross_switching_rates.png`.](data/aggregated/perturbation_cross_regime/cross_switching_rates.png)
-
-
 This table is now read through §5.2. The O2/O3 values are real measurements of the original overwrite protocol, but they are not fair injected-token barrier estimates. They mostly measure replacement of prior state. O1 shows the cleanest content-dependent append result: in-distribution adversarial text switches more often than neutral or lorem text. D1 is broadly susceptible across perturbation types, consistent with a dialog-state basin that is easier to redirect than O1 but less mechanically overwritten than O2/O3.
+
+![Figure 3. **Perturbation switching by regime.** Grouped bar chart of final-step switching rate, defined as final K-means cluster disagreement with the paired control trajectory. Source: `data/aggregated/perturbation_cross_regime/cross_switching_rates.png`.](data/aggregated/perturbation_cross_regime/cross_switching_rates.png)
 
 ### 5.5 Drill-down dialog adds content gravity
 
@@ -1201,8 +1186,7 @@ We injected the same perturbation at three times in a 30-step trajectory: D1 neu
 
 D1 shows partial basin hardening. By step 25, the trajectory has more often committed to a dialog-state basin, and switching falls from 78% at step 15 to 52% at step 25. O1 is approximately flat across injection time. The contractive append operator integrates in-domain adversarial text regardless of when it arrives, while D1 becomes harder to redirect late in the trajectory.
 
-![Fig 8. **Basin hardening by injection time.** Switching rates for early, middle, and late injections in O1 and D1, with $n=50$ per cell and 95% Wilson confidence intervals. D1 shows partial late hardening, whereas O1 adversarial append perturbations remain approximately flat across injection time. Source: `data/aggregated/perturbation_basin_hardening/basin_hardening.png`.](data/aggregated/perturbation_basin_hardening/basin_hardening.png)
-
+![Figure 5. **Switching versus injection time.** Switching rate for injections at steps 5, 15, and 25 of a 30-step trajectory, with $n=50$ per cell and 95% Wilson confidence intervals. Source: `data/aggregated/perturbation_basin_hardening/basin_hardening.png`.](data/aggregated/perturbation_basin_hardening/basin_hardening.png)
 
 ---
 
@@ -1240,8 +1224,7 @@ We also recomputed perturbation switching in the four diagnostic perturbation pi
 
 The O1 content asymmetry is robust: adversarial switching remains roughly 2-3 times neutral or lorem switching across granularities. O2/O3 overwrite-protocol switching remains high at fine granularities, with some collapse under coarse $k=4$. D1 is the most granularity-sensitive, consistent with its family-leakage and dialog-state dependence.
 
-![Fig 9. **Switching under alternative basin granularities.** Perturbation switching recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. The O1 adversarial-versus-OOD contrast is robust across granularities, while D1 is more granularity-sensitive. Source: `data/aggregated/multi_granularity_switching.png`.](data/aggregated/multi_granularity_switching.png)
-
+![Figure H. **Switching rates under alternative cluster granularities.** Perturbation switching rates for D1, O1, O2, and O3 recomputed with K-means $k=12$, K-means $k=4$, and HDBSCAN. Source: `data/aggregated/multi_granularity_switching.png`.](data/aggregated/multi_granularity_switching.png)
 
 ### 5.8 Per-cluster semantic inspection
 
@@ -1270,8 +1253,7 @@ The sparse O1 adversarial dose grid revealed substantial family-level heterogene
 
 `philosophy_dialog` shows a clear threshold-like increase up to dose 200. `practical_dialog` increases after dose 80. `creative_dialog` increases after dose 200. `reflective` is nearly flat, and `emotional` is non-monotone with a low 400-token endpoint. The dense rerun establishes a clean population-level raw dose response, but the wide family-cluster bootstrap interval is consistent with this underlying heterogeneity. Future replications should increase the number of prompt families rather than only the number of ICs per family.
 
-![Fig 10. **Per-family O1 adversarial dose response.** Family-level sparse O1 adversarial dose curves with $n=10$ trajectories per family-dose cell. Heterogeneity behind the population-level ED50 explains the wide family-cluster bootstrap interval. Source: `data/aggregated/per_family_ed50.png`.](data/aggregated/per_family_ed50.png)
-
+![Figure I. **Per-family O1 adversarial dose-response.** Lines show switching rate versus adversarial dose for each prompt family in the sparse O1 dose experiment, with $n=10$ trajectories per family-dose cell. Source: `data/aggregated/per_family_ed50.png`.](data/aggregated/per_family_ed50.png)
 
 ---
 
@@ -1291,8 +1273,7 @@ The rank-order result is selective. Basin predictability is the most embedder-in
 
 The load-bearing taxonomy distinction between replace-mode regimes and append/dialog regimes survives embedder substitution. O2 and O3 remain high-recurrence and high-predictability relative to O1, D1, and D2. The fine-grained sharpness-dimension ordering should be interpreted only within the original `text-embedding-3-small` measurement pipeline.
 
-![Fig 11. **Embedding-model ablation.** Diagnostics recomputed under `text-embedding-3-small`, `text-embedding-3-large`, and `all-mpnet-base-v2`. Basin predictability and coarse recurrence ordering are more stable than sharpness dimension. Source: `data/aggregated/embedding_ablation/comparison.png`.](data/aggregated/embedding_ablation/comparison.png)
-
+![Figure 14. **Embedding-model ablation.** Bar plots compare three diagnostics across regimes after re-embedding subsamples with `text-embedding-3-small`, `text-embedding-3-large`, and `all-mpnet-base-v2`. Source: `data/aggregated/embedding_ablation/comparison.png`.](data/aggregated/embedding_ablation/comparison.png)
 
 The n = 4 cross-metric correlations among recurrence, switching, sharpness, and lock-in are descriptive only and are reported in the released aggregate tables rather than used as inferential evidence here.
 
@@ -1338,33 +1319,23 @@ The $V(x) = -\log \hat{\rho}(x)$ density-landscape analyses visualize where traj
 
 The main limitation is parameter sensitivity. For the O1 perturbation pilot, we recomputed $V^\star$ across 45 combinations of KDE bandwidth, grid resolution, and basin count. Per-condition coefficients of variation ranged from 14% to 24%. A single numerical $V^\star$ value is therefore not stable enough to quote as a calibrated barrier.
 
-![Fig 12. **V* parameter-grid sensitivity.** Sensitivity of empirical potential-barrier summaries across KDE bandwidth, grid resolution, and basin-count settings. The ordinal pattern is more stable than the absolute $V^\star$ values, so density landscapes remain descriptive rather than calibrated. Source: `data/aggregated/v_star_sensitivity.png`.](data/aggregated/v_star_sensitivity.png)
-
-
 The ordinal pattern was more stable. Across the 45 parameter combinations, control had the highest $V^\star$ in 98% of combinations, adversarial had the lowest $V^\star$ in 89%, and neutral and lorem occupied the middle. This supports a weak geometric statement: the density-landscape summaries preserve a robust rank ordering within the O1 perturbation pilot. It does not support a quantitative $V^\star$ to ED50 conversion.
 
 This distinction is especially important for replace-mode regimes. O2 and O3 can show high geometric separation while also showing high overwrite-protocol switching, because the perturbation and memory policy can create or occupy a different basin rather than cross a pre-existing ridge. Full $V^\star$ tables, RG merge-distance tables, and the parameter-grid sensitivity outputs are moved to §11.11.
+
+![Figure 6. **Representative PCA-2 density landscapes for the O1 perturbation pilot.** Panels show $V(x) = -\log \rho(x)$ for control, neutral, lorem, and adversarial conditions. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
 
 ### 5.13 Why exactly five regimes?
 
 The five-regime taxonomy is not recovered cleanly by unsupervised clustering of bulk diagnostics alone. We assembled five-dimensional diagnostic vectors containing recurrence rate, late sharpness dimension, late $\lambda_1$, basin-predictability accuracy at $k=10$, and adversarial switching rate. Internal validation indices did not select a single cluster count matching the five labels: silhouette favored two clusters, Calinski-Harabasz favored seven, and Davies-Bouldin favored six.
 
-The substantive result is that bulk diagnostics separate O2 and O3 from the append/dialog regimes, but they do not cleanly separate O1 from D1. O1 and D1 have similar recurrence, contraction, and basin-predictability values at this diagnostic resolution.
-
-![Fig 13. **Regime clustering in diagnostic space.** Scatter view of regime diagnostic vectors used in the unsupervised five-regime check. Bulk geometry separates replace-mode regimes from append/dialog regimes but does not by itself recover the full five-way taxonomy. Source: `data/aggregated/regime_cluster_analysis/cluster_scatter.png`.](data/aggregated/regime_cluster_analysis/cluster_scatter.png)
- The perturbation protocol is what separates them: O1 shows content-dependent adversarial raw switching with out-of-distribution resistance, while D1 is broadly susceptible to dialog-state redirection and hardens with time. D2 is then distinguished by drill-down content gravity.
-
-![Fig 14. **Regime-clustering dendrogram.** Hierarchical clustering of regime-level diagnostic summaries. The dendrogram reinforces that the five-regime taxonomy is not obtained from bulk diagnostics alone and requires perturbation endpoints for separation. Source: `data/aggregated/regime_cluster_analysis/cluster_dendrogram.png`.](data/aggregated/regime_cluster_analysis/cluster_dendrogram.png)
-
+The substantive result is that bulk diagnostics separate O2 and O3 from the append/dialog regimes, but they do not cleanly separate O1 from D1. O1 and D1 have similar recurrence, contraction, and basin-predictability values at this diagnostic resolution. The perturbation protocol is what separates them: O1 shows content-dependent adversarial raw switching with out-of-distribution resistance, while D1 is broadly susceptible to dialog-state redirection and hardens with time. D2 is then distinguished by drill-down content gravity.
 
 The five-way taxonomy is therefore supported by the union of bulk diagnostics and perturbation endpoints, not by either alone. Full unsupervised-clustering matrices, validation indices, and feature-space plots are available in the released aggregate tables.
 
 ---
 
 At matched reduced scope, D1 showed narrower temperature variation than O1: D1 basin predictability at $k=10$ stayed in a 0.57-0.61 band, while O1 ranged from 0.52 to 0.65. However, the O1 reduced-scope T=0.8 cell was 28 percentage points below the publication-scope T=0.8 anchor, 0.52 versus 0.80, so O1 absolute temperature values are scope-confounded. The full temperature sweep is retained as exploratory secondary material in the released aggregate tables.
-
-![Fig 15. **Cross-experiment temperature sensitivity.** Temperature-sensitivity summary across reduced-scope cells. These results remain explicitly secondary because absolute O1 values are scope-confounded relative to the publication-scale anchor. Source: `data/aggregated/t_sensitivity_cross_regime/cross_t_sensitivity.png`.](data/aggregated/t_sensitivity_cross_regime/cross_t_sensitivity.png)
-
 
 ## 6. Discussion
 
@@ -1891,6 +1862,7 @@ caveat flags. It is placed in Extended Data because it functions as an
 audit map for reproducibility and interpretation, while the main
 Results text reports the load-bearing measurements directly.
 
+
 The central numerical story of this paper, in four numbers: O1 adversarial $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens; control-vs-control stochastic floor $\approx 35\%$; net switching saturates at +32 percentage points and never reaches the +50 pp threshold; persistent escape never crosses 50% in the tested 5-400 token range, with 16% as the maximum under canonical k=12 clustering at 400 tokens. The audit table below provides the supporting per-regime evidence; the rest of §5 stress-tests each of these numbers individually.
 
 For audit, we consolidate all primary endpoints across all four
@@ -1987,6 +1959,7 @@ temperature sensitivity. It is placed in Extended Data to preserve the
 original lookup table without interrupting the narrative sequence of
 the Results section.
 
+
 Before walking through the experiment phases, a master comparison
 of the diagnostic signatures across regimes. Each row is a regime;
 each column is a diagnostic that distinguishes it from the others.
@@ -2016,6 +1989,8 @@ The regime ordering, replace-mode locks in fast and capitulates
 to any perturbation; append-mode locks in slowly and resists
 out-of-distribution perturbation but yields to in-distribution
 adversaries, runs through every diagnostic below.
+
+![Figure 1. **Cross-experiment dynamics map.** Scatter plot of experiments in late-window $\lambda_1$ versus sharpness dimension, computed on the `rolling_k3` observable; points are experiment means and black bars are ±1 SD across trajectories. Colors denote the manually assigned regime labels. Replace-mode and dialog regimes occupy different parts of this diagnostic plane, while several append/contractive variants cluster near low $\lambda_1$. Source: `data/aggregated/dynamics_plots/regime_map_rolling_k3.png`.](data/aggregated/dynamics_plots/regime_map_rolling_k3.png)
 
 ### 11.3 Full proof of Lemma 1 (Replace-mode hitting bound)
 
@@ -2130,13 +2105,6 @@ for k in range(T):
 
 These are reference implementations only; the executable, test-
 covered code lives at `src/analysis/` and `src/experiments/dynamics/`.
-
-![ED Fig 1. **Joint t-SNE regime map.** Joint t-SNE visualization of all publication-scale experiments colored by regime. The view supports qualitative inspection of regime separation but is not used for quantitative endpoint claims. Source: `data/aggregated/dynamics_plots/A_joint_tsne_rolling_k3.png`.](data/aggregated/dynamics_plots/A_joint_tsne_rolling_k3.png)
-
-![ED Fig 2. **Per-family trajectory grid.** Shared-coordinate trajectory grid by prompt family. The figure supports visual inspection of family-level heterogeneity without serving as a primary endpoint. Source: `data/aggregated/dynamics_plots/B_trajectory_grid_rolling_k3.png`.](data/aggregated/dynamics_plots/B_trajectory_grid_rolling_k3.png)
-
-![ED Fig 3. **Ensemble-spread timeline.** Ensemble spread over recursive steps, grouped by regime. The plot supplements the finite-time ensemble-spread diagnostics used in the attractor audit. Source: `data/aggregated/dynamics_plots/C_spread_timeline_rolling_k3.png`.](data/aggregated/dynamics_plots/C_spread_timeline_rolling_k3.png)
-
 
 ### 11.5 Perturbation injection mechanics (full)
 
@@ -2315,11 +2283,6 @@ workers, each worker creating a fresh figure for one frame. Frames
 are stitched into MP4 via `imageio-ffmpeg` (libx264 codec, quality
 8). Wall-time per animation: ~80s vs ~11 min single-threaded.
 
-![ED Fig 4. **Combined PCA flow fields.** Combined empirical PCA-2 flow-field summary across regimes. Flow fields are useful qualitative checks on local motion but are not primary decision endpoints. Source: `data/aggregated/dynamics_plots/E_flow_fields_rolling_k3.png`.](data/aggregated/dynamics_plots/E_flow_fields_rolling_k3.png)
-
-![ED Fig 5. **Combined t-SNE flow fields.** t-SNE-space flow-field visualization used for qualitative comparison with the PCA-2 flow summaries. Source: `data/aggregated/dynamics_plots/E_tsne_flow_fields_rolling_k3.png`.](data/aggregated/dynamics_plots/E_tsne_flow_fields_rolling_k3.png)
-
-
 ### 11.9 Reproducibility: commands and repository tree
 
 #### Pipeline commands
@@ -2459,15 +2422,6 @@ Threshold for PASS: $A_r^{\mathrm{final}} \ge 0.70$.
 
 Source: §5.11, `data/aggregated/group_aware_basin_pred.csv`.
 
-![ED Fig 6. **Original stratified basin-predictability curves.** Stratified-CV basin-predictability curves are retained for audit but should be interpreted alongside the leakage-aware GroupKFold results in main-text Fig 6. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability.png)
-
-![ED Fig 7. **Basin-predictability grid.** Per-experiment basin-predictability panels showing how predictability varies across regimes and observables. Source: `data/aggregated/basin_predictability_cross/cross_basin_predictability_grid.png`.](data/aggregated/basin_predictability_cross/cross_basin_predictability_grid.png)
-
-![ED Fig 8. **Temperature-sweep basin predictability.** Basin predictability as a function of sampling temperature. These reduced-scope cells are exploratory and are not used as primary evidence for temperature effects. Source: `data/aggregated/t_sweep_basin_predictability/t_sweep_basin_predictability.png`.](data/aggregated/t_sweep_basin_predictability/t_sweep_basin_predictability.png)
-
-![ED Fig 12. **Seed determinism versus temperature.** Control-control divergence as a function of temperature, used to contextualize stochastic floors. The figure supports the endpoint rule that raw switching must be interpreted against paired controls. Source: `data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png`.](data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png)
-
-
 #### C2, Temporal recurrence vs null
 
 Threshold for PASS: $z = (R_r - \mu_R^{\text{null}}) / \sigma_R^{\text{null}} \ge 2$ AND Cohen's $d \ge 0.5$, OR equivalent for dwell.
@@ -2580,11 +2534,6 @@ The $V_{\max} \approx 8.0$ ceiling appears when a geodesic crosses
 a region of near-zero density. Per-geodesic raw values are written
 alongside the figures to `geodesic_barriers_pca.csv`. Reading:
 
-![ED Fig 9. **Representative O1 perturbation potential landscapes.** PCA-2 density landscapes for the O1 perturbation pilot under control, neutral, lorem, and adversarial conditions. The landscapes are descriptive geometry, not calibrated token barriers. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
-
-![ED Fig 10. **Representative O1 geodesic skeleton.** Geodesic minimum-cost paths between detected basin centers for the O1 perturbation pilot. The figure illustrates how $V^\star$ summaries are constructed. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
-
-
 - **O2/O3 lorem** has $V^\star \approx 5.6 / 7.0$, the highest
   barriers in the matrix. Those barriers separate *control* from a
   *new* basin that lorem injection creates far from any pre-
@@ -2623,9 +2572,6 @@ the matrix, consistent with replace-mode lorem producing a *new*
 basin far from the original attractor; (3) **O1 adversarial mildly
 compresses** (2.06 vs 2.38), in-distribution adversarial text
 pulls into a tighter region.
-
-![ED Fig 11. **Representative O1 RG dendrogram.** Ward-merge cloud-expansion dendrogram for the O1 perturbation pilot. The figure supplements the geometric-barrier table with an independent view of condition-wise cloud expansion. Source: `data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png)
-
 
 ### 11.12 Instrumenting your own recursive system: recipe and reporting standard
 
