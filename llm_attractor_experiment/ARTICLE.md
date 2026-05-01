@@ -2465,7 +2465,7 @@ Source: §5.11, `data/aggregated/group_aware_basin_pred.csv`.
 
 ![ED Fig 8. **Temperature-sweep basin predictability.** Basin predictability as a function of sampling temperature. These reduced-scope cells are exploratory and are not used as primary evidence for temperature effects. Source: `data/aggregated/t_sweep_basin_predictability/t_sweep_basin_predictability.png`.](data/aggregated/t_sweep_basin_predictability/t_sweep_basin_predictability.png)
 
-![ED Fig 12. **Seed determinism versus temperature.** Control-control divergence as a function of temperature, used to contextualize stochastic floors. The figure supports the endpoint rule that raw switching must be interpreted against paired controls. Source: `data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png`.](data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png)
+![ED Fig 9. **Seed determinism versus temperature.** Control-control divergence as a function of temperature, used to contextualize stochastic floors. The figure supports the endpoint rule that raw switching must be interpreted against paired controls. Source: `data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png`.](data/aggregated/t_sensitivity_cross_regime/seed_determinism_vs_T.png)
 
 
 #### C2, Temporal recurrence vs null
@@ -2580,9 +2580,14 @@ The $V_{\max} \approx 8.0$ ceiling appears when a geodesic crosses
 a region of near-zero density. Per-geodesic raw values are written
 alongside the figures to `geodesic_barriers_pca.csv`. Reading:
 
-![ED Fig 9. **Representative O1 perturbation potential landscapes.** PCA-2 density landscapes for the O1 perturbation pilot under control, neutral, lorem, and adversarial conditions. The landscapes are descriptive geometry, not calibrated token barriers. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
+![ED Fig 10. **Representative O1 perturbation potential landscapes.** PCA-2 density landscapes for the O1 perturbation pilot under control, neutral, lorem, and adversarial conditions. The landscapes are descriptive geometry, not calibrated token barriers. Source: `data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/bulk_landscape_pca.png)
 
-![ED Fig 10. **Representative O1 geodesic skeleton.** Geodesic minimum-cost paths between detected basin centers for the O1 perturbation pilot. The figure illustrates how $V^\star$ summaries are constructed. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
+![ED Fig 11. **Representative O1 geodesic skeleton.** Geodesic minimum-cost paths between detected basin centers for the O1 perturbation pilot. The figure illustrates how $V^\star$ summaries are constructed. Source: `data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/geodesic_skeleton_pca.png)
+
+![ED Fig 12. **Representative O1 flow skeleton with basin centers.** Empirical PCA-2 flow streamlines overlaid on the smoothed potential landscape, with detected basin centers marked. The view combines local-motion direction with the basin-geometry skeleton to make the geodesic shortest-path construction visually consistent with the underlying flow. Source: `data/exp_perturb_O1_pilot/reports/perturbation/flow_skeleton_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/flow_skeleton_pca.png)
+
+![ED Fig 13. **3D iso-density snapshots of the O1 perturbation pilot.** Three-dimensional iso-density shells at five density fractions (4%, 10%, 20%, 35%, 55% of peak density) computed in PCA-3 space, with sampled trajectories overlaid for control, neutral, lorem, and adversarial conditions. The 3D view exposes basin organization that is partially obscured in the 2D PCA projection. Source: `data/exp_perturb_O1_pilot/reports/perturbation/animation3d_snapshots.png`.](data/exp_perturb_O1_pilot/reports/perturbation/animation3d_snapshots.png)
+
 
 
 - **O2/O3 lorem** has $V^\star \approx 5.6 / 7.0$, the highest
@@ -2624,7 +2629,7 @@ basin far from the original attractor; (3) **O1 adversarial mildly
 compresses** (2.06 vs 2.38), in-distribution adversarial text
 pulls into a tighter region.
 
-![ED Fig 11. **Representative O1 RG dendrogram.** Ward-merge cloud-expansion dendrogram for the O1 perturbation pilot. The figure supplements the geometric-barrier table with an independent view of condition-wise cloud expansion. Source: `data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png)
+![ED Fig 14. **Representative O1 RG dendrogram.** Ward-merge cloud-expansion dendrogram for the O1 perturbation pilot. The figure supplements the geometric-barrier table with an independent view of condition-wise cloud expansion. Source: `data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png`.](data/exp_perturb_O1_pilot/reports/perturbation/rg_dendrogram_pca.png)
 
 
 ### 11.12 Instrumenting your own recursive system: recipe and reporting standard
