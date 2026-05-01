@@ -18,6 +18,8 @@
 \usepackage{booktabs}
 \usepackage{caption}
 \usepackage[section]{placeins}
+\usepackage{footnote}    % savenotes env: lets \footnote work inside captions
+\makesavenoteenv{figure}
 \captionsetup{font=small,labelfont=bf}
 
 % Microtype protrusion / expansion (works with Times via T1)
@@ -529,12 +531,13 @@ Recursive LLM systems increasingly feed model outputs back into future prompts: 
 
 We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35\% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig01.png}
-\caption{Fig 1. \textbf{Headline perturbation dose response.} Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: \texttt{data/aggregated/perturbation\_dose\_response/dose\_response.png}.}
+\caption{Fig 1. \textbf{Headline perturbation dose response.} Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: \texttt{data/aggregated/perturbation\_dose\_response/dose\_response.png}.\protect\footnote{The single panel plots raw switching fraction at step 29 against injected perturbation dose in tokens on a log-scaled x axis, with the y axis giving the fraction of 50 trajectories that leave the measured switching basin. Green circles show D1 with neutral content, blue circles show O1 with neutral content, and red squares with a dashed line show O1 with adversarial content; vertical error bars indicate sampling uncertainty, point labels give percentages, and the dotted horizontal line marks the 50 percent switching threshold. Read the figure by comparing each curve to this threshold and to the blue neutral O1 baseline. The red adversarial O1 curve rises with dose and crosses the operational halfway point, consistent with ED50\_raw around 40 tokens and a raw plateau near two thirds, while the blue control remains near the stochastic floor of about 35 percent. Persistent escape is a separate, lower endpoint, reaching at most 16 percent at dose 400 under the K-means k equals 12 analysis.}}
 \end{figure}
-
+\end{savenotes}
 
 The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
 
@@ -1465,12 +1468,13 @@ Family-cluster bootstrap median & 52 & 95\% CI [8.5, 242] \\
 \end{tabular}
 \end{table}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig02.png}
-\caption{Fig 2. \textbf{Dense O1 adversarial ED50 fit.} O1 append-mode adversarial dose response from the dense confirmatory rerun, with 8 doses x $n=200$ per cell. Black points are observed switching rates with family-cluster bootstrap 95\% CIs; the blue curve is a 4-parameter logistic fit (\texttt{a=0.69, d=0.28, b=1.16, ED50=36 tok}); the dashed red line marks the bootstrap-median ED50 = 52 tokens [CI 8.5, 242]. Source: \texttt{data/exp\_perturb\_O1\_ed50\_dense/reports/perturbation/ed50\_curve.png}.}
+\caption{Fig 2. \textbf{Dense O1 adversarial ED50 fit.} O1 append-mode adversarial dose response from the dense confirmatory rerun, with 8 doses x $n=200$ per cell. Black points are observed switching rates with family-cluster bootstrap 95\% CIs; the blue curve is a 4-parameter logistic fit (\texttt{a=0.69, d=0.28, b=1.16, ED50=36 tok}); the dashed red line marks the bootstrap-median ED50 = 52 tokens [CI 8.5, 242]. Source: \texttt{data/exp\_perturb\_O1\_ed50\_dense/reports/perturbation/ed50\_curve.png}.\protect\footnote{This single panel plots adversarial append dose in tokens on a log-scaled x axis against the fraction of trajectories that switch basin on the y axis. Black circles with gray vertical intervals show observed switching rates and family-cluster bootstrap uncertainty at each sampled dose. The solid blue curve gives the fitted 4-parameter logistic dose response, with the pale blue ribbon indicating the bootstrap uncertainty band for the ED50 localization. The gray horizontal reference line marks 50 percent switching, and the red vertical reference line marks the bootstrap median ED50. Read the figure by locating where the fitted curve crosses the 50 percent threshold and by comparing the high-dose points with the low-dose control floor. The plot supports a reproducible raw switching effect beginning at a few dozen tokens and saturating near 67 percent, about 32 percentage points above the control floor, while motivating the separate persistence and relaxation analyses in Figs. 3 and 4.}}
 \end{figure}
-
+\end{savenotes}
 
 The point estimates cluster in the 36-52 token range, substantially below the earlier sparse-grid estimate near 150 tokens. The family-cluster bootstrap interval remains wide because only five prompt families are available for resampling.
 
@@ -1478,12 +1482,13 @@ Two structural findings matter more than the exact ED50 point estimate. First, t
 
 The persistence decomposition on the dense rerun confirms this interpretation. At dose 400, 69 of 200 trajectories visibly changed cluster at injection. Of those, 32 persisted in the post-injection cluster, 13 drifted back to the pre-injection cluster, and 24 drifted elsewhere. Even among trajectories that visibly jump at injection, roughly half do not remain in the post-injection basin.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig03.png}
-\caption{Fig 4. \textbf{Post-perturbation relaxation and recovery.} Relaxation curves after perturbation show that many trajectories move transiently but do not remain in the injected post-jump basin. The curves support the distinction between raw switching and durable escape. Source: \texttt{data/aggregated/perturbation\_cross\_regime/cross\_relaxation\_curves.png}.}
+\caption{Fig 4. \textbf{Post-perturbation relaxation and recovery.} Relaxation curves after perturbation show that many trajectories move transiently but do not remain in the injected post-jump basin. The curves support the distinction between raw switching and durable escape. Source: \texttt{data/aggregated/perturbation\_cross\_regime/cross\_relaxation\_curves.png}.\protect\footnote{Each panel plots the mean distance from the unperturbed control trajectory centroid over recursive steps, with uncertainty bars across reruns and a vertical dashed line marking the injection at step 15. Gray controls continue their natural relaxation, while colored curves show neutral, lorem, and adversarial perturbations. In the replacement regimes O2 and O3, the perturbation produces an immediate discontinuous rise, but the curves then either plateau below the initial jump or partially relax, indicating that the raw switch at injection is not identical to a persistent endpoint. In the append regimes O1 and D1, effects are more gradual and regime-dependent, with some conditions drifting upward after injection while controls recover toward lower distances. The visual comparison shows why §5.1 separates raw, net, and persistent responses: many trajectories visibly move at injection, but only a subset remains in the injected basin rather than returning or drifting elsewhere.}}
 \end{figure}
-
+\end{savenotes}
 
 Because persistence is cluster-defined, we also recomputed it under three granularities: K-means $k=12$, K-means $k=4$, and HDBSCAN. The formal persistent-escape ED50, the dose at which persistent escape reaches 50\%, is not reached under any of the three definitions.
 
@@ -1506,12 +1511,13 @@ dose & persistent escape, $k=12$ & persistent escape, $k=4$ & persistent escape,
 \end{tabularx}
 \end{table}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig04.png}
-\caption{Fig 3. \textbf{Persistent escape under cluster granularity.} Persistent-escape rates recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. No clustering convention reaches the 50\% persistent-escape threshold up to 400 injected tokens. Source: \texttt{data/aggregated/multi\_granularity\_persistence.png}.}
+\caption{Fig 3. \textbf{Persistent escape under cluster granularity.} Persistent-escape rates recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. No clustering convention reaches the 50\% persistent-escape threshold up to 400 injected tokens. Source: \texttt{data/aggregated/multi\_granularity\_persistence.png}.\protect\footnote{The plot compares adversarial dose on the horizontal axis with measured rates on the vertical axis, using solid lines for persistent escape and dashed lines for immediate cluster kicks at injection. Across all three clustering choices, injection often causes visible switching, especially under HDBSCAN, where the kicked rate rises to about 68.5 percent by 400 tokens. The corresponding persistent-escape curves remain much lower: K-means with 12 clusters reaches 16 percent, K-means with 4 clusters reaches 10 percent, and HDBSCAN peaks at 39.5 percent. The dotted horizontal line marks the 50 percent criterion used as the formal barrier. Visually, every persistent-escape curve stays below that line throughout the 5 to 400 token range, indicating that raw perturbation-induced switching does not reliably stabilize into a terminal cluster change for O1.}}
 \end{figure}
-
+\end{savenotes}
 
 HDBSCAN is the most permissive definition and gives the largest persistent-escape values, but even there the maximum is 39.5\%, below the 50\% threshold. The conclusion is therefore robust to cluster granularity: O1 adversarial append perturbations create a finite raw-switching dose response, but persistent basin escape is not demonstrated up to 400 injected tokens.
 
@@ -1624,23 +1630,25 @@ experiment & regime & acc(k=5) & acc(k=10), stratified & acc(k=10), group-aware 
 \end{tabularx}
 \end{table}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig05.png}
-\caption{Fig 6. \textbf{Leakage-aware basin predictability.} Group-aware basin-predictability with prompt families held out across folds. O1 remains the strongest leakage-free predictability result, while O2, O3, and D1 drop substantially under family-held-out validation. Source: \texttt{data/aggregated/group\_aware\_basin\_pred.png}.}
+\caption{Fig 6. \textbf{Leakage-aware basin predictability.} Group-aware basin-predictability with prompt families held out across folds. O1 remains the strongest leakage-free predictability result, while O2, O3, and D1 drop substantially under family-held-out validation. Source: \texttt{data/aggregated/group\_aware\_basin\_pred.png}.\protect\footnote{The plot compares basin predictability under the original stratified split, shown in red, with a leakage-resistant GroupKFold split by prompt family, shown in green, across dialogue, continue, paraphrase, summarize, and negate-replace perturbation families at several exposure steps. The dashed horizontal line marks chance level, so bars above it indicate recoverable basin information from first-exposure features. Labels above each pair give the stratified minus group-aware gap. O1 continue remains high after grouping, especially at k equals 10 and 20, indicating that its predictive signal transfers across prompt families rather than depending mainly on family identity. By contrast, O2 paraphrase, O3 summarize, D1 dialogue, and negate-replace show large red-green separations, typically around 27 to 32 percentage points. Thus the figure visualizes that stratified validation inflated predictability for several regimes through same-family leakage, while O1 is the most robust leakage-free result.}}
 \end{figure}
-
+\end{savenotes}
 
 The stratified values reproduce the original regime ordering: O2 and O3 lock in very early, O1 is slower but still strongly predictable, and D1 remains the least predictable at early steps. The group-aware analysis changes the interpretation. O1 loses only 7 percentage points when prompt families are held out, while O2, O3, and D1 lose 27-30 percentage points. Thus O1's basin predictability is the most cross-family robust result. For O2, O3, and D1, a substantial part of the original predictability is a family or style fingerprint.
 
 The qualitative regime separation survives. O3 and O2 remain high-recurrence replace-mode regimes, O1 remains a cross-family contractive append regime, and D1 remains a slower, more family-sensitive dialog regime. The main correction is evidential: stratified accuracies should be read as upper bounds, and the leakage-aware columns are the relevant values for cross-family generalization.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig06.png}
-\caption{Fig 7. \textbf{Cross-experiment dynamics map.} Regime-level map in late-window $\lambda_1$ versus sharpness-dimension space, showing broad separation of replace, append, and dialog regimes. The plot is diagnostic rather than endpoint-defining. Source: \texttt{data/aggregated/dynamics\_plots/regime\_map\_rolling\_k3.png}.}
+\caption{Fig 7. \textbf{Cross-experiment dynamics map.} Regime-level map in late-window $\lambda_1$ versus sharpness-dimension space, showing broad separation of replace, append, and dialog regimes. The plot is diagnostic rather than endpoint-defining. Source: \texttt{data/aggregated/dynamics\_plots/regime\_map\_rolling\_k3.png}.\protect\footnote{Each point summarizes one publication-scale run or pilot variant by its late largest growth estimate on the horizontal axis and sharpness dimension on the vertical axis. Error bars show the observed spread across windows or perturbations, so overlap should be read as uncertainty rather than strict equivalence. The vertical reference line marks the approximate stability boundary: points to the right are less contractive, while points near or left of it are more stable in the late window. The blue replace-style runs cluster at lower sharpness with small positive or near zero growth, while green dialog and drill-down runs sit higher and farther right. The red oscillatory case occupies a neighboring high-sharpness, positive-growth region, and the purple absorbing cases form a compact intermediate band. Overall, the map supports coarse separation of replace from append and dialog behavior, while leaving finer regime distinctions to perturbation-based evidence.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsection{Perturbation pilots separate append from replace}
 
@@ -1662,12 +1670,13 @@ D2, drill-down dialog & 0\% [0-13] & n/a & n/a & 64\% [44-80] \\
 \end{tabularx}
 \end{table}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig07.png}
-\caption{Fig 5. \textbf{Cross-regime perturbation switching.} Final-cluster switching rates across append, replace, and dialog perturbation pilots. Replace-mode O2/O3 saturation should be read as overwrite-protocol sensitivity, not as a clean injected-token barrier. Source: \texttt{data/aggregated/perturbation\_cross\_regime/cross\_switching\_rates.png}.}
+\caption{Fig 5. \textbf{Cross-regime perturbation switching.} Final-cluster switching rates across append, replace, and dialog perturbation pilots. Replace-mode O2/O3 saturation should be read as overwrite-protocol sensitivity, not as a clean injected-token barrier. Source: \texttt{data/aggregated/perturbation\_cross\_regime/cross\_switching\_rates.png}.\protect\footnote{Figure 5 plots the fraction of paired trajectories whose final cluster differs from its matched control, grouped by perturbation regime and colored by perturbation type. Controls remain at 0 percent wherever shown, while append-style O1 produces modest switching for neutral and lorem prompts, 24 percent and 18 percent, but a larger adversarial response at 54 percent. The replace-style O2 and O3 bars nearly saturate, with neutral and lorem at 100 percent and adversarial at 94 to 96 percent, indicating that overwriting prior content strongly redirects the loop. Dialog-append D1 shows intermediate sensitivity, 76 percent for neutral, 54 percent for lorem, and 60 percent for adversarial, while the D2 adversarial drill-down condition reaches 64 percent. The key reading is comparative: append and dialog perturbations reveal graded dose responses, whereas O2 and O3 mainly expose overwrite-protocol effects, consistent with the lower insert-mode rates reported in §5.2.}}
 \end{figure}
-
+\end{savenotes}
 
 This table is now read through §5.2. The O2/O3 values are real measurements of the original overwrite protocol, but they are not fair injected-token barrier estimates. They mostly measure replacement of prior state. O1 shows the cleanest content-dependent append result: in-distribution adversarial text switches more often than neutral or lorem text. D1 is broadly susceptible across perturbation types, consistent with a dialog-state basin that is easier to redirect than O1 but less mechanically overwritten than O2/O3.
 
@@ -1699,12 +1708,13 @@ inject step & D1, neutral at 80 & O1, adversarial at 200 \\
 
 D1 shows partial basin hardening. By step 25, the trajectory has more often committed to a dialog-state basin, and switching falls from 78\% at step 15 to 52\% at step 25. O1 is approximately flat across injection time. The contractive append operator integrates in-domain adversarial text regardless of when it arrives, while D1 becomes harder to redirect late in the trajectory.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig08.png}
-\caption{Fig 8. \textbf{Basin hardening by injection time.} Switching rates for early, middle, and late injections in O1 and D1, with $n=50$ per cell and 95\% Wilson confidence intervals. D1 shows partial late hardening, whereas O1 adversarial append perturbations remain approximately flat across injection time. Source: \texttt{data/aggregated/perturbation\_basin\_hardening/basin\_hardening.png}.}
+\caption{Fig 8. \textbf{Basin hardening by injection time.} Switching rates for early, middle, and late injections in O1 and D1, with $n=50$ per cell and 95\% Wilson confidence intervals. D1 shows partial late hardening, whereas O1 adversarial append perturbations remain approximately flat across injection time. Source: \texttt{data/aggregated/perturbation\_basin\_hardening/basin\_hardening.png}.\protect\footnote{The plot should be read left to right as moving the same diagnostic perturbation later in the recursive run, while the vertical position gives the fraction of trajectories that have entered the perturbed basin by the final measurement. Green circles track D1 dialog trajectories at neutral dose 80, and blue squares track O1 continuation trajectories under adversarial append dose 200; whiskers show sampling uncertainty around the printed percentages. The dotted horizontal line marks chance level for a two-basin switch criterion. D1 is high for early and middle injections, near 72 and 78 percent, but drops to about 52 percent when injected at step 25, indicating that late dialog states have partially hardened against rerouting. O1 instead remains close to the same switching rate at all three times, consistent with a contractive continuation regime that incorporates in-domain adversarial text largely independent of timing.}}
 \end{figure}
-
+\end{savenotes}
 
 
 \subsection*{Phase C, cluster, granularity, and semantic robustness}
@@ -1757,12 +1767,13 @@ D1 & lorem & 0.56 & 0.46 & 0.44 & granularity-sensitive \\
 
 The O1 content asymmetry is robust: adversarial switching remains roughly 2-3 times neutral or lorem switching across granularities. O2/O3 overwrite-protocol switching remains high at fine granularities, with some collapse under coarse $k=4$. D1 is the most granularity-sensitive, consistent with its family-leakage and dialog-state dependence.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig09.png}
-\caption{Fig 9. \textbf{Switching under alternative basin granularities.} Perturbation switching recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. The O1 adversarial-versus-OOD contrast is robust across granularities, while D1 is more granularity-sensitive. Source: \texttt{data/aggregated/multi\_granularity\_switching.png}.}
+\caption{Fig 9. \textbf{Switching under alternative basin granularities.} Perturbation switching recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. The O1 adversarial-versus-OOD contrast is robust across granularities, while D1 is more granularity-sensitive. Source: \texttt{data/aggregated/multi\_granularity\_switching.png}.\protect\footnote{Each subplot reports the fraction of perturbation runs that leave the paired control basin, with grouped bars for the three alternative clusterings and black Wilson 95 percent confidence intervals. The gray horizontal line marks chance level, so bars well above it indicate frequent basin changes. Visually, O1 preserves the main content contrast under all definitions: adversarial prompts switch much more often than the lorem and neutral out-of-distribution controls, even though the absolute rates move with the clustering. O2 and O3 are near ceiling for the canonical twelve-cluster and HDBSCAN partitions, while the coarse four-cluster partition compresses some adversarial and neutral rates downward. D1 is the least stable case, with adversarial, lorem, and neutral ordering changing across granularities and overlapping intervals. Overall, the dose response is strongest and most interpretable for O1, whereas D1 depends more on the basin resolution.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsection{Per-cluster semantic inspection}
 
@@ -1807,12 +1818,13 @@ emotional & 0.30 & 0.40 & 0.40 & 0.10 \\
 
 \texttt{philosophy\_dialog} shows a clear threshold-like increase up to dose 200. \texttt{practical\_dialog} increases after dose 80. \texttt{creative\_dialog} increases after dose 200. \texttt{reflective} is nearly flat, and \texttt{emotional} is non-monotone with a low 400-token endpoint. The dense rerun establishes a clean population-level raw dose response, but the wide family-cluster bootstrap interval is consistent with this underlying heterogeneity. Future replications should increase the number of prompt families rather than only the number of ICs per family.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig10.png}
-\caption{Fig 10. \textbf{Per-family O1 adversarial dose response.} Family-level sparse O1 adversarial dose curves with $n=10$ trajectories per family-dose cell. Heterogeneity behind the population-level ED50 explains the wide family-cluster bootstrap interval. Source: \texttt{data/aggregated/per\_family\_ed50.png}.}
+\caption{Fig 10. \textbf{Per-family O1 adversarial dose response.} Family-level sparse O1 adversarial dose curves with $n=10$ trajectories per family-dose cell. Heterogeneity behind the population-level ED50 explains the wide family-cluster bootstrap interval. Source: \texttt{data/aggregated/per\_family\_ed50.png}.\protect\footnote{The plot separates the aggregate adversarial dose response into individual prompt family trajectories. The horizontal axis is adversarial dose on a log scale, and the vertical axis is the fraction of runs that switch; colored points and vertical intervals show family estimates and uncertainty, while the thick black dashed curve shows the mean across families and the dotted horizontal line marks 50 percent switching. Visually, the mean rises only gradually, but this smooth trend hides very different family behavior. Philosophy and practical dialog show strong increases at higher dose, creative dialog rises more moderately, reflective remains nearly flat, and emotional is nonmonotone. Thus the broad uncertainty around the population ED50 is not just sampling noise within a single shared curve. It reflects that prompt families have distinct sensitivities and asymptotes, so future replications should add more families rather than only more initial conditions per family.}}
 \end{figure}
-
+\end{savenotes}
 
 
 \subsection*{Phase D, embedder and cross-generator checks}
@@ -1839,12 +1851,13 @@ sharpness\_dim\_late & -0.40 & +0.00 & embedding-specific and not load-bearing \
 
 The load-bearing taxonomy distinction between replace-mode regimes and append/dialog regimes survives embedder substitution. O2 and O3 remain high-recurrence and high-predictability relative to O1, D1, and D2. The fine-grained sharpness-dimension ordering should be interpreted only within the original \texttt{text-embedding-3-small} measurement pipeline.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig11.png}
-\caption{Fig 11. \textbf{Embedding-model ablation.} Diagnostics recomputed under \texttt{text-embedding-3-small}, \texttt{text-embedding-3-large}, and \texttt{all-mpnet-base-v2}. Basin predictability and coarse recurrence ordering are more stable than sharpness dimension. Source: \texttt{data/aggregated/embedding\_ablation/comparison.png}.}
+\caption{Fig 11. \textbf{Embedding-model ablation.} Diagnostics recomputed under \texttt{text-embedding-3-small}, \texttt{text-embedding-3-large}, and \texttt{all-mpnet-base-v2}. Basin predictability and coarse recurrence ordering are more stable than sharpness dimension. Source: \texttt{data/aggregated/embedding\_ablation/comparison.png}.\protect\footnote{Figure 11 contains three grouped bar charts over regimes O1, O2, O3, D1, and D2, with colors indicating text-embedding-3-small, text-embedding-3-large, and all-mpnet-base-v2. The left panel shows recurrence rate after PCA compression: O2 and O3 remain high across embedders, while D1, D2, and especially O1 are lower, preserving the main replace versus append or dialog split despite changes in absolute values. The right panel shows basin prediction accuracy, where O2 and O3 again stay among the strongest regimes and D2 remains weak, making this the most stable diagnostic under embedding substitution. The middle panel shows late sharpness dimension, whose ordering changes substantially across embedders, including reversals between O2, O3, and D1. Visually, the figure supports treating recurrence and basin structure as robust geometric signals, while interpreting sharpness dimension as embedder-dependent.}}
 \end{figure}
-
+\end{savenotes}
 
 The n = 4 cross-metric correlations among recurrence, switching, sharpness, and lock-in are descriptive only and are reported in the released aggregate tables rather than used as inferential evidence here.
 
@@ -1905,12 +1918,13 @@ The $V(x) = -\log \hat{\rho}(x)$ density-landscape analyses visualize where traj
 
 The main limitation is parameter sensitivity. For the O1 perturbation pilot, we recomputed $V^\star$ across 45 combinations of KDE bandwidth, grid resolution, and basin count. Per-condition coefficients of variation ranged from 14\% to 24\%. A single numerical $V^\star$ value is therefore not stable enough to quote as a calibrated barrier.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig12.png}
-\caption{Fig 12. \textbf{V* parameter-grid sensitivity.} Sensitivity of empirical potential-barrier summaries across KDE bandwidth, grid resolution, and basin-count settings. The ordinal pattern is more stable than the absolute $V^\star$ values, so density landscapes remain descriptive rather than calibrated. Source: \texttt{data/aggregated/v\_star\_sensitivity.png}.}
+\caption{Fig 12. \textbf{V\textit{ parameter-grid sensitivity.} Sensitivity of empirical potential-barrier summaries across KDE bandwidth, grid resolution, and basin-count settings. The ordinal pattern is more stable than the absolute $V^\star$ values, so density landscapes remain descriptive rather than calibrated. Source: \texttt{data/aggregated/v\_star\_sensitivity.png}.\protect\footnote{The plot shows four condition traces over 45 choices of KDE bandwidth, grid resolution, and basin count, with the horizontal axis serving only as an index of parameter settings rather than a temporal or ordered trajectory. Vertical movement within each colored line indicates that the estimated V} barrier height can change noticeably when the density-landscape construction is altered, consistent with the reported 14 to 24 percent coefficient of variation. The important visual cue is not the exact height at any one index, but the separation among conditions across the grid: control is usually the highest curve, adversarial is usually the lowest, and neutral and lorem occupy the middle with occasional crossings. Thus the figure illustrates that V* should not be interpreted as a calibrated physical energy, while still supporting a robust ordinal interpretation of condition differences.}}
 \end{figure}
-
+\end{savenotes}
 
 The ordinal pattern was more stable. Across the 45 parameter combinations, control had the highest $V^\star$ in 98\% of combinations, adversarial had the lowest $V^\star$ in 89\%, and neutral and lorem occupied the middle. This supports a weak geometric statement: the density-landscape summaries preserve a robust rank ordering within the O1 perturbation pilot. It does not support a quantitative $V^\star$ to ED50 conversion.
 
@@ -1922,31 +1936,35 @@ The five-regime taxonomy is not recovered cleanly by unsupervised clustering of 
 
 The substantive result is that bulk diagnostics separate O2 and O3 from the append/dialog regimes, but they do not cleanly separate O1 from D1. O1 and D1 have similar recurrence, contraction, and basin-predictability values at this diagnostic resolution.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig13.png}
-\caption{Fig 13. \textbf{Regime clustering in diagnostic space.} Scatter view of regime diagnostic vectors used in the unsupervised five-regime check. Bulk geometry separates replace-mode regimes from append/dialog regimes but does not by itself recover the full five-way taxonomy. Source: \texttt{data/aggregated/regime\_cluster\_analysis/cluster\_scatter.png}.}
+\caption{Fig 13. \textbf{Regime clustering in diagnostic space.} Scatter view of regime diagnostic vectors used in the unsupervised five-regime check. Bulk geometry separates replace-mode regimes from append/dialog regimes but does not by itself recover the full five-way taxonomy. Source: \texttt{data/aggregated/regime\_cluster\_analysis/cluster\_scatter.png}.\protect\footnote{The left panel shows the five diagnostic coordinates compressed to two principal components, with points colored by ground-truth regime and labeled by run. PC1 carries most of the displayed variance, while PC2 separates several high-sharpness or paraphrase cases. The geometry makes the endpoint regimes easy to spot: O2 and O3 sit as isolated points far to the right, and one O1 paraphrase point sits high on PC2. In contrast, many O1 and D1 append or dialog traces occupy the same lower-left neighborhood, so their labels are not recoverable from bulk diagnostics alone. The right panel explains why the unsupervised check is inconclusive. Silhouette score is highest for two clusters and then declines, while Calinski-Harabasz keeps improving and peaks at seven clusters. Thus five regimes are scientifically motivated, but not selected as the unique optimum by these internal clustering criteria.}}
 \end{figure}
+\end{savenotes}
  The perturbation protocol is what separates them: O1 shows content-dependent adversarial raw switching with out-of-distribution resistance, while D1 is broadly susceptible to dialog-state redirection and hardens with time. D2 is then distinguished by drill-down content gravity.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig14.png}
-\caption{Fig 14. \textbf{Regime-clustering dendrogram.} Hierarchical clustering of regime-level diagnostic summaries. The dendrogram reinforces that the five-regime taxonomy is not obtained from bulk diagnostics alone and requires perturbation endpoints for separation. Source: \texttt{data/aggregated/regime\_cluster\_analysis/cluster\_dendrogram.png}.}
+\caption{Fig 14. \textbf{Regime-clustering dendrogram.} Hierarchical clustering of regime-level diagnostic summaries. The dendrogram reinforces that the five-regime taxonomy is not obtained from bulk diagnostics alone and requires perturbation endpoints for separation. Source: \texttt{data/aggregated/regime\_cluster\_analysis/cluster\_dendrogram.png}.\protect\footnote{Read bottom up, each leaf is one experiment label and the vertical merge height is its Ward-linkage distance from the cluster it joins. The tightest structure is among nearby Tsweep variants: several D1 publication sweeps merge near the baseline, O1 publication sweeps merge slightly higher, and those two sweep families combine at a modest height. On the right, the continue variants first pair together, then join the D1 dialog endpoint and the O4 append endpoint at higher distances. The O2 replace and O3 negate endpoints form a separate pair, but this pair only joins the rest of the tree at the largest height, making it the most isolated branch. Horizontal cuts illustrate why automated criteria do not recover exactly five regimes: coarse cuts favor a two-group split, while lower cuts fragment the tree into six or seven diagnostic subclusters. Thus O1 and D1 remain close here, requiring perturbation endpoints for separation.}}
 \end{figure}
-
+\end{savenotes}
 
 The five-way taxonomy is therefore supported by the union of bulk diagnostics and perturbation endpoints, not by either alone. Full unsupervised-clustering matrices, validation indices, and feature-space plots are available in the released aggregate tables.
 
 
 At matched reduced scope, D1 showed narrower temperature variation than O1: D1 basin predictability at $k=10$ stayed in a 0.57-0.61 band, while O1 ranged from 0.52 to 0.65. However, the O1 reduced-scope T=0.8 cell was 28 percentage points below the publication-scope T=0.8 anchor, 0.52 versus 0.80, so O1 absolute temperature values are scope-confounded. The full temperature sweep is retained as exploratory secondary material in the released aggregate tables.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig15.png}
-\caption{Fig 15. \textbf{Cross-experiment temperature sensitivity.} Temperature-sensitivity summary across reduced-scope cells. These results remain explicitly secondary because absolute O1 values are scope-confounded relative to the publication-scale anchor. Source: \texttt{data/aggregated/t\_sensitivity\_cross\_regime/cross\_t\_sensitivity.png}.}
+\caption{Fig 15. \textbf{Cross-experiment temperature sensitivity.} Temperature-sensitivity summary across reduced-scope cells. These results remain explicitly secondary because absolute O1 values are scope-confounded relative to the publication-scale anchor. Source: \texttt{data/aggregated/t\_sensitivity\_cross\_regime/cross\_t\_sensitivity.png}.\protect\footnote{Fig. 15 plots, for each reduced-scope cell, how well an embedding at predictor step k identifies the final basin reached later in the recursive loop. The left panel shows O1 continue runs and the right panel shows D1 dialog runs; colored curves are temperatures, points are measured accuracies, vertical bars indicate uncertainty, and the gray band marks chance. In O1, all temperatures sit well above chance, with modest increases across k for most settings, but the ordering is not monotone in temperature and the T=0.8 curve remains lower than the others. In D1, accuracy rises more steadily with k, and higher temperature reaches the strongest late values, while the k=10 values remain tightly clustered. The main visual message is that temperature effects exist, especially at later D1 steps, but absolute O1 temperature comparisons should be read cautiously because the reduced-scope O1 cells are confounded relative to the publication-scale anchor.}}
 \end{figure}
-
+\end{savenotes}
 
 \section{Discussion}
 
@@ -2471,24 +2489,29 @@ for k in range(T):
 These are reference implementations only; the executable, test-
 covered code lives at \texttt{src/analysis/} and \texttt{src/experiments/dynamics/}.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig16.png}
-\caption{ED Fig 1. \textbf{Joint t-SNE regime map.} Joint t-SNE visualization of all publication-scale experiments colored by regime. The view supports qualitative inspection of regime separation but is not used for quantitative endpoint claims. Source: \texttt{data/aggregated/dynamics\_plots/A\_joint\_tsne\_rolling\_k3.png}.}
+\caption{ED Fig 1. \textbf{Joint t-SNE regime map.} Joint t-SNE visualization of all publication-scale experiments colored by regime. The view supports qualitative inspection of regime separation but is not used for quantitative endpoint claims. Source: \texttt{data/aggregated/dynamics\_plots/A\_joint\_tsne\_rolling\_k3.png}.\protect\footnote{Each point represents one windowed recursive trajectory state from the rolling\_k3 observable, embedded jointly after the shared preprocessing used in the stability analyses. Colors encode the assigned qualitative regimes, so the plot should be read as a neighborhood map rather than as a metric space: nearby points indicate similar local trajectory signatures, while absolute positions, cluster areas, and long-range separations should not be interpreted quantitatively. The dominant visual pattern is a broad contractive population occupying much of the left side, a more compact stylistic multi-basin region near the center, scattered oscillatory islands, and absorbing states concentrated toward the right and lower right. Debate-like contractive variants appear as smaller, darker pockets embedded near adjacent regimes. This supports the clustering narrative in §11.4 by showing coarse local separation among regimes while also making clear that transitions and mixed neighborhoods occur.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig17.png}
-\caption{ED Fig 2. \textbf{Per-family trajectory grid.} Shared-coordinate trajectory grid by prompt family. The figure supports visual inspection of family-level heterogeneity without serving as a primary endpoint. Source: \texttt{data/aggregated/dynamics\_plots/B\_trajectory\_grid\_rolling\_k3.png}.}
+\caption{ED Fig 2. \textbf{Per-family trajectory grid.} Shared-coordinate trajectory grid by prompt family. The figure supports visual inspection of family-level heterogeneity without serving as a primary endpoint. Source: \texttt{data/aggregated/dynamics\_plots/B\_trajectory\_grid\_rolling\_k3.png}.\protect\footnote{Each panel displays the projected recursive trajectory for one prompt family, with connected points tracing successive loop iterations and color indicating normalized time from early dark points to late bright points. Reading across panels, the eye should compare where trajectories are located, how tightly they remain bundled, whether paths form arcs, loops, or separated islands, and whether later iterations drift toward a stable region or continue to wander. The grid shows that prompt families are not interchangeable in trajectory space: some occupy broad curved manifolds with substantial within-family dispersion, whereas others collapse into compact clusters or a small number of recurrent basins. This supports the metric audit by showing that the PCA embedding preserves visible family structure and that downstream clustering is not driven solely by a global average pattern, but by heterogeneous family-specific dynamics.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig18.png}
-\caption{ED Fig 3. \textbf{Ensemble-spread timeline.} Ensemble spread over recursive steps, grouped by regime. The plot supplements the finite-time ensemble-spread diagnostics used in the attractor audit. Source: \texttt{data/aggregated/dynamics\_plots/C\_spread\_timeline\_rolling\_k3.png}.}
+\caption{ED Fig 3. \textbf{Ensemble-spread timeline.} Ensemble spread over recursive steps, grouped by regime. The plot supplements the finite-time ensemble-spread diagnostics used in the attractor audit. Source: \texttt{data/aggregated/dynamics\_plots/C\_spread\_timeline\_rolling\_k3.png}.\protect\footnote{The left panel plots the raw ensemble spread at each recursive step, measured as mean pairwise run-to-run distance with a three-step rolling window, for all experimental regimes. The right panel rescales each trace by its spread at the first step, making relative amplification directly comparable across conditions with different absolute scales. Curves that rise sharply and keep accelerating would indicate sensitive dependence and growing dispersion, while curves that flatten indicate bounded finite-time spread. Visually, nearly all traces show an initial adjustment phase followed by saturation or only mild drift. The green and red regimes grow the most in relative terms, but even these remain gradual rather than exponential. The diagnostic therefore supports the attractor audit: perturbations may separate during early recursion, but across the 11 experiments the ensembles remain in a stable, bounded spread regime.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsection{Perturbation injection mechanics (full)}
 
@@ -2689,18 +2712,21 @@ workers, each worker creating a fresh figure for one frame. Frames
 are stitched into MP4 via \texttt{imageio-ffmpeg} (libx264 codec, quality
 8). Wall-time per animation: ~80s vs ~11 min single-threaded.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig19.png}
-\caption{ED Fig 4. \textbf{Combined PCA flow fields.} Combined empirical PCA-2 flow-field summary across regimes. Flow fields are useful qualitative checks on local motion but are not primary decision endpoints. Source: \texttt{data/aggregated/dynamics\_plots/E\_flow\_fields\_rolling\_k3.png}.}
+\caption{ED Fig 4. \textbf{Combined PCA flow fields.} Combined empirical PCA-2 flow-field summary across regimes. Flow fields are useful qualitative checks on local motion but are not primary decision endpoints. Source: \texttt{data/aggregated/dynamics\_plots/E\_flow\_fields\_rolling\_k3.png}.\protect\footnote{Each panel shows one regime projected into its own two-dimensional PCA space, so positions are comparable within a panel but not across panels. The grey square background marks where trajectory visits are concentrated, while arrows summarize the average displacement from one time step to the next for visits falling in that grid cell. Arrow direction indicates local drift and arrow color indicates the local speed, with empty regions left blank. The contractive examples show broad crescent or ring-shaped occupancy with many arrows bending along or back toward the occupied manifold, consistent with recurrent local return. The oscillatory and absorbing cases are more fragmented, with sparse clusters and short local motions between them. The stylistic multi-basin cases show separated dense islands with weaker or basin-specific flows. Overall, the figure provides a qualitative map of local dynamics and basin structure rather than a statistical decision rule.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig20.png}
-\caption{ED Fig 5. \textbf{Combined t-SNE flow fields.} t-SNE-space flow-field visualization used for qualitative comparison with the PCA-2 flow summaries. Source: \texttt{data/aggregated/dynamics\_plots/E\_tsne\_flow\_fields\_rolling\_k3.png}.}
+\caption{ED Fig 5. \textbf{Combined t-SNE flow fields.} t-SNE-space flow-field visualization used for qualitative comparison with the PCA-2 flow summaries. Source: \texttt{data/aggregated/dynamics\_plots/E\_tsne\_flow\_fields\_rolling\_k3.png}.\protect\footnote{Each small panel shows the same perturbation response summary after embedding PCA-50 features into t-SNE space, with gray background density indicating where recursive loop states fall and colored arrows giving locally averaged displacement for rolling\_k3. Read arrows only as neighborhood-level directions within a blob, since t-SNE preserves local neighborhoods but not global distances or physical vector lengths. The panels show that several nominally contractive settings have arrows pointing back into nearby clusters or along short return paths, while O2 exhibits a strong coherent sweep between adjacent high-density regions, consistent with an oscillatory two-cycle. O3 and O3b show sparser absorbing behavior, with localized drift toward apparent sinks, and D1 and D2 show multiple separated basins with heterogeneous local motion. The main use is as a robustness check: regime-specific patterns visible in PCA space largely reappear under this nonlinear neighborhood-preserving projection.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsection{Reproducibility: commands and repository tree}
 
@@ -2859,30 +2885,37 @@ D2 & 0.20 (n=25) & n.t. & n.t. & FAIL (exploratory scope) \\
 
 Source: §5.11, \texttt{data/aggregated/group\_aware\_basin\_pred.csv}.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig21.png}
-\caption{ED Fig 6. \textbf{Original stratified basin-predictability curves.} Stratified-CV basin-predictability curves are retained for audit but should be interpreted alongside the leakage-aware GroupKFold results in main-text Fig 6. Source: \texttt{data/aggregated/basin\_predictability\_cross/cross\_basin\_predictability.png}.}
+\caption{ED Fig 6. \textbf{Original stratified basin-predictability curves.} Stratified-CV basin-predictability curves are retained for audit but should be interpreted alongside the leakage-aware GroupKFold results in main-text Fig 6. Source: \texttt{data/aggregated/basin\_predictability\_cross/cross\_basin\_predictability.png}.\protect\footnote{The left panel plots basin prediction accuracy versus the recursion step used as the predictor, with error bars and a gray chance band near the bottom. The contractive, oscillatory, and absorbing regimes are already highly predictable from the earliest observed step, with only modest later improvement, suggesting strong seed-level basin information under this stratified split. The stylistic multi-basin regime starts much lower but rises steadily with deeper recursion, indicating progressive basin clarification. The drill-down dialog regime is shown only at early steps and remains near a low, flat accuracy. The right panel summarizes top-1 accuracy at the initial step and the later recursion endpoint for each regime; the nan percentage-point annotations indicate unavailable paired-gain estimates in this original audit view. Overall, the figure visually supports strong apparent early basin predictability, while also flagging why leakage-aware validation is needed.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig22.png}
-\caption{ED Fig 7. \textbf{Basin-predictability grid.} Per-experiment basin-predictability panels showing how predictability varies across regimes and observables. Source: \texttt{data/aggregated/basin\_predictability\_cross/cross\_basin\_predictability\_grid.png}.}
+\caption{ED Fig 7. \textbf{Basin-predictability grid.} Per-experiment basin-predictability panels showing how predictability varies across regimes and observables. Source: \texttt{data/aggregated/basin\_predictability\_cross/cross\_basin\_predictability\_grid.png}.\protect\footnote{The grid is organized by observable, with each small panel sharing the same axes so accuracies can be compared directly across readouts and prediction horizons. The left output panel notes that D1 is omitted, and the middle rolling\_k3 and rolling\_agent\_k3 panel has no plotted signal in this slice, while the context\_tail panel contains the active cross-regime curves. In each panel, step k is on the horizontal axis and top-1 recursive accuracy is on the vertical axis; colored markers and error bars show stratified cross-validation means and uncertainty for the regimes. The grey horizontal band marks the low baseline region. The context tail is strongly predictive: O2 and O3 are near ceiling from the earliest steps, O1 rises with k, and D1 improves substantially as more tail context is included. D2 remains near chance. Thus, basin identity is carried mainly by trailing context rather than the omitted or rolling observables here.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig23.png}
-\caption{ED Fig 8. \textbf{Temperature-sweep basin predictability.} Basin predictability as a function of sampling temperature. These reduced-scope cells are exploratory and are not used as primary evidence for temperature effects. Source: \texttt{data/aggregated/t\_sweep\_basin\_predictability/t\_sweep\_basin\_predictability.png}.}
+\caption{ED Fig 8. \textbf{Temperature-sweep basin predictability.} Basin predictability as a function of sampling temperature. These reduced-scope cells are exploratory and are not used as primary evidence for temperature effects. Source: \texttt{data/aggregated/t\_sweep\_basin\_predictability/t\_sweep\_basin\_predictability.png}.\protect\footnote{The panels plot top-1 basin-prediction accuracy across recursive predictor step k, with colored curves for sampling temperatures and error bars for reduced-scope cells of n equals 150; the gray band marks chance. In all predictor families, accuracy rises with recursion depth, showing that later generated context contains more information about the eventual basin than the initial seed alone. The strongest separability appears for context\_tail, while rolling-agent and turn-pair are weaker but still well above chance by later steps. Across temperatures, the curves do not show a clean monotonic collapse of predictability at higher sampling temperature. In this audit slice, D1 remains broadly stable, about 0.57 to 0.61 by the summary comparison, while O1 varies more, about 0.52 to 0.65, though its absolute level is scope-confounded relative to the publication-scope anchor.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig24.png}
-\caption{ED Fig 9. \textbf{Seed determinism versus temperature.} Control-control divergence as a function of temperature, used to contextualize stochastic floors. The figure supports the endpoint rule that raw switching must be interpreted against paired controls. Source: \texttt{data/aggregated/t\_sensitivity\_cross\_regime/seed\_determinism\_vs\_T.png}.}
+\caption{ED Fig 9. \textbf{Seed determinism versus temperature.} Control-control divergence as a function of temperature, used to contextualize stochastic floors. The figure supports the endpoint rule that raw switching must be interpreted against paired controls. Source: \texttt{data/aggregated/t\_sensitivity\_cross\_regime/seed\_determinism\_vs\_T.png}.\protect\footnote{The panel shows paired control trajectories evaluated across sampling temperatures 0.3, 0.6, 0.8, and 1.2, with the vertical axis giving the fraction of runs that preserve the same step 0 basin at the context tail. The grey band marks the chance level, far below all observed points. Blue points show O1, which remains near one half determinism across the sweep, with labels around 51 percent, 53 percent, 43 percent, and 56 percent. Green points show D1, which is similar at low temperature but drops at the hottest setting, from about 48 percent and 44 percent to 47 percent and then 34 percent. Error bars indicate uncertainty in these paired estimates. Visually, the figure emphasizes that seed choice alone produces substantial basin variability, so perturbation-induced switching must be judged relative to this model- and temperature-matched stochastic baseline.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsubsection*{C2, Temporal recurrence vs null}
 
@@ -3036,31 +3069,37 @@ The $V_{\max} \approx 8.0$ ceiling appears when a geodesic crosses
 a region of near-zero density. Per-geodesic raw values are written
 alongside the figures to \texttt{geodesic\_barriers\_pca.csv}. Reading:
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig25.png}
-\caption{ED Fig 10. \textbf{Representative O1 perturbation potential landscapes.} PCA-2 density landscapes for the O1 perturbation pilot under control, neutral, lorem, and adversarial conditions. The landscapes are descriptive geometry, not calibrated token barriers. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/bulk\_landscape\_pca.png}.}
+\caption{ED Fig 10. \textbf{Representative O1 perturbation potential landscapes.} PCA-2 density landscapes for the O1 perturbation pilot under control, neutral, lorem, and adversarial conditions. The landscapes are descriptive geometry, not calibrated token barriers. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/bulk\_landscape\_pca.png}.\protect\footnote{ED Fig 10 visualizes the smoothed empirical potential surface for the O1 perturbation pilot in four conditions: control, neutral, lorem, and adversarial. Each panel maps the same two-dimensional PCA projection, with height and color indicating the transformed density landscape. Darker, lower regions mark high-occupancy basins where trajectories concentrate, while brighter, elevated ridges and cliffs mark low-density separations between basins. The comparison is intended to be read geometrically rather than metrically: basin depth, ridge height, and apparent connectivity summarize relative organization in state space, not calibrated energetic or token-level barriers. Across perturbations, the surfaces show qualitative shifts in basin placement, basin breadth, and inter-basin separation, indicating that different injected prompts reshape the accessible trajectory geometry. These patterns support the ordinal interpretation used in the geometric V* and RG dendrogram audits, where robust structure matters more than exact numerical potential values.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig26.png}
-\caption{ED Fig 11. \textbf{Representative O1 geodesic skeleton.} Geodesic minimum-cost paths between detected basin centers for the O1 perturbation pilot. The figure illustrates how $V^\star$ summaries are constructed. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/geodesic\_skeleton\_pca.png}.}
+\caption{ED Fig 11. \textbf{Representative O1 geodesic skeleton.} Geodesic minimum-cost paths between detected basin centers for the O1 perturbation pilot. The figure illustrates how $V^\star$ summaries are constructed. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/geodesic\_skeleton\_pca.png}.\protect\footnote{Each subplot shows the same two-dimensional PCA view for one O1 condition, with shaded contours representing the scalar landscape V, star markers denoting the four detected basin centers, and colored polylines tracing the six pairwise Dijkstra routes between centers. The boxed labels give the V* value for each route, read as the highest landscape value encountered along that path, so larger labels indicate a stronger separating barrier between two basins. The skeleton makes the pairwise connectivity visible without relying only on contour shape: paths bend around high-cost regions, merge through common corridors, and expose which basins are separated by shallow versus steep saddles. Across conditions, control shows several comparatively high barriers, neutral shows notably low right-side connectivity, while lorem and adversarial display intermediate, redistributed barriers, indicating that perturbation type changes both basin geometry and transition difficulty.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig27.png}
-\caption{ED Fig 12. \textbf{Representative O1 flow skeleton with basin centers.} Empirical PCA-2 flow streamlines overlaid on the smoothed potential landscape, with detected basin centers marked. The view combines local-motion direction with the basin-geometry skeleton to make the geodesic shortest-path construction visually consistent with the underlying flow. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/flow\_skeleton\_pca.png}.}
+\caption{ED Fig 12. \textbf{Representative O1 flow skeleton with basin centers.} Empirical PCA-2 flow streamlines overlaid on the smoothed potential landscape, with detected basin centers marked. The view combines local-motion direction with the basin-geometry skeleton to make the geodesic shortest-path construction visually consistent with the underlying flow. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/flow\_skeleton\_pca.png}.\protect\footnote{Each panel should be read as a two-dimensional phase portrait of the O1 recursion under one perturbation condition. The shaded terrain gives the relative potential, with darker basins indicating high density, while black streamlines show the local empirical direction of motion estimated from observed trajectory increments. Star markers identify the basin centers recovered independently from the potential surface, and the colored polygonal curves trace low-action connections among those centers, with labels indicating relative barrier costs. Across conditions, the streamlines generally bend around and terminate near the marked centers, supporting the consistency between the flow field and the basin detector. The perturbations mainly reorganize geometry rather than the basin count: neutral preserves a broad four-basin layout, lorem compresses and shifts the skeleton toward the right and lower center, and adversarial produces a more displaced, stretched connection pattern with altered barrier ordering.}}
 \end{figure}
+\end{savenotes}
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig28.png}
-\caption{ED Fig 13. \textbf{3D iso-density snapshots of the O1 perturbation pilot.} Three-dimensional iso-density shells at five density fractions (4\%, 10\%, 20\%, 35\%, 55\% of peak density) computed in PCA-3 space, with sampled trajectories overlaid for control, neutral, lorem, and adversarial conditions. The 3D view exposes basin organization that is partially obscured in the 2D PCA projection. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/animation3d\_snapshots.png}.}
+\caption{ED Fig 13. \textbf{3D iso-density snapshots of the O1 perturbation pilot.} Three-dimensional iso-density shells at five density fractions (4\%, 10\%, 20\%, 35\%, 55\% of peak density) computed in PCA-3 space, with sampled trajectories overlaid for control, neutral, lorem, and adversarial conditions. The 3D view exposes basin organization that is partially obscured in the 2D PCA projection. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/animation3d\_snapshots.png}.\protect\footnote{The four panels show the same PCA-3 state space viewed in three dimensions, with translucent nested density shells marking regions where recursive trajectories tend to concentrate. The outer pale shells indicate low-density support, while darker inner plasma-colored shells mark higher-density basins. Colored paths trace representative rollouts for each condition, so their direction and depth through the shells indicate how strongly the loop remains inside, skirts, or exits local attractor regions after the perturbation window. Compared with the 2D projections, the 3D view makes clear that several apparently overlapping clusters are separated along the third component. Control trajectories remain comparatively compact and basin aligned, neutral and lorem traces show moderate displacement with partial return, and adversarial traces show the largest post-kick excursions, with red perturbation segments bridging basins and leaving longer recovery paths.}}
 \end{figure}
-
-
+\end{savenotes}
 
 \begin{itemize}
   \item \textbf{O2/O3 lorem} has $V^\star \approx 5.6 / 7.0$, the highest
@@ -3111,12 +3150,13 @@ basin far from the original attractor; (3) \textbf{O1 adversarial mildly
 compresses} (2.06 vs 2.38), in-distribution adversarial text
 pulls into a tighter region.
 
+\begin{savenotes}
 \begin{figure}[h!]
 \centering
 \includegraphics[width=0.95\linewidth]{figures/fig29.png}
-\caption{ED Fig 14. \textbf{Representative O1 RG dendrogram.} Ward-merge cloud-expansion dendrogram for the O1 perturbation pilot. The figure supplements the geometric-barrier table with an independent view of condition-wise cloud expansion. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/rg\_dendrogram\_pca.png}.}
+\caption{ED Fig 14. \textbf{Representative O1 RG dendrogram.} Ward-merge cloud-expansion dendrogram for the O1 perturbation pilot. The figure supplements the geometric-barrier table with an independent view of condition-wise cloud expansion. Source: \texttt{data/exp\_perturb\_O1\_pilot/reports/perturbation/rg\_dendrogram\_pca.png}.\protect\footnote{Each panel shows a Ward-hierarchical tree built from the 48 fine cluster centroids for one O1 condition, with leaves corresponding to fine basins and the horizontal position of each merge giving the RG scale at which two subclouds coarsen. Reading left to right, short branches indicate nearby centroid groups, while the final rightmost merge gives the maximum cloud-expansion distance. Control, neutral, and lorem have broadly similar late-merge heights, reaching 2.38, 2.27, and 2.37 respectively, with several midscale subtrees joining before the final coarse cluster. The adversarial panel is visibly more compact, with its final merge at 2.06 and less extension of the longest branches. Thus, in O1 the adversarial perturbation does not expand the centroid cloud, but mildly compresses it, consistent with in-distribution adversarial text pulling trajectories into a tighter region.}}
 \end{figure}
-
+\end{savenotes}
 
 \subsection{Instrumenting your own recursive system: recipe and reporting standard}
 
@@ -3193,6 +3233,9 @@ This Box collects the reporting standard described in §6.5 in checklist form. I
 
   \item \textbf{Scope caveat.} State what was not tested: other generators, longer doses, other languages, production scaffolds, tool environments, safety prompts, jailbreak attacks, human users, factuality-grounded tasks, or domain-specific agent benchmarks.
 \end{enumerate}
+
+<!-- Figure footnote definitions (round-23) -->
+
 
 
 

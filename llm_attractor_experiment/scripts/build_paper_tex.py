@@ -83,6 +83,8 @@ PREAMBLE = r"""\documentclass{article}
 \usepackage{booktabs}
 \usepackage{caption}
 \usepackage[section]{placeins}
+\usepackage{footnote}    % savenotes env: lets \footnote work inside captions
+\makesavenoteenv{figure}
 \captionsetup{font=small,labelfont=bf}
 
 % Microtype protrusion / expansion (works with Times via T1)
@@ -702,6 +704,58 @@ def _convert_headings(text: str) -> str:
     return "\n".join(out_lines)
 
 
+def _convert_footnotes(text: str) -> str:
+    """Convert markdown footnotes [^id] / [^id]: def to LaTeX \\protect\\footnote.
+
+    Strategy:
+      1. Find all [^id]: <multi-line definition> blocks. Definitions run from
+         the colon up to the next blank line, the next [^id]:, or EOF.
+      2. Build a dict mapping id -> escaped definition text.
+      3. Strip the definition blocks from the text.
+      4. Replace each inline [^id] reference with \\protect\\footnote{<def>}.
+
+    \\protect is required because the footnote may sit inside a moving
+    argument such as \\caption{}.
+    """
+    # Capture definitions: [^id]: <def text>  (def can span lines until blank)
+    def_pat = re.compile(
+        r"^\[\^([A-Za-z0-9_]+)\]:\s*(.+?)(?=\n\s*\n|\n\[\^[A-Za-z0-9_]+\]:|\Z)",
+        re.MULTILINE | re.DOTALL,
+    )
+
+    definitions: dict[str, str] = {}
+    for m in def_pat.finditer(text):
+        fid = m.group(1)
+        body = m.group(2).strip()
+        # Collapse internal newlines in the definition to single spaces
+        body = re.sub(r"\s+", " ", body)
+        definitions[fid] = body
+
+    # Strip the definition blocks from the text
+    text = def_pat.sub("", text)
+
+    # Replace inline references [^id] with \\protect\\footnote{def}
+    def repl(m: re.Match) -> str:
+        fid = m.group(1)
+        if fid not in definitions:
+            # Leave unresolved markers visible so the issue is obvious
+            return f"[FOOTNOTE-MISSING-{fid}]"
+        body = definitions[fid]
+        # Escape LaTeX-special characters in the body. Order matters:
+        # backslash first, then the others.
+        body = body.replace("\\", r"\textbackslash{}")
+        body = body.replace("&", r"\&").replace("%", r"\%").replace("#", r"\#")
+        body = body.replace("_", r"\_").replace("$", r"\$")
+        body = body.replace("{", r"\{").replace("}", r"\}")
+        return r"\protect\footnote{" + body + "}"
+
+    text = re.sub(r"\[\^([A-Za-z0-9_]+)\]", repl, text)
+
+    # Clean up multiple consecutive blank lines left by stripped definitions
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text
+
+
 def _convert_lists(text: str) -> str:
     """Convert markdown - / 1. lists to itemize / enumerate.
     Naive: only handles top-level lists, not nesting.
@@ -967,11 +1021,17 @@ def _convert_figures(text: str, fig_target_dir: Path) -> str:
             includegraphics_path = f"figures/{target_name}"
         else:
             includegraphics_path = m.group(2)  # leave dangling for user fix
+        # Wrap each figure in savenotes so \footnote inside \caption emits
+        # the footnote body at the bottom of the page (rather than just the
+        # superscript marker, which is the default LaTeX behavior for
+        # footnotes inside floats).
+        out.append(r"\begin{savenotes}")
         out.append(r"\begin{figure}[h!]")
         out.append(r"\centering")
         out.append(r"\includegraphics[width=0.95\linewidth]{" + includegraphics_path + "}")
         out.append(r"\caption{" + cap_clean + "}")
         out.append(r"\end{figure}")
+        out.append(r"\end{savenotes}")
     return "\n".join(out)
 
 
@@ -1484,6 +1544,11 @@ def main() -> int:
     # inline-code spans whose underscores would otherwise get escaped
     # before the path could be picked up.
     article_text = _convert_figures(article_text, OUT_FIGS)
+
+    # Footnotes: must run AFTER figure conversion so the [^id] markers
+    # inside markdown captions get carried into the LaTeX caption text,
+    # then replaced with \protect\footnote{} so the moving argument is safe.
+    article_text = _convert_footnotes(article_text)
 
     # Inline patterns
     article_text = _convert_inline_code(article_text)
