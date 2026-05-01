@@ -137,6 +137,39 @@ PREAMBLE = r"""\documentclass{article}
 }{%
   \par\addvspace{4pt}%
 }
+
+% Pipeline / flow-diagram boxes (tcolorbox + TikZ).
+% Used for §4.11 end-to-end pipeline and similar phase-structured
+% diagrams. Phase boxes are titled, breakable across pages, and
+% connected by short downward TikZ arrows via \flowarrow.
+\usepackage[most]{tcolorbox}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, calc, matrix}
+\tcbset{
+  pipelinephase/.style={
+    enhanced, breakable, colback=gray!4, colframe=black!55,
+    fonttitle=\bfseries\sffamily\small, fontupper=\small,
+    boxrule=0.5pt, arc=2pt,
+    left=6pt, right=6pt, top=4pt, bottom=4pt,
+    before skip=2pt, after skip=2pt,
+    title={#1}
+  },
+  pipelinesub/.style={
+    enhanced, colback=white, colframe=black!35,
+    fonttitle=\bfseries\sffamily\footnotesize, fontupper=\footnotesize,
+    boxrule=0.4pt, arc=1.5pt,
+    left=4pt, right=4pt, top=3pt, bottom=3pt,
+    before skip=2pt, after skip=2pt,
+    title={#1}
+  }
+}
+\newcommand{\flowarrow}{%
+  \par\addvspace{1pt}%
+  {\centering\tikz\draw[-{Stealth[length=2.8mm]}, line width=0.6pt]
+       (0,0) -- (0,-0.42);\par}%
+  \addvspace{1pt}%
+}
+
 \hypersetup{
   colorlinks=true,
   linkcolor=blue,
@@ -292,9 +325,9 @@ PREAMBLE = r"""\documentclass{article}
 \newtheorem{conjecture}{Conjecture}
 
 % --- title block (user must fill in author block before submission) ---------
-\title{Perturbation dose responses in recursive large-language-model loops:\\
-       Raw switching, stochastic floors, and rare persistent escape\\
-       across append, replace, and dialog nudges.}
+\title{Perturbation Dose Responses in Recursive LLM Loops\\[2pt]
+       \large\itshape Raw switching, stochastic floors, and persistent escape\\
+       \large\itshape under append, replace, and dialog updates}
 
 % Short title for the running header on pages 2+. Without this, the
 % full multi-line title gets crammed into the header.
@@ -303,24 +336,26 @@ PREAMBLE = r"""\documentclass{article}
 % `\\{}` (with the empty group) prevents \\ from parsing the next
 % line-content as its optional vertical-space argument.
 \author{Paweł Kapłański~\orcidlink{0000-0003-2223-0870}\\{}Kaplanski Ai Lab\\\texttt{pawel@kaplanski.ai}}
-\date{\today}
+\date{April 30, 2026}
 
 % PDF metadata (per Kourgeorge template best-practice). Helps reference
 % managers / pdf viewers display the paper correctly.
 \hypersetup{
-  pdftitle={Perturbation dose responses in recursive large-language-model loops},
-  pdfsubject={cs.LG, cs.CL},
+  pdftitle={Perturbation Dose Responses in Recursive LLM Loops},
+  pdfsubject={cs.AI, cs.LG, cs.CL},
   pdfauthor={Paweł Kapłański},
-  pdfkeywords={recursive LLM loops, attractor regimes, barrier height,
-    token-cost perturbation, embedding-space dynamics},
+  pdfkeywords={recursive LLM loops, perturbation dose response,
+    attractor-like regimes, context-update rules, basin switching,
+    dialog dynamics},
 }
 
 \begin{document}
 \maketitle
 
 % Optional keywords line (rendered just under the abstract).
-\keywords{recursive LLM loops \and attractor regimes \and barrier height
-  \and token-cost perturbation \and embedding-space dynamics}
+\keywords{recursive LLM loops \and perturbation dose response
+  \and attractor-like regimes \and context-update rules
+  \and basin switching \and dialog dynamics}
 
 """
 
@@ -493,6 +528,14 @@ def _restore_fenced_code(
             out_chars.append(ascii_only if ascii_only else "?")
         return "".join(out_chars)
     for i, (lang, caption, body) in enumerate(blocks):
+        # Special passthrough: ```tex-raw  blocks emit their body
+        # verbatim into the LaTeX output (NOT wrapped in verbatim).
+        # Used for inline TikZ / tcolorbox diagrams whose markdown
+        # source is the literal LaTeX. No unicode-asciification —
+        # the body must already be LaTeX-safe.
+        if lang in ("tex-raw", "latex-raw"):
+            text = text.replace(f"\x00CODEBLOCK{i}\x00", body)
+            continue
         env = "asciiblock" if not lang else "codeblock"
         opt = f"[{caption}]" if caption else ""
         text = text.replace(
@@ -593,18 +636,42 @@ def _convert_headings(text: str) -> str:
     Strips leading numeric prefix from the heading text (`1. `, `1.1 `,
     `4.3.5 `, etc.) — LaTeX adds its own `\\section{}` numbering, so a
     literal "1.1" baked into the title produces "1.1  1.1 Phenomenon"
-    in the rendered PDF."""
+    in the rendered PDF.
+
+    Headings WITHOUT a numeric prefix (e.g. `## Plain-language
+    summary`, `### Why it matters`) are emitted as starred / unnumbered
+    section commands (`\\section*{}`, `\\subsection*{}`). This lets us
+    keep TOC-friendly numbered sections (1, 2, 3, ...) for the body
+    while front-matter and per-paragraph sub-headings inside the
+    plain-language summary stay out of the numbering hierarchy."""
     num_prefix = re.compile(r"^\d+(?:\.\d+)*\.?\s+")
-    def _clean(title: str) -> str:
-        return num_prefix.sub("", title.strip())
+    def _split(title: str) -> tuple[str, bool]:
+        """Return (clean title, was_numbered). The bool tells the caller
+        whether to use the starred / unnumbered form."""
+        stripped = title.strip()
+        if num_prefix.match(stripped):
+            return num_prefix.sub("", stripped), True
+        return stripped, False
     out_lines: list[str] = []
     for line in text.split("\n"):
         if line.startswith("#### "):
-            out_lines.append(r"\subsubsection{" + _clean(line[5:]) + "}")
+            t, numbered = _split(line[5:])
+            out_lines.append(
+                r"\subsubsection{" + t + "}" if numbered
+                else r"\subsubsection*{" + t + "}"
+            )
         elif line.startswith("### "):
-            out_lines.append(r"\subsection{" + _clean(line[4:]) + "}")
+            t, numbered = _split(line[4:])
+            out_lines.append(
+                r"\subsection{" + t + "}" if numbered
+                else r"\subsection*{" + t + "}"
+            )
         elif line.startswith("## "):
-            out_lines.append(r"\section{" + _clean(line[3:]) + "}")
+            t, numbered = _split(line[3:])
+            out_lines.append(
+                r"\section{" + t + "}" if numbered
+                else r"\section*{" + t + "}"
+            )
         elif line.startswith("# "):
             # top-level title — already in preamble; emit as paragraph break
             continue
@@ -620,12 +687,41 @@ def _convert_lists(text: str) -> str:
     Indented continuation lines (the wrap of a bullet whose source
     spans multiple lines) are appended to the most recent \\item
     rather than ending the list — without this, multi-line italic /
-    bold spans inside a bullet get split by a stray \\end{itemize}."""
+    bold spans inside a bullet get split by a stray \\end{itemize}.
+
+    Blank lines inside a list (between two consecutive items, or
+    between an item and one of its continuation lines) do NOT end
+    the list — otherwise each numbered item would get its own fresh
+    \\begin{enumerate}, resetting the counter to 1 and rendering as
+    "1. 1. 1." instead of "1. 2. 3.". A blank line only ends the
+    list when the next non-blank line is neither another list item
+    nor an indented continuation."""
     lines = text.split("\n")
     out: list[str] = []
     in_itemize = False
     in_enumerate = False
-    for line in lines:
+    pending_blanks: list[str] = []  # blank lines whose fate depends on lookahead
+
+    def _is_list_item_or_cont(idx: int) -> bool:
+        """Peek at line `idx` (and skip further blank lines) to decide
+        whether the current pending blank gap is interior to a list."""
+        j = idx
+        while j < len(lines) and lines[j].strip() == "":
+            j += 1
+        if j >= len(lines):
+            return False
+        nxt = lines[j]
+        if re.match(r"^(\s*)-\s+(.+)$", nxt):
+            return True
+        if re.match(r"^(\s*)\d+\.\s+(.+)$", nxt):
+            return True
+        # An indented continuation line (starts with whitespace then
+        # non-whitespace) is also part of the list.
+        if re.match(r"^\s+\S", nxt):
+            return True
+        return False
+
+    for i, line in enumerate(lines):
         m_ul = re.match(r"^(\s*)-\s+(.+)$", line)
         m_ol = re.match(r"^(\s*)\d+\.\s+(.+)$", line)
         is_blank = line.strip() == ""
@@ -639,21 +735,56 @@ def _convert_lists(text: str) -> str:
                 out.append(r"\end{enumerate}")
                 in_enumerate = False
             if not in_itemize:
+                # Emit any buffered blank lines BEFORE opening the list
+                # (they belong to the surrounding paragraph context).
+                out.extend(pending_blanks)
+                pending_blanks = []
                 out.append(r"\begin{itemize}")
                 in_itemize = True
+            else:
+                # Continuing an open list across a blank gap — keep
+                # the blank lines inside the environment so paragraph
+                # spacing inside items is preserved.
+                out.extend(pending_blanks)
+                pending_blanks = []
             out.append(r"  \item " + m_ul.group(2))
         elif m_ol:
             if in_itemize:
                 out.append(r"\end{itemize}")
                 in_itemize = False
             if not in_enumerate:
+                out.extend(pending_blanks)
+                pending_blanks = []
                 out.append(r"\begin{enumerate}")
                 in_enumerate = True
+            else:
+                out.extend(pending_blanks)
+                pending_blanks = []
             out.append(r"  \item " + m_ol.group(2))
         elif is_indented_cont:
             # Continuation of the previous bullet — keep it inside the
             # list, preserving the indent so the rendered prose flows.
+            # Flush any buffered blank lines into the list first.
+            out.extend(pending_blanks)
+            pending_blanks = []
             out.append(line)
+        elif is_blank and (in_itemize or in_enumerate):
+            # Hold this blank: defer the decision to close the list
+            # until we see the next non-blank line.
+            if _is_list_item_or_cont(i + 1):
+                # Interior gap — keep blank inside the list.
+                pending_blanks.append(line)
+            else:
+                # The list ends here. Close it, then emit the blank.
+                if in_itemize:
+                    out.append(r"\end{itemize}")
+                    in_itemize = False
+                if in_enumerate:
+                    out.append(r"\end{enumerate}")
+                    in_enumerate = False
+                out.extend(pending_blanks)
+                pending_blanks = []
+                out.append(line)
         else:
             if in_itemize:
                 out.append(r"\end{itemize}")
@@ -661,11 +792,14 @@ def _convert_lists(text: str) -> str:
             if in_enumerate:
                 out.append(r"\end{enumerate}")
                 in_enumerate = False
+            out.extend(pending_blanks)
+            pending_blanks = []
             out.append(line)
     if in_itemize:
         out.append(r"\end{itemize}")
     if in_enumerate:
         out.append(r"\end{enumerate}")
+    out.extend(pending_blanks)
     return "\n".join(out)
 
 
@@ -736,9 +870,27 @@ def _convert_tables(text: str) -> str:
             )
             n_cols = len(header)
             use_tabularx = (n_cols >= 3 and max_cell_len > 40) or n_cols >= 5
+            # Pull a preceding italic "Table — ..." line into the float
+            # as an unnumbered \caption*{...} so it stays attached to
+            # the table even when the [h!] float migrates. Looks back
+            # across blank lines.
+            caption_text = None
+            scan = len(out) - 1
+            while scan >= 0 and out[scan].strip() == "":
+                scan -= 1
+            if scan >= 0:
+                m_cap = re.match(r"^\\textit\{Table\s*[—–-]\s*(.+)\}$", out[scan])
+                if m_cap:
+                    caption_text = m_cap.group(1).rstrip(".") + "."
+                    # Drop the italic line and any trailing blanks
+                    out = out[:scan]
+                    while out and out[-1].strip() == "":
+                        out.pop()
             out.append(r"\begin{table}[h!]")
             out.append(r"\centering")
             out.append(r"\small")
+            if caption_text:
+                out.append(r"\caption*{" + caption_text + "}")
             if use_tabularx:
                 # Keep first column at its natural width, wrap the
                 # remaining columns ragged-right (Y). Y = raggedright
@@ -1271,9 +1423,13 @@ def main() -> int:
         article_text,
     )
 
-    # Remove the top-level "# Title\n" line and any subtitle "## Subtitle"
-    article_text = re.sub(r"^#\s+.+?\n", "", article_text)
-    article_text = re.sub(r"^##\s+What does it cost.+?\n", "", article_text, count=1)
+    # Remove the top-level "# Title\n" line and the subtitle line
+    # immediately after it. The subtitle is part of the title block
+    # (already in \title{...} in the preamble) and must NOT be
+    # emitted as \section{} — doing so consumes section number 1
+    # and shifts every subsequent section by +1 in the rendered PDF.
+    article_text = re.sub(r"\A#\s+[^\n]+\n", "", article_text)
+    article_text = re.sub(r"\A##\s+[^\n]+\n", "", article_text, count=1)
 
     # Stash math blocks ($$..$$) and fenced code blocks (```...```)
     # so they pass through every other rewrite unchanged.

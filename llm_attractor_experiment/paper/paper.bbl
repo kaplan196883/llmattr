@@ -1,28 +1,66 @@
-\begin{thebibliography}{4}
+\begin{thebibliography}{10}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Anonymous(2025{\natexlab{a}})]{arxiv251021258}
-Anonymous.
-\newblock Correlation dimension of auto-regressive large language models,
-  2025{\natexlab{a}}.
+\bibitem[Tacheny(2025)]{arxiv251210350}
+N~Tacheny.
+\newblock Geometric dynamics of agentic loops in large language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2512.10350}.
 
-\bibitem[Anonymous(2025{\natexlab{b}})]{arxiv251210350}
-Anonymous.
-\newblock Dynamics of agentic loops in large language models: A geometric
-  theory of trajectories, 2025{\natexlab{b}}.
+\bibitem[Du and Tanaka-Ishii(2025)]{arxiv251021258}
+X.~Du and K~Tanaka-Ishii.
+\newblock Correlation dimension of auto-regressive large language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.21258}.
 
-\bibitem[et~al.(2025)]{arxiv251024797}
-Berg et~al.
-\newblock Llms report subjective experience under self-referential processing,
-  2025.
+\bibitem[Berg et~al.(2025)Berg, de~Lucena, and Rosenblatt]{arxiv251024797}
+C.~Berg, D.~de~Lucena, and J~Rosenblatt.
+\newblock Large language models report subjective experience under
+  self-referential processing, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.24797}.
+
+\bibitem[Hopfield(1982)]{hopfield1982}
+J.~J Hopfield.
+\newblock Neural networks and physical systems with emergent collective
+  computational abilities.
+\newblock \emph{PNAS, 79(8), 2554–2558}, 1982.
+
+\bibitem[Sussillo and Barak(2013)]{sussillo2013}
+D.~Sussillo and O~Barak.
+\newblock Opening the black box: low-dimensional dynamics in high-dimensional
+  recurrent neural networks.
+\newblock \emph{Neural Computation, 25(3), 626–649}, 2013.
+
+\bibitem[Maheswaranathan et~al.(2019)Maheswaranathan, Williams, Golub, Ganguli,
+  and Sussillo]{maheswaranathan2019}
+N.~Maheswaranathan, A.~Williams, M.~Golub, S.~Ganguli, and D~Sussillo.
+\newblock Reverse engineering recurrent networks for sentiment classification
+  reveals line attractor dynamics.
+\newblock \emph{NeurIPS}, 2019.
+
+\bibitem[Carlini et~al.(2021)Carlini, Tramèr, Wallace, et~al.]{carlini2021}
+N.~Carlini, F.~Tramèr, E.~Wallace, et~al.
+\newblock Extracting training data from large language models.
+\newblock \emph{USENIX Security '21}, 2021.
+
+\bibitem[Holtzman et~al.(2020)Holtzman, Buys, Du, Forbes, and
+  Choi]{holtzman2020}
+A.~Holtzman, J.~Buys, L.~Du, M.~Forbes, and Y~Choi.
+\newblock The curious case of neural text degeneration.
+\newblock \emph{ICLR}, 2020.
 
 \bibitem[Tuci et~al.(2026)Tuci, Korkmaz, Şimşekli, and
   Birdal]{arxiv260419740}
 M.~Tuci, C.~Korkmaz, U.~Şimşekli, and T~Birdal.
 \newblock Generalization at the edge of stability, 2026.
+\newblock URL \url{https://arxiv.org/abs/2604.19740}.
+
+\bibitem[Park et~al.(2023)Park, O'Brien, Cai, Morris, Liang, and
+  Bernstein]{park2023}
+J.~S. Park, J.~O'Brien, C.~J. Cai, M.~R. Morris, P.~Liang, and M.~S Bernstein.
+\newblock Generative agents: interactive simulacra of human behavior.
+\newblock \emph{UIST '23}, 2023.
 
 \end{thebibliography}
