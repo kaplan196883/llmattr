@@ -4757,288 +4757,55 @@ above with full predicate detail). All three are referenced from
 
 \section{Discussion}
 
-\subsection{Regimes are properties of nudges, not prompts alone}
+The main result is not simply that recursive LLM loops have attractor-like regimes. It is that their apparent robustness depends on two separable choices: the memory policy that writes text back into state, and the endpoint used to define a successful perturbation. Append-mode continuation shows a real in-distribution raw dose response, with $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens, but that number is not a durable escape threshold: raw switching plateaus near $67\%$, paired controls already diverge at about $35\%$, net switching never reaches the $+50$ pp criterion, and persistent escape remains below $50\%$ at every tested dose. Replace-mode loops, meanwhile, look fragile mostly because the update rule overwrites the prior state. Thus the practical unit of analysis is not the prompt alone, or the model alone, but the generator–nudge system evaluated under raw, net, and persistent endpoints.
 
-The central lesson of these experiments is that recursive LLM regimes
-are determined jointly by the generator and the context-update rule.
-Two systems built around the same generator model and similar prompts
-can exhibit very different perturbation-response properties solely
-because one preserves prior context (append) while the other overwrites
-it (replace); the resulting "robustness" difference is then a property
-of the loop's update rule, not of the model itself.
-In our framework, the model samples
-$Y_t \sim P_\theta(\cdot \mid X_t; f)$ while the nudge $\mathcal{N}_f$
-determines how that output is written back into the next state. The
-observed taxonomy is therefore not merely a taxonomy of prompts or
-tasks; it is a taxonomy of \textbf{generator–nudge systems}.
+\subsection{Recursive-loop robustness is determined by memory policy and endpoint choice}
 
-Viewed this way, the empirical pattern is remarkably regular. The
-taxonomy decomposes into a 2×2 over the operator regimes plus an
-orthogonal dialog axis:
+The central lesson of these experiments is that recursive-loop behavior is determined jointly by the generator and the context-update rule. In the formalism of §3.1, the model samples $Y_t \sim P_\theta(\cdot \mid X_t; f)$, while the nudge $\mathcal{N}_f$ decides how that sampled text becomes the next state. Two loops with the same generator and similar prompt instructions can therefore have different perturbation responses solely because one preserves prior context and the other overwrites it.
 
-\begin{table}[h!]
-\centering
-\small
-\begin{tabularx}{\textwidth}{lYY}
-\toprule
- & append (preserve) & replace (overwrite) \\
-\midrule
-\textbf{content-preserving} (continue, paraphrase) & O1 contractive basin & O2 oscillatory 2-cycle \\
-\textbf{content-degrading} (summarize+negate) & weak collapse (small N) & O3 absorbing \\
-\bottomrule
-\end{tabularx}
-\end{table}
+The second lesson is that "robustness" is endpoint-dependent. A loop can move without staying moved; two unperturbed runs can diverge without any perturbation; and an overwrite-style update can make a system appear fragile even when inserted text has little effect. This is why the paper separates raw switching, net switching, and persistent escape (§3.1.2). In O1, adversarial append-mode perturbations yield $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens, with 4PL $=36$, GLMM $=41$, and family-cluster bootstrap median $=52$ tokens, 95\% CI $[8.5, 242]$ (§5.6.1). But the raw curve plateaus near $67\%$, the control-vs-control floor is $\approx 35\%$, the net effect saturates at only $+32$ pp, and persistent escape never crosses $50\%$ (§5.15). The same loop is therefore movable under the raw endpoint but not durably redirected under the strict endpoint.
 
-\begin{table}[h!]
-\centering
-\small
-\begin{tabular}{ll}
-\toprule
- & dialog architecture \\
-\midrule
-\textbf{free} (curious user / helpful agent) & D1 dialogue-state-driven multi-basin \\
-\textbf{structured} (explorer drill-down / expert) & D2 content-anchored multi-basin \\
-\bottomrule
-\end{tabular}
-\end{table}
+\subsection{Append, replace, and dialog implement different memory mechanisms}
 
-Content-preserving operators under append mode produce contractive
-behavior; content-preserving operators under replace mode produce
-oscillation; content-degrading operators under replace mode produce
-absorbing collapse. Dialog adds a second architectural axis because
-role structure changes how text is accumulated and reinterpreted
-across steps. D1 and D2 are therefore not exceptions to the operator
-taxonomy, but evidence that dialog should be treated as a distinct
-nudge family rather than as a special case of append.
+Append, replace, and dialog are not implementation details; they are different memory mechanisms. In append mode, the perturbation enters an already-accumulated context and must compete with prior trajectory mass. This makes append-mode continuation resistant to irrelevant text: O1 neutral and lorem perturbations remain near the out-of-distribution drift floor, while in-distribution adversarial text produces the graded raw dose response measured in §5.6.1.
 
-This interpretation is stronger than a descriptive regime table. It
-suggests that a new recursive loop can be located by knowing two
-things: what semantic transformation it asks the model to perform,
-and how that transformation is written back into state. The
-experiments do not yet prove that this factorization is exhaustive,
-but they show that it is already predictive across the operator
-families studied here.
+Replace mode implements a different mechanism. The previous state is discarded, so the next state is dominated by the replacement. The overwrite-vs-insert probe makes this visible: for O2, overwrite-mode perturbations switch at $92$--$98\%$, while insert-mode perturbations switch at only $18$--$32\%$, a $60$--$80$ pp gap (§5.17). For O3, overwrite switching is $90$--$92\%$, but insert switching is only $12$--$18\%$, a $72$--$80$ pp gap. Thus most apparent replace-mode fragility is attributable to overwrite mechanics rather than a low injected-token barrier.
 
-The within-vendor cross-generation replication on \texttt{gpt-4.1-nano}
-(§5.21) sharpens this point. All six paper-thesis predicates pass on
-nano, with the structural taxonomy preserved unchanged — but two of
-the magnitude shifts go in directions a generator–nudge framing
-predicts: the smaller, less-stable contractive system has shallower
-O1 basins (T4 adversarial-vs-OOD margin shrinks +0.36 → +0.20) and
-weaker D1 dialogue-state anchoring (T5 lorem switching jumps to 0.94).
-In the \textbf{two OpenAI generators} tested here, the qualitative
-taxonomy is preserved across both, while the \textit{barrier magnitude
-inside each regime} shifts with the generator (e.g. T4
-adversarial-vs-OOD margin: 0.36 vs 0.20). This is consistent with
-the formalism's prediction that nudge family sets regime structure
-and generator sets barrier magnitude — but two generators from one
-vendor are insufficient to claim model-agnosticism. Cross-vendor
-replication (open-weight Llama / Qwen / Claude generators) is
-required before the architecture-vs-generator partition can be
-asserted as a general property of recursive LLM loops; see §8.1.
+Dialog sits between these cases. It preserves a running transcript like append mode, but role-structured turns give recent utterances high local influence. D1 therefore behaves as a dialogue-state-driven multi-basin regime, while D2 suggests topic-anchored "content gravity" under drill-down structure (§5.8, §5.14).
 
-\textbf{A note on regime labels.} The labels "append-contractive,
-replace-oscillatory, replace-absorbing, dialog-multibasin" describe
-the qualitative dynamics measured at the embedding-cloud level. Per-
-cluster semantic inspection in §5.14 shows that \textbf{only O1's label
-accurately describes its basin mechanism}: O1 trajectories converge
-toward register-shaped attractors (sentimental narrative, expository
-discourse, reflective empathy) regardless of original topic. The
-other three labels are partial misnomers: O2's "oscillatory" basins
-are paraphrastic family-preserving sub-basins (period-2 dynamics
-hold but the basins are not absorbing); O3's "absorbing" property is
-formal-template (X / not-X) rather than semantic; D1's "stylistic
-multi-basin" structure is mediated by append-mode conversational
-drift / recent-context capture rather than by direct stylistic
-preference. We retain the existing labels in this paper for
-continuity with prior versions but flag the correction explicitly.
-A future revision should adopt the re-labelled taxonomy:
-register-contractive (O1), paraphrastic family-preserving (O2),
-template-absorbing (O3), dialogue-state-driven multi-basin (D1).
+\subsection{A raw-switching ED50 is not a persistent-escape barrier}
 
-\subsection{Why append resists and replace yields}
+The most important interpretive correction is that $\mathrm{ED50}_{\mathrm{raw}}$ is not the same quantity as a persistent-escape barrier. Raw switching asks whether the perturbed trajectory's terminal cluster differs from its paired control. That endpoint is useful, but it conflates three phenomena: true redirection, ordinary stochastic divergence, and transient movement that later recovers. Persistent escape is stricter: the trajectory must visibly jump at injection and remain in the post-injection basin through the terminal step (§3.1.2).
 
-The sharpest mechanistic contrast in the paper is between append and
-replace. In append mode, a perturbation is injected into an
-already-accumulating state. It therefore competes with prior
-trajectory mass rather than replacing it. Unless the perturbation is
-semantically aligned with an alternative basin, it is diluted by the
-existing context and tends to wash out. This is exactly what the
-perturbation results show for O1: neutral and lorem injections remain
-near the drift floor, while in-distribution adversarial text
-accumulates enough basin-relevant evidence to move the trajectory
-with nontrivial probability.
+Under the permissive raw endpoint, O1 adversarial append-mode continuation has a clear dose response: $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens, with estimates 36, 41, and 52 tokens across the 4PL, GLMM, and family-cluster-bootstrap analyses (§5.6.1). But the raw plateau is only $\approx 67\%$, not $100\%$. Moreover, paired controls already disagree at about $35\%$, so subtracting the stochastic floor leaves a maximum net effect of only $+32$ pp at 400 tokens, below the $+50$ pp criterion for $\mathrm{ED50}_{\mathrm{net}}$.
 
-In replace mode, by contrast, the perturbation effectively becomes
-the next state. The prior trajectory is discarded after one step, so
-the system has almost no memory barrier. This is why O2 and O3 are
-nearly transparent to perturbation: once the next state is rewritten,
-the subsequent loop evolves from the injected text rather than from
-the original basin. \textbf{Lemma 1 (§3.1.4) formalizes this asymmetry by
-showing that replace-mode barriers are bounded by roughly one
-generation length.} The measurements support exactly that prediction.
+The persistent endpoint is smaller still. At the highest tested dose, persistent escape reaches only $16\%$ under canonical K-means $k=12$, $10\%$ under K-means $k=4$, and $39.5\%$ under HDBSCAN (§5.15). None crosses $50\%$ in the tested 5--400 token range. The correct conclusion is therefore: O1 has a finite raw-switching dose response, but no measured persistent-escape barrier in this experiment.
 
-The dialog regimes sit between these extremes. They accumulate
-content as append systems do, but new turns have unusually high local
-influence because role-structured observables emphasize recent turns.
-This makes dialog less rigid than append-mode continuation, but more
-path-dependent than replace-mode overwrite. The result is an
-intermediate barrier scale whose interpretation depends on whether
-the dialog stabilizes \textbf{style} or \textbf{topic}.
+\subsection{Density landscapes diagnose basin geometry but do not calibrate token barriers}
 
-In systems that use generated summaries as the next state, the summary is therefore not merely a compression artifact; it is the effective next state of the dynamical system. Errors, omissions, or untrusted claims introduced into that summary receive the same structural status as any other replacement state, regardless of their origin. The same mechanism applies to scratchpad-replacement architectures, "current task state" agents, and any context-management strategy that periodically discards prior history in favor of a generated condensation.
+The empirical potential landscape $V(x) = -\log \rho(x)$ is useful as a diagnostic picture of trajectory density, but it should not be read as a calibrated token barrier. The landscape is computed after embedding, projection, smoothing, and basin detection, so its absolute values depend on the representation and analysis choices. The parameter-grid sensitivity analysis confirms this: per-condition $V^\star$ values vary with coefficient of variation $14$--$24\%$ across KDE bandwidths, grid resolutions, and basin-count settings (§5.16).
 
-\subsection{D1 and D2 reveal two kinds of dialog attractor}
+What survives is the weaker ordinal claim. In the O1 perturbation pilot, the rank ordering of $V^\star$ is stable across $89$--$98\%$ of parameter combinations: control is usually highest, adversarial usually lowest, and neutral / lorem occupy the middle (§5.16). This supports the use of density landscapes as descriptive basin-geometry tools. It does not justify converting $V^\star$ into tokens, nor does it independently validate $\mathrm{ED50}_{\mathrm{raw}}$. The behavioral dose-response and geometric landscape are complementary measurements, not interchangeable estimators of the same scalar.
 
-The contrast between D1 and D2 is important because it shows that
-"dialog" is not a single regime. D1 behaves like a stylistic
-multi-basin system: trajectories settle into stable conversational
-modes, and perturbations act mainly on those style channels. D2
-behaves differently. Its Explorer–Expert drill-down structure creates
-what is best described as \textbf{content gravity}: once the exchange has
-narrowed into a deeper subtopic, adversarial injections are only
-partially successful because the next turn is explicitly constrained
-to continue drilling into the established semantic branch.
+\subsection{Robust recursive-loop evaluations must report floors, persistence, and overwrite mechanics}
 
-This distinction matters theoretically. D1 shows that conversational
-structure can stabilize a trajectory without tightly binding its
-content. D2 shows that conversational structure can do more: it can
-impose topic-preserving momentum even when each turn is freshly
-generated. That is the first evidence in this project that a nudge
-architecture can encode a form of semantic inertia beyond simple
-append-mode accumulation.
+\begin{enumerate}
+  \item \textbf{Report the context-update rule.} Every recursive-loop evaluation should state whether the system appends, replaces, role-structures, summarizes, pins, rolls, or hybridizes memory, because the same generator can show different perturbation responses under different nudges (§3.1, §5.17).
 
-The broader implication is that dialog architectures should be
-studied as a space of nudge designs. Free chat, drill-down, debate,
-role-play, and multi-party deliberation may occupy different points
-on a style-versus-content stability continuum. D2 is therefore best
-understood not merely as another measured regime, but as evidence
-that dialog structure can itself be a control parameter of attractor
-geometry.
+  \item \textbf{Report raw, net, and persistent-escape endpoints rather than raw switching alone.} Raw movement says whether the trajectory changed, net switching subtracts the control-vs-control stochastic floor, and persistent escape asks whether the perturbation produced a durable basin change after recovery turns (§3.1.2, §5.6.1, §5.15).
 
-\subsection{Barrier height is the missing dimension of regime analysis}
+  \item \textbf{For replace-style or summary-memory systems, run an overwrite-vs-insert control.} If overwrite switching is high but insert switching is low, the measured fragility is partly the memory policy discarding prior state rather than the injected text overcoming a basin barrier (§5.17).
+\end{enumerate}
 
-Classifying recursive loops only by contraction, oscillation, or
-collapse is not enough. Those diagnostics describe the \textbf{shape} of
-a regime, but not its \textbf{stability under intervention}. Barrier
-height — decomposed into raw, net, and persistent-escape endpoints per §3.1.2 — adds this missing dimension. Even the most permissive endpoint, $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens for O1 adversarial, gives an operational answer to a practical question: how much
-semantically relevant text does it take to redirect a recursive
-loop's raw cluster identity? The net and persistent-escape endpoints (§3.1.2) are not reached in the tested range.
+A checklist version of this reporting standard is given in Box 1 (§12.16).
 
-This is why the perturbation protocol is the paper's real headline
-contribution. Without it, O1 and D1 look closer than they truly are
-(see §5.19, where bulk-diagnostic clustering cannot resolve them),
-and D1 and D2 are not sharply separable at all. Bulk diagnostics
-recover broad classes; perturbation barriers reveal how strongly
-those classes are held in place. \textbf{In that sense, the full five-way
-taxonomy is not produced by geometry alone or by perturbation alone,
-but by the combination of the two.}
+\subsection{The unresolved question is external validity across generators and real agent scaffolds}
 
-The information-theoretic reading in §3.1.6 helps explain why the
-barrier story is richer than a raw token count. Out-of-distribution
-perturbations can be long without being effective because they carry
-little basin-relevant information. In-distribution adversarial
-perturbations are effective not because they are surprising, but
-because they are semantically legible to the model as evidence for a
-competing continuation. Barrier height is therefore best understood
-as a structured set of endpoints — raw cluster disagreement, net excess over the stochastic floor, and persistent basin escape (§3.1.2). Only the raw endpoint is reached in the tested 5–400 token range; net and persistent-escape barriers remain above the tested doses.
+The present evidence is strongest for the measured generator–nudge systems, not for all LLMs or all agent architectures. The within-vendor replication on \texttt{gpt-4.1-nano} preserves the qualitative thesis predicates (§5.21), but both generators are from the same vendor family. Cross-vendor and open-weight replication remain necessary before the architecture-vs-generator partition can be treated as general (§7.1, §8.1).
 
-An immediate practical consequence for evaluation design: any
-benchmark that reports only final raw switching as a redirection /
-robustness signal will systematically over-estimate durable
-redirection whenever the control-vs-control divergence floor is
-non-negligible (here $\approx 35\%$) or whenever transient kicks
-recover before the terminal step. Reporting all three endpoints —
-raw, net, and persistent-escape — together with the measured
-stochastic floor is therefore the minimum disclosure standard implied
-by §3.1.2 and §5.6.1.
+The same caution applies to real agent scaffolds. The paper studies recursive text loops with controlled update rules and embedding-space observables; it does not directly evaluate coding agents, tool-using assistants, SWE-Bench tasks, jailbreak benchmarks, production indirect prompt injection, or factuality-graded hallucination settings (§7.9). Those domains can adopt the same endpoint decomposition, but their observables must be application-specific: patch family, files touched, tests passed, policy violations, tool-call traces, or grounded factual claims.
 
-\textbf{Engineering interpretation of the three endpoints.}
-
-\begin{itemize}
-  \item \textit{Raw switching} asks whether the system moved.
-  \item \textit{Net switching} asks whether it moved more than ordinary stochastic drift.
-  \item \textit{Persistent escape} asks whether it committed after recovery turns.
-\end{itemize}
-
-In tool-using agents, all three should be reported. A one-step malicious-tool-output compliance rate is not a durable-redirection rate; a final-patch difference is not necessarily an attack success; a summary-overwrite failure is partly a memory-policy failure. The same protocol-level discipline applies whether the application domain is recursive text generation, structured agent loops, or any other recursive inference system in which paired controls and persistence-after-perturbation can be measured.
-
-\subsection{Why the geometric picture matters}
-
-The empirical potential landscape $V(x) = -\log \rho(x)$ should not
-be mistaken for a literal physical free energy. It is a descriptive
-summary of the density of trajectories in a reduced representation
-space. But the fact that geodesic barrier estimates derived from $V$
-rank-correlate with behavioral switching thresholds is still significant. It
-suggests that the perturbation results are not only artifacts of one
-intervention protocol; they are reflecting genuine large-scale
-geometry in the embedding-space dynamics.
-
-This geometric agreement is especially useful because the two
-measurements are independent in spirit. Behavioral barriers are
-measured by \textit{actively} kicking trajectories and observing switching.
-Geometric barriers are measured \textit{passively} from the density
-landscape and shortest paths between basins. Agreement between them
-does not prove a mechanistic potential model of LLM inference, but
-it does strengthen the interpretation of the rank-ordering of barrier endpoints across regimes as a real
-structural property of the recursive loop.
-
-\subsection{Practical implications}
-
-For practitioners, the results suggest that recursive-loop design is
-partly a problem of \textbf{nudge engineering}. The table below summarizes
-which nudge family produces which qualitative behavior in the
-measured battery; the "what was actually tested" column makes
-explicit which entries are direct measurements vs informed speculation.
-
-{\footnotesize
-\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.8cm}>{\raggedright\arraybackslash}p{2.8cm}Y>{\raggedright\arraybackslash}p{2.8cm}@{}}
-\toprule
-Goal & Recommended operator & What we measured & Not directly tested \\
-\midrule
-\textbf{A stable trajectory} that holds the user's seed thought & Append-mode + content-preserving operator (O1) & Dense-dose $\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens (4PL/GLMM/bootstrap; \S5.6.1); $\mathrm{ED50}_{\mathrm{net}}$ and $\mathrm{ED50}_{\mathrm{persist}}$ not reached in tested 5--400 token range; curve plateaus at ${\sim}67\%$ --- ${\sim}31\%$ non-switching subpopulation; control-vs-control natural floor ${\sim}35\%$ so net adversarial effect saturates at $+32$~pp; OOD noise $\leq 24\%$ across the tested 5--400 token range & Safety/alignment-relevant adversarial prompts, multi-turn jailbreak attempts, longer doses, generalisation to other generators / vendors \\
-\addlinespace
-\textbf{Fast lock-in to a topic} (don't care which one) & Replace-mode (O2 paraphrase or O3 summarize+negate) & 90--98\% switching with overwrite-mode injection (\S5.17), but \textbf{only 12--32\% with context-insert injection at the same doses} --- the 60--80~pp gap is the operator-overwrite contribution. The pattern replicates across both replace-mode regimes (O2 and O3), confirming the contribution is operator-independent within the two tested replace-mode operators (O2, O3). Per Lemma~1 / \S3.1.4, replace mode has no formal injected-token barrier; the generation-budget result is the operator's contribution, not a discovered low barrier & Whether insert-mode switching rises further at larger doses \\
-\addlinespace
-\textbf{Stylistic stability across resets} & Dialog framework (D1) & Basin-predictability acc($k{=}10$) is in $[0.57, 0.61]$ across $T \in \{0.3, 0.6, 0.9, 1.2\}$ (\S5.4); 4-of-4 (formal C1--C4) attractor criteria PASS (\S3.1.3) & Persona stability under adversarial roleplay or multi-turn manipulation (no such experiments run) \\
-\addlinespace
-\textbf{Content gravity that resists topic-switching} & Structured drill-down dialog (D2) & 64\% adversarial switching rate at one dose, $n{=}25$ (\S5.8) & Publication-scale validation (D2 fails the operational attractor criteria in \S3.1.3 due to underpowered measurements) \\
-\addlinespace
-\textbf{Collapse} (degenerate output) & Replace-mode summarize+negate (O3) & Convergence within ${\sim}10$ steps; sharpness-dim $\approx 1.3$--$1.5$ (lowest measured; \S12.2); trivially low effective rank & None --- the empirical signature is direct \\
-\addlinespace
-\textbf{Evaluate coding-agent indirect prompt injection} & Use paired controls; inject into tool output, file content, logs, package docs, or comments; report raw, net, and persistent endpoints & Raw switching can be large while persistent escape remains low; overwrite-style interventions overstate fragility (\S5.17) & No specific coding-agent product (Cursor, Cline, Devin, Claude Code) and no SWE-Bench task was directly evaluated \\
-\addlinespace
-\textbf{Long-running agent memory compression} & Prefer hybrid memory: pinned invariants + rolling recent context + provenance-preserving summaries & Replace-mode probes show overwriting state can account for 60--80~pp of apparent switching (\S5.17) & Actual summary quality, extractive-vs-abstractive compression, and tool-output quarantine policies were not tested \\
-\bottomrule
-\end{tabularx}
-}
-
-The perturbation-barrier protocol \textit{could} in principle be read as a
-generic robustness probe — measuring how much context budget an
-adversary or operator must spend to move the system from one regime
-to another. \textbf{However, we have not run experiments specifically
-targeting jailbreak prompts, persona-manipulation attacks, or
-in-context attack evaluation.} Whether the measured barriers
-transfer to those settings is an empirical question the present
-paper does not answer; we mention these applications only as
-candidate next-step domains, not as validated use-cases. The
-4-condition protocol's neutral and lorem conditions provide the
-right \textit{baseline framework}: any robustness claim is meaningful only
-relative to the irreducible drift floor (~24\% for O1) that the model
-exhibits under benign perturbation.
-
-\subsection{Interpretation}
-
-The main conceptual conclusion of the paper is therefore simple.
-Recursive LLM behavior is shaped not only by the generator $P_\theta$,
-but by the nudge that writes generated text back into state. Different
-nudges induce different attractor geometries, and those geometries
-are measurable not only by their trajectory statistics, but by the
-amount of injected text required to cross their basin boundaries.
-\textbf{In that sense, the barrier-endpoint structure (raw / net / persistent-escape, §3.1.2) is the operational bridge between a
-formal theory of recursive dynamics and the practical problem of
-controlling LLM loops.}
-
+The paper's position is therefore deliberately bounded: recursive-loop stability is measurable, but the measurement only becomes meaningful when memory policy, stochastic floor, and persistence endpoint are made explicit.
 
 \section{Limitations}
 
@@ -6432,6 +6199,28 @@ Overwrite-vs-insert gap (replace-mode systems only): pp +/- CI
 \end{codeblock}
 
 This template is the academic-paper equivalent of the eval-loop pseudocode that practitioners may already be reaching for. Reporting all three endpoints separately, with the stochastic floor calibration and the overwrite-vs-insert separation, is the minimum disclosure standard implied by §3.1.2, §5.11, §5.15, and §5.17.
+
+\subsection{Box 1 — Minimum reporting standard for recursive-loop perturbation studies}
+
+This Box collects the reporting standard described in §6.5 in checklist form. It is intended as a minimum disclosure template for studies that use perturbations to evaluate recursive LLM loops, agent scaffolds, memory policies, or related generator–nudge systems.
+
+\begin{enumerate}
+  \item \textbf{Generator and version.} Report the generator model, provider, resolved snapshot or version if available, decoding parameters, output-token limits, and any model changes across conditions.
+
+  \item \textbf{Nudge / memory policy.} Report the context-update rule explicitly: append, replace, dialog, rolling window, generated-summary replacement, pinned-memory hybrid, or another specified mechanism.
+
+  \item \textbf{Observable and equivalence rule.} Define what counts as the trajectory state for evaluation and how equivalence classes are assigned: embedding cluster, patch family, files touched, tests passed, tool-call sequence, policy violation, factual claim set, or another pre-specified observable.
+
+  \item \textbf{Control-vs-control stochastic floor.} Run paired unperturbed controls and report the natural disagreement rate with confidence intervals; raw perturbation effects should not be interpreted without this floor.
+
+  \item \textbf{Raw, net, and persistent rates.} Report raw switching, net switching after subtracting the stochastic floor, and persistent escape, where persistent escape requires an injection-time jump that remains through the terminal measurement.
+
+  \item \textbf{Dose-response curve and ED50 endpoint type.} Vary perturbation strength or length systematically and state which endpoint the fitted ED50 refers to: $\mathrm{ED50}_{\mathrm{raw}}$, $\mathrm{ED50}_{\mathrm{net}}$, or $\mathrm{ED50}_{\mathrm{persist}}$.
+
+  \item \textbf{Overwrite-vs-insert gap for replace-style systems.} For replace, summary, scratchpad, or "current state" memory policies, compare overwrite-mode perturbations with insert-mode perturbations and report the overwrite-minus-insert gap.
+
+  \item \textbf{Scope caveat.} State what was not tested: other generators, longer doses, other languages, production scaffolds, tool environments, safety prompts, jailbreak attacks, human users, factuality-grounded tasks, or domain-specific agent benchmarks.
+\end{enumerate}
 
 \subsection{Pointers to remaining supplementary material}
 
