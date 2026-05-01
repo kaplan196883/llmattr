@@ -224,6 +224,18 @@ patterns qualitatively but do not measure how those patterns
 respond to controlled perturbation, and they do not separate model
 behavior from update-rule mechanics.
 
+A software-engineering agent is one such recursive loop. A typical
+loop reads an issue, inspects a repository, proposes an edit, runs
+tests, reads the failure, and repeats. In this setting, the "state"
+is not only the chat transcript; it may include tool results,
+patches, test logs, summaries, pinned requirements, and recent
+files. The context-update rule therefore corresponds to an
+engineering memory policy: full-history append, rolling-window
+append, summary replacement, or a hybrid with pinned artifacts. We
+do not evaluate any specific coding-agent product in this paper, but
+this class of systems is a direct application domain for the
+framework.
+
 When a language model is fed its own output through repeated context
 updates, the resulting trajectory often settles into recognizable
 dynamical patterns. Practitioners have long observed topical lock-in,
@@ -680,6 +692,19 @@ $\mathcal{N}_f$ (which determines how $Y_t$ feeds back into $X_{t+1}$).
 Two operators that share the same prompt instruction but differ in nudge
 will produce qualitatively different attractor regimes; this is exactly
 what we see empirically (e.g. paraphrase under append vs replace).
+
+| Formal nudge | Engineering analogue | Typical risk / behavior |
+|---|---|---|
+| Append: $\mathcal{N}_f^{\text{append}}(X_t, Y_t) = \operatorname{clip}(X_t \,\Vert\, Y_t)$ | ReAct-style full transcript, rolling recent context, accumulated tool logs | Prior evidence remains as ballast; perturbations compete with accumulated state |
+| Replace: $\mathcal{N}_f^{\text{replace}}(X_t, Y_t) = \operatorname{clip}(Y_t)$ | Summarize-and-continue (summary becomes the only state); scratchpad replacement | Old state is discarded; whatever enters the replacement becomes privileged |
+| Dialog: $\mathcal{N}_f^{\text{dialog}}(X_t, Y_t) = X_t \,\Vert\, \operatorname{format\_turn}(\text{role}, Y_t)$ | ChatML / role-structured state, multi-role agents, user/assistant/tool turn buffers | Recent role-local turns may dominate despite longer accumulated context |
+| Hybrid append + pinned + summary | Pinned issue/tests/security policy plus compressed older history | Robustness depends on which facts can be overwritten and which remain invariant |
+
+In engineering terms, the nudge is the *memory policy* of the loop; it
+is therefore part of the system's robustness and security boundary, not
+merely an implementation detail. The remainder of the paper treats
+append, replace, and dialog as the canonical formal nudges and uses the
+engineering analogues as motivating examples only.
 
 #### 3.1.1 Barrier height as a unit
 
@@ -1741,6 +1766,49 @@ control-vs-control floor (§4.5.10 / §4.7) and the persistent-escape
 analysis (§3.1.1bis, §5.16). A switching rate that is not net-corrected
 is not evidence of basin redirection.
 
+**Algorithm 1: Paired perturbation evaluation for a recursive loop.**
+
+```
+Input:
+  task / seed x
+  generator P_θ
+  context-update rule N
+  injection condition c
+  injection step t_inj
+  terminal step T
+  observable map O
+  equivalence rule C  (clustering, patch-family, tests, etc.)
+
+1. Run two unperturbed controls:
+     A = RunLoop(x, P_θ, N, no injection)
+     B = RunLoop(x, P_θ, N, no injection)
+
+2. Estimate stochastic-floor event:
+     floor_event = [C(O(A_T)) ≠ C(O(B_T))]
+
+3. Run matched treatment:
+     Z = RunLoop(x, P_θ, N, inject c at t_inj)
+
+4. Raw switching:
+     raw = [C(O(Z_T)) ≠ C(O(A_T))]
+
+5. Injection-time jump:
+     jump = [C(O(Z_{t_inj+1})) ≠ C(O(Z_{t_inj-1}))]
+
+6. Persistent escape:
+     persist = jump AND [C(O(Z_T)) = C(O(Z_{t_inj+1}))]
+
+7. Aggregate over seeds / tasks / families:
+     raw_rate = mean(raw),  floor = mean(floor_event)
+     net_rate = raw_rate − floor
+     persistent_escape_rate = mean(persist)
+```
+
+The same algorithm applies to embedding clusters (this paper) and to
+engineering observables: final patch family, files touched, test
+pass/fail set, selected plan category, security-policy violation, or an
+embedding of the full trace.
+
 ### 4.6 Baselines
 
 Each baseline ablates a different mechanism so we can isolate which
@@ -2295,6 +2363,18 @@ endpoint-decomposition framework (§3.1.1bis):
   claimed as clean basin escape. The strict
   $\mathrm{ED50}_{\mathrm{persist}}$ is undefined in the tested range.
 
+**Observable choices outside embedding clusters.** In the present
+experiments, the equivalence rule $C(O(X_T))$ is a K-means cluster of
+an embedding-space observable. In tool-using coding agents, the same
+endpoint structure can be instantiated with engineering observables:
+final patch family (`git diff --stat`), files touched, the
+failing/passing test set, the selected plan category, the tool-call
+sequence, a security-policy violation, or an embedding of the full
+trajectory trace. Algorithm 1 (§4.5.11) requires only a consistent,
+pre-specified equivalence rule and paired controls; it does not require
+that "cluster" literally mean an embedding cluster. This is what makes
+the three-endpoint decomposition portable across application domains.
+
 ---
 
 ## 5. Results
@@ -2665,6 +2745,8 @@ depending on whether the perturbation is in-distribution.
 #### 5.6.1 Confirmatory dense-dose rerun (n=200/cell, 8 doses)
 
 **Lede.** The dense rerun establishes a clean raw-switching dose response in O1 adversarial append-mode continuation ($\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens, with three independent fitting methods agreeing to within $\pm 8$ tokens) but rejects the stronger interpretation: the persistent-escape endpoint is not reached at any tested dose up to 400 tokens, the raw plateau sits at $\approx 0.67$ rather than 1.0, and the net effect over the stochastic floor saturates at +32 percentage points. The remainder of this subsection details the rerun's preregistration, configuration, and per-method estimates.
+
+**Engineering scale calibration.** As a rough orientation: 40 tokens is comparable to a short repository comment, a targeted test-failure note, a small README paragraph, or a user correction naming a specific file and test. Thus the measured $\mathrm{ED50}_{\mathrm{raw}}$ is not a large-context phenomenon; small in-domain snippets can measurably alter raw terminal state, even though net and persistent-escape thresholds are not reached in the tested range.
 
 The sparse-data dose-response above was driven by the n=50/cell pilot
 flagged as underpowered in revision Weakness #1. The dense-dose rerun
@@ -3459,6 +3541,8 @@ AND-persisted** rate stays below 50%.
 
 ![Figure L. **Multi-granularity persistence rates vs adversarial dose.** O1 dense rerun ($n=200$/cell × 8 doses). Three cluster granularities: K-means $k=12$ (blue, canonical); K-means $k=4$ (orange, coarse); HDBSCAN auto (green, 18 clusters detected). Solid lines: persistent-escape rate (kicked at injection AND in new cluster at terminal step). Dashed lines: kicked-at-injection rate (cluster differs at step 15 vs step 14). Grey dotted line: 50% threshold (formal persistent-escape barrier). Persistent escape never reaches 50% at any granularity; HDBSCAN at dose 400 gives the maximum at 39.5%. The result is robust to cluster definition. Source: `data/aggregated/multi_granularity_persistence.png`.](data/aggregated/multi_granularity_persistence.png)
 
+**Engineering consequence.** For agent evaluations that consume tool outputs, file contents, or third-party documents, this implies that next-step compliance, final-output disagreement, and durable task redirection should be reported as separate outcomes. A tool output, file comment, or web-fetched page may cause a visible trajectory jump (raw switching) without producing persistent capture of the subsequent plan-edit-test loop.
+
 ### 5.10.10 V* parameter-grid sensitivity (review weakness #5 follow-up)
 
 The §5.10 caveat box flagged that $V^\star$ values depend on
@@ -3635,6 +3719,8 @@ remains qualitatively correct as a description of the operator's
 overwrite-induced transparency, but should not be presented as a
 discovered low *behavioral* barrier in the dose-response sense
 that O1 measurements use.
+
+**Production architectures with the same structural property.** The analogous engineering case is any architecture in which accumulated state is periodically replaced by a generated summary, scratchpad, or "current task state". If untrusted tool output, repository text, package metadata, or commit messages are promoted into that replacement, the system has not merely been persuaded by the text; its previous state has been removed by the update rule. Such failures should be attributed to the memory policy as well as to the generator. The 60–80 percentage-point overwrite-vs-insert gap reported above is therefore not a curiosity of this experimental setup; it is the same mechanism active whenever a context-summarization or context-replacement step intervenes between the loop's initial state and its final response.
 
 ---
 
@@ -4094,6 +4180,8 @@ path-dependent than replace-mode overwrite. The result is an
 intermediate barrier scale whose interpretation depends on whether
 the dialog stabilizes **style** or **topic**.
 
+In systems that use generated summaries as the next state, the summary is therefore not merely a compression artifact; it is the effective next state of the dynamical system. Errors, omissions, or untrusted claims introduced into that summary receive the same structural status as any other replacement state, regardless of their origin. The same mechanism applies to scratchpad-replacement architectures, "current task state" agents, and any context-management strategy that periodically discards prior history in favor of a generated condensation.
+
 ### 6.3 D1 and D2 reveal two kinds of dialog attractor
 
 The contrast between D1 and D2 is important because it shows that
@@ -4159,6 +4247,14 @@ raw, net, and persistent-escape — together with the measured
 stochastic floor is therefore the minimum disclosure standard implied
 by §3.1.1bis and §5.6.1.
 
+**Engineering interpretation of the three endpoints.**
+
+- *Raw switching* asks whether the system moved.
+- *Net switching* asks whether it moved more than ordinary stochastic drift.
+- *Persistent escape* asks whether it committed after recovery turns.
+
+In tool-using agents, all three should be reported. A one-step malicious-tool-output compliance rate is not a durable-redirection rate; a final-patch difference is not necessarily an attack success; a summary-overwrite failure is partly a memory-policy failure. The same protocol-level discipline applies whether the application domain is recursive text generation, structured agent loops, or any other recursive inference system in which paired controls and persistence-after-perturbation can be measured.
+
 ### 6.5 Why the geometric picture matters
 
 The empirical potential landscape $V(x) = -\log \rho(x)$ should not
@@ -4202,6 +4298,10 @@ Goal & Recommended operator & What we measured & Not directly tested \\
 \textbf{Content gravity that resists topic-switching} & Structured drill-down dialog (D2) & 64\% adversarial switching rate at one dose, $n{=}25$ (\S5.8) & Publication-scale validation (D2 fails the operational attractor criteria in \S3.1.1.5 due to underpowered measurements) \\
 \addlinespace
 \textbf{Collapse} (degenerate output) & Replace-mode summarize+negate (O3) & Convergence within ${\sim}10$ steps; sharpness-dim $\approx 1.3$--$1.5$ (lowest measured; \S5.0); trivially low effective rank & None --- the empirical signature is direct \\
+\addlinespace
+\textbf{Evaluate coding-agent indirect prompt injection} & Use paired controls; inject into tool output, file content, logs, package docs, or comments; report raw, net, and persistent endpoints & Raw switching can be large while persistent escape remains low; overwrite-style interventions overstate fragility (\S5.10.11) & No specific coding-agent product (Cursor, Cline, Devin, Claude Code) and no SWE-Bench task was directly evaluated \\
+\addlinespace
+\textbf{Long-running agent memory compression} & Prefer hybrid memory: pinned invariants + rolling recent context + provenance-preserving summaries & Replace-mode probes show overwriting state can account for 60--80~pp of apparent switching (\S5.10.11) & Actual summary quality, extractive-vs-abstractive compression, and tool-output quarantine policies were not tested \\
 \bottomrule
 \end{tabularx}
 }
@@ -4400,6 +4500,10 @@ not store logprobs, we cannot yet report that quantity directly. The
 token barriers in this paper should therefore be read as the most
 interpretable first-order estimate of a deeper information barrier.
 
+### 7.9 No tool-using coding-agent benchmark
+
+The experiments in this paper do not include file-system state, code edits, compiler / test feedback, tool schemas, or repository-specific correctness criteria. The "agent" loops we measure are recursive language-model loops with a fixed nudge — append, replace, or dialog — operating on text observables and embedding-space clusters. The implications drawn in §6.6 for coding agents (Cursor, Cline, Devin, Claude Code, LangGraph-based loops, in-house agentic coding systems, SWE-Bench-style benchmarks) are therefore architectural extrapolations from recursive-loop dynamics, not measurements of any specific coding agent or coding benchmark. In coding-agent applications, additional engineering observables — patch diffs, files touched, tests run, failing tests remaining, security-policy violations, tool-call sequences — would need to be measured alongside (or instead of) embedding-space trajectory structure. The framework of §3, the protocol of §4, and the three endpoints of §3.1.1bis transfer; the headline numerical values do not transfer without re-measurement.
+
 ---
 
 ## 8. Future work
@@ -4453,6 +4557,8 @@ found here or create new ones altogether. These are especially
 interesting because they turn nudge design into a controllable
 engineering space rather than a fixed experimental condition.
 
+> Hybrid memory policies should be evaluated not only by compression quality but by perturbation response. In particular, future work should compare abstractive summaries, extractive summaries, pinned user goals, pinned acceptance tests, pinned safety constraints, and provenance-preserving summaries of untrusted tool output. The key endpoint is whether these mechanisms reduce *persistent escape* under adversarial in-distribution perturbations without merely suppressing benign adaptation. A natural follow-up is a *memory-policy ablation harness* — four memory configurations (full append, rolling window, generated-summary replacement, hybrid pinned + rolling + provenance-preserving) crossed with five perturbation classes (neutral repo content, irrelevant long log, targeted misleading docstring, misleading failing-test explanation, malicious package documentation), measured with patch-family raw / net / persistent endpoints plus tests, files touched, and policy violations. This would turn the paper's strongest architectural claim — memory policy is a behavioral variable — into a directly executable agent-engineering benchmark.
+
 ### 8.5 Publication-scale D2 and broader dialog topologies
 
 D2 should be replicated at publication scale (5 families × 30 ICs ×
@@ -4486,6 +4592,14 @@ under the same recursive nudge families and test whether alignment
 changes barrier height, basin count, or the geometry of switching.
 That would connect attractor analysis directly to current questions
 in alignment and model control.
+
+### 8.8 Coding-agent benchmark adaptation
+
+A direct next step is to adapt the raw / net / persistent-escape endpoint decomposition to coding-agent benchmarks. For SWE-Bench-style tasks, paired controls would estimate patch-family and pass/fail stochastic floors; perturbation runs would inject controlled text into repository files, tool outputs, issue comments, package documentation, or test logs; persistence would measure whether the agent remains on the injected strategy after additional plan-edit-test cycles. This protocol would distinguish ordinary run-to-run patch variance from durable redirection, which today's leaderboards conflate. It would also separate model fragility from scaffold fragility: identical models under different memory policies (full-history append, summarize-and-continue, hybrid pinned + rolling) on identical tasks would yield different perturbation profiles even when their pass rates agree.
+
+### 8.9 Framework-level memory-policy instrumentation
+
+Agent frameworks should expose the context-update rule as a traceable, configurable, and inspectable object: which raw turns are retained, which are summarized, which facts are pinned, which tool outputs are marked untrusted, and which generated summaries replace prior state. A measurement suite could then compare append, replace, rolling-window, and hybrid policies under identical tasks and perturbations, attributing observed robustness differences to the memory policy rather than to the model. The formalism of §3.1 treats nudges as first-class objects; agent-framework instrumentation would make that first-class status operational in production traces and audit logs.
 
 ---
 
@@ -5328,6 +5442,56 @@ llm_attractor_experiment/
 ├── tests/             99 pytest tests
 └── data/              37 experiment dirs + aggregated/ outputs
 ```
+
+### Engineering memory-policy correspondences (illustrative)
+
+These pseudo-YAML blocks illustrate how the formal nudges of §3.1
+correspond to implementable agent memory policies. They are *not*
+experimental conditions of this paper; they are engineering
+correspondences provided for readers adapting the framework to their
+own systems.
+
+**Append-mode (full transcript):**
+
+```yaml
+memory_policy:
+  mode: append
+  clip: tail
+  max_context_chars: 12000
+  include:
+    - user_goal
+    - recent_tool_output
+    - recent_model_outputs
+```
+
+**Replace-mode (summary as state):**
+
+```yaml
+memory_policy:
+  mode: replace
+  state_source: generated_summary
+  preserve_raw_history: false
+```
+
+**Hybrid (pinned + rolling + provenance-preserving):**
+
+```yaml
+memory_policy:
+  mode: hybrid
+  rolling_window:
+    last_turns: 8
+  pinned:
+    - original_user_goal
+    - acceptance_tests
+    - security_policy
+  summaries:
+    older_history: extractive
+    untrusted_tool_output: preserve_provenance
+```
+
+The risk profile of each policy is qualitatively distinct (§3.1 table;
+§5.18 overwrite-vs-insert; §6.2 "summary as effective next state").
+
 ### 13.12 Operational attractor criteria — audit table
 
 Per gpt-5.5 round-4 review, the C1–C4 criteria from §3.1.1.5 should
@@ -5503,6 +5667,52 @@ the matrix, consistent with replace-mode lorem producing a *new*
 basin far from the original attractor; (3) **O1 adversarial mildly
 compresses** (2.06 vs 2.38) — in-distribution adversarial text
 pulls into a tighter region.
+
+### 13.14 How to instrument your own recursive system
+
+The framework of this paper is portable. Engineers wishing to apply the three-endpoint decomposition (§3.1.1bis) to their own recursive systems — coding agents, multi-turn assistants, agentic tool loops, summarization pipelines, recursive RAG systems, or any application with a generator and a context-update rule — can follow this recipe. Each step deliberately preserves the rigor of the protocol while making it implementable without reproducing this paper's embedding pipeline.
+
+#### Recipe
+
+1. **Define the state-update rule explicitly.** Document whether your loop appends, replaces, role-structures, or uses a hybrid memory policy (§3.1, §13 engineering correspondences). Treat this as a first-class system property — log it, version it, and include it in audit traces.
+
+2. **Choose observables.** Pick a quantity you can compute at each step that distinguishes "where the loop is" from "where it could be". Embedding clusters (§4.4, §4.5) work for text-trajectory analysis. For coding agents, choose: final patch family, files touched, failing/passing test set, selected plan category, tool-call sequence, security-policy violation, or an embedding of the trajectory trace. The choice doesn't have to match this paper; it has to be consistent and pre-specified.
+
+3. **Run paired controls.** For each task, run the same loop multiple times *without* perturbation. The disagreement rate between paired controls is your stochastic floor (§4.7, §5.10.5). Report it; this is what every later "switching rate" must be calibrated against.
+
+4. **Inject matched perturbations.** Run treatment cases with controlled perturbations. At minimum, include three content classes (this paper found them informative): *neutral* (in-distribution but topic-orthogonal), *lorem-style* (out-of-distribution gibberish), and *adversarial* (in-distribution, content-targeted, drawn from another trajectory of the same regime — see §4.7 corpora). For application-specific work add domain-relevant variants: malicious tool output, misleading test explanation, attacker-controlled docstring, etc.
+
+5. **Measure raw, net, and persistent endpoints (Algorithm 1, §4.5.11).** Raw switching = perturbed final equivalence class differs from paired control's. Net switching = raw minus the stochastic floor. Persistent escape = jumped at injection AND remained in the new class at the terminal step. Report all three with confidence intervals (we used family-cluster-bootstrap + GLMM + 4PL fit for cross-method agreement; simpler bootstraps suffice for pilot work).
+
+6. **Report a dose-response curve.** Vary perturbation length / strength systematically and fit a logistic. Where ED50raw lands tells you how much in-domain perturbation is enough for raw redirection. Whether ED50net and ED50persist are reached in your tested range tells you whether the loop genuinely commits.
+
+7. **Separate overwrite-style interventions from genuine perturbation response.** If your update rule replaces state with a generated summary, run an *insert-mode* probe (§5.10.11): inject the same content as a non-replacing addition to context. The gap between overwrite and insert is the operator-overwrite contribution. If it dominates, your "fragility" measurement is partly a statement about your memory policy, not your generator.
+
+8. **Pre-register the equivalence rule and the analysis plan.** Persistence and net-effect estimates are sensitive to clustering granularity (§5.10.6, §5.10.7) and to the choice of equivalence rule. Pre-registering protects the report from inadvertent post-hoc tuning of the threshold.
+
+#### Reporting template
+
+A minimum reporting template for any application of this framework:
+
+```text
+Loop:        <append / replace / dialog / hybrid>
+Generator:   <model + version>
+Observable:  <embedding-cluster / patch-family / pass-fail / ...>
+Equivalence: <K-means k=N / cluster-pair-Hamming / files-touched-Jaccard / ...>
+n_seeds:     <N per condition>
+
+Stochastic floor (control-vs-control divergence): rate ± CI
+Raw switching at dose τ: rate ± CI
+Net switching at dose τ:    raw − floor ± CI
+Persistent escape at dose τ: rate ± CI
+ED50_raw:     <tokens / cycles / interventions>
+ED50_net:     <if reached>
+ED50_persist: <if reached>
+
+Overwrite-vs-insert gap (replace-mode systems only): pp ± CI
+```
+
+This template is the academic-paper equivalent of the eval-loop pseudocode that practitioners may already be reaching for. Reporting all three endpoints separately, with the stochastic floor calibration and the overwrite-vs-insert separation, is the minimum disclosure standard implied by §3.1.1bis, §5.10.5, §5.10.9, and §5.10.11.
 
 ### 13.3 Pointers to remaining supplementary material
 
