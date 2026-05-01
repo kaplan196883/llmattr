@@ -8,9 +8,9 @@ Why this exists
 The default per-cell Wilson interval treats trajectories as IID — but
 they're nested in (prompt_family, initial_condition_id, run_id). When
 the same family/IC seed is rerun multiple times, those trajectories share
-upstream randomness (seed, prompt structure) and aren't independent. The
-review (paper/openai_review.md, Weakness #7) flagged this; this script
-fixes it.
+upstream randomness (seed, prompt structure) and aren't independent.
+This script accounts for that nesting via family-cluster bootstrap +
+mixed-effects logistic, instead of pretending trajectories are IID.
 
 What it does
 ------------

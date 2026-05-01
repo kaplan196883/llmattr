@@ -244,12 +244,18 @@ these behaviors been studied as properties of recursive LLM dynamics
 rather than as isolated prompt artifacts. arXiv:2512.10350
 (*Dynamics of Agentic Loops*) classifies recursive LLM trajectories
 into three regimes — contractive, oscillatory, and exploratory —
-using drift, dispersion, and cluster-persistence metrics.
-arXiv:2510.21258 quantifies degeneration as a collapse from a
-higher-dimensional trajectory into a low-dimensional attractor.
-arXiv:2510.24797 reports that recursive self-referential dialogues
-across frontier models converge on a stable "spiritual-bliss"
-attractor.
+using drift, dispersion, and cluster-persistence metrics on a
+single open-source generator. arXiv:2510.21258 introduces
+correlation dimension as a fractal-geometric measure of self-
+similarity in language-model trajectories and reports that this
+dimension drops sharply during pretraining and again during
+multiple forms of degeneration (compatible with — though not
+explicitly framed by the paper as — a collapse onto a
+lower-dimensional attractor). arXiv:2510.24797 reports that under
+sustained self-referential prompting, frontier models (GPT, Claude,
+Gemini families) produce *statistically convergent* descriptions
+of the resulting state — independent evidence that recursive
+self-referential loops have consistent, model-spanning endpoints.
 
 That line of work establishes an important fact: **attractor-like
 regimes exist in recursive LLM loops**. But it leaves open a more
@@ -394,14 +400,20 @@ cluster persistence. They show empirically that prompt design selects
 the regime: iterative paraphrasing → contractive, iterative negation
 → exploratory.
 
-arXiv:2510.21258 (*Correlation Dimension of Auto-Regressive Large
-Language Models*) quantifies degeneration as **a sudden collapse from
-a higher-dimensional trajectory in the model's state space into a
-lower-dimensional attractor**, using correlation dimension on
-sequences of next-token log-probability vectors. This validates the
-absorbing-regime interpretation we report in O3 (§5.2): a near-zero
-sharpness-dim and a single-cluster late window are exactly what a
-correlation-dim collapse predicts.
+arXiv:2510.21258 (Du and Tanaka-Ishii, *Correlation Dimension of
+Auto-Regressive Large Language Models*) introduces correlation
+dimension as a fractal-geometric measure of "epistemological
+complexity of text," applied broadly across autoregressive
+architectures (Transformer and Mamba). They report that
+correlation dimension drops during pretraining phase transitions
+and during multiple forms of generated-text degeneration. We do
+not claim their framework explicitly characterizes degeneration as
+"attractor collapse"; rather, the *direction of their effect* —
+sharp dimensionality drop coincident with degeneration — is
+compatible with the absorbing-regime interpretation we report in
+O3 (§5.2), where a near-zero sharpness-dim and a single-cluster
+late window are exactly the kind of dimensional collapse a
+correlation-dim drop would track on a different observable.
 
 Earlier work characterized degeneration *symptomatically* but without
 the dynamical-systems framing. Carlini et al. (2021) noted aggressive
@@ -434,15 +446,22 @@ A concise comparison with the closest prior work:
 | diagnostic metrics | local drift, global drift, dispersion, cluster persistence | + recurrence rate, sharpness dim, basin predictability acc(k), V\* geodesic-derived geometric barriers, RG dendrogram coarse-graining |
 | barrier-height measurement | not measured | **token-quantified** via 4-condition perturbation protocol (control / neutral / lorem / adversarial) × 3 sweep dimensions (regime / dose / injection-time) |
 | theoretical framework | discrete dynamical system in semantic space (informal) | state–generator–nudge formalism (§3.1) with formal access bound (Lemma 1) and append-mode accumulation conjecture (Conjecture 1) |
-| geometric/behavioral triangulation | n/a | **mean V\* across 6 inter-basin geodesics agrees with perturbation-derived dose thresholds** (§5.10) |
-| reproducibility | code link only | 103/103 cell-verified numeric claims (`RESULTS.md`); 37/37 experiments at 100% applicable artifact coverage (`COVERAGE.csv`); raw trajectories LFS-tracked |
-| trajectory scope | not specified | 50–1,350 trajectories per configuration across 37 experiments |
-| model | not specified | gpt-4o-mini, with within-vendor cross-generation replication on gpt-4.1-nano (37/37 cells; pub-scale headline verdicts preserved) |
+| geometric/behavioral triangulation | n/a | **rank-stable V\* ordering across 6 inter-basin geodesics matches perturbation-derived dose-rankings (89–98% of parameter combinations; absolute V\* magnitudes are descriptive only, CV 14–24% across a 45-point parameter grid)** (§5.10) |
+| reproducibility | trajectory artifacts in appendices; code "to be considered following peer review" (no public link) | 103/103 cell-verified numeric claims (`RESULTS.md`); 37/37 experiments at 100% applicable artifact coverage (`COVERAGE.csv`); raw trajectories LFS-tracked; full code, configs, and prompt templates publicly available |
+| trajectory scope | $n=2$ (one contractive, one exploratory), single seed, 50 iterations, three clustering configurations | 50–1,350 trajectories per configuration across 37 experiments |
+| model | `deepseek-r1:8b` via Ollama 0.12.9 (8B params, $T=0.8$, no explicit seed) | `gpt-4o-mini`, with within-vendor cross-generation replication on `gpt-4.1-nano` (37/37 cells; pub-scale headline verdicts preserved) |
 
 We share the dynamical-systems framing and the contractive /
 oscillatory pair; we *add* the cost-of-nudging measurement and the
 two dialog regimes whose distinguishing signature appears only when
-that measurement is made.
+that measurement is made. Tacheny (2025) introduced the
+dynamical-systems framing on a single open-source generator
+(`deepseek-r1:8b`) with two proof-of-concept singular loops; this
+paper scales the protocol — paired controls, perturbation
+dose-response, within-vendor cross-generation replication, and
+full-trajectory release — and adds the formal generator/nudge
+separation that makes context-update mechanics a first-class
+property of the loop.
 
 Tuci et al. (2026) study SGD-optimization dynamics
 on neural-net loss landscapes via random dynamical systems and
@@ -489,12 +508,12 @@ generates its own attractor structure, including dialogue-state-driven multi-bas
 
 ### 2.6 Terminology
 
-The reviewer flagged that the manuscript uses "attractor," "basin,"
+The dynamical-systems literature uses "attractor," "basin,"
 "cluster," "sink," "barrier," "switch," "collapse," "regime," and
-"nudge" interchangeably in places (`paper/openai_review.md` Writing
-& Structure §3). To fix this, we fix a strict hierarchy and
-explicit definitions. All later usage in the paper conforms to this
-glossary unless otherwise noted.
+"nudge" with overlapping but non-identical scopes. To avoid
+ambiguity in this paper, we fix a strict hierarchy with explicit
+definitions. All later usage conforms to this glossary unless
+otherwise noted.
 
 **Text state $X_t$.**
 The text state is the bounded visible context string available to
@@ -737,10 +756,9 @@ separate these cases. Treating them as a single "switching rate" would
 conflate redirection, sampling drift, and transient kicks; the rest of
 the paper depends on holding them apart.
 
-We separate three endpoints that earlier drafts treated as one. Let
-$D$ denote injected-dose length, $C_0$ the initial cluster, $C_T$
-the terminal cluster, and $p_0$ the control-vs-control natural
-floor.
+We define three endpoints. Let $D$ denote injected-dose length,
+$C_0$ the initial cluster, $C_T$ the terminal cluster, and $p_0$
+the control-vs-control natural floor.
 
 1. **Raw-switching ED50.**
    $$
@@ -773,10 +791,10 @@ floor.
 The formal §3.1.1 barrier-height definition corresponds to
 $\mathrm{ED50}_{\mathrm{persist}}$: an intervention must push the
 system out of its starting basin AND the trajectory must remain
-escaped at the terminal measurement. The sparse-data "barrier
-height" claim in earlier versions implicitly conflated this
-persistent-escape endpoint with raw terminal switching. They are
-different estimands.
+escaped at the terminal measurement. A naive "barrier height"
+formulation that does not separate these two conditions implicitly
+conflates the persistent-escape endpoint with raw terminal
+switching. They are different estimands.
 
 **Reading the dense rerun.** The dense rerun establishes a
 raw-switching ED50 of approximately 40 tokens. The fitted raw curve
@@ -2349,7 +2367,7 @@ endpoint-decomposition framework (§3.1.1bis):
   passes (S\_adv(200) = 0.620 in the dense rerun, ratio to
   S\_neutral/S\_lorem ≈ 2.8). Replace-mode O2/O3 capitulation passes
   by point estimate but is partly tautological (state-overwrite
-  intervention; see §5.6.1 / §13.4 / `paper/ed50_rerun_plan.md`).
+  intervention; see §5.6.1 / §13.4).
 - **Behavioral $\mathrm{ED50}_{\mathrm{raw}}$ token barrier**:
   **passes** at $\approx 40$ tokens (4PL=36, GLMM=41,
   bootstrap median=52); 95% CI [8.5, 242] is wide because of the
@@ -2597,7 +2615,7 @@ is supported.**
 
 ### 5.4 Phase 2b — temperature sensitivity
 
-> **Caveat (added in revision).** The T-sweep cells in this section
+> **Caveat.** The T-sweep cells in this section
 > are at **reduced scope** (n=150) rather than publication scope
 > (n=1350 for O1, n=450 for D1). The reduced-scope T=0.8 cell sits
 > 28 pct pts below the publication-scope T=0.8 anchor (0.52 vs 0.80
@@ -2748,10 +2766,11 @@ depending on whether the perturbation is in-distribution.
 
 **Engineering scale calibration.** As a rough orientation: 40 tokens is comparable to a short repository comment, a targeted test-failure note, a small README paragraph, or a user correction naming a specific file and test. Thus the measured $\mathrm{ED50}_{\mathrm{raw}}$ is not a large-context phenomenon; small in-domain snippets can measurably alter raw terminal state, even though net and persistent-escape thresholds are not reached in the tested range.
 
-The sparse-data dose-response above was driven by the n=50/cell pilot
-flagged as underpowered in revision Weakness #1. The dense-dose rerun
-described in `paper/ed50_rerun_plan.md` was committed as a frozen
-pre-registration before the run started: n=200/cell (= 5 families × 10 ICs × 4 runs); 8 dose conditions + 1 control × 200 = 1,800 trajectories total via
+The sparse-data dose-response above was n=50/cell, an
+underpowered pilot. The dense-dose rerun was committed as a
+frozen pre-registration before the run started: n=200/cell
+(= 5 families × 10 ICs × 4 runs); 8 dose conditions + 1 control ×
+200 = 1,800 trajectories total via
 `configs/perturbation/O1_ed50_dense.yaml` and
 `scripts/fit_ed50_hierarchical.py`. The pre-registered analysis
 included 4 control runs/IC to enable a control-vs-control natural-
@@ -2784,11 +2803,12 @@ floor estimate. The run completed cleanly; results below.
 | Family-cluster bootstrap median | 52 | 95% CI [8.5, 242] |
 
 The point estimates from three independent methods cluster in the
-**~36–52-token range** — substantially below the sparse-data
-"~150 tokens" claim of earlier versions of this manuscript. The
-bootstrap CI remains wide because only 5 prompt families means
-family-level resampling has heavy tails; widening the family count
-in a future replication would tighten the CI.
+**~36–52-token range** — substantially below an earlier sparse-data
+estimate of approximately 150 tokens, which the dense rerun reveals
+was an artifact of the coarse dose grid. The bootstrap CI remains
+wide because only 5 prompt families means family-level resampling
+has heavy tails; widening the family count in a future replication
+would tighten the CI.
 
 **Two structurally important findings beyond the point estimate:**
 
@@ -2935,7 +2955,7 @@ re-aggregation as new experiments land.
 
 **How to read this section.** The figures below visualize the empirical density of trajectory clouds in the joint PCA-2 embedding via $V(x) = -\log \hat\rho(x)$. They are descriptive summaries of where trajectories spent time, NOT independent quantitative validation of the behavioral barrier estimates from §5.6.1. The geometric $V^\star$ values that follow are sensitive to KDE bandwidth, grid resolution, and basin-detection parameters (CV $14$–$24\%$ across a 45-point parameter grid; see §5.10.10). The rank ordering of conditions is mostly stable across parameter settings, but absolute $V^\star$ magnitudes are not, and they should not be quoted as token-equivalent barrier heights. The caveat box immediately below restates these four points and adds the basin-creation-vs-barrier-crossing distinction that governs which regimes the $V^\star$↔ED50 comparison is even meaningful for.
 
-> **Caveat (added in revision).** The geometric $V^\star$ values
+> **Caveat.** The geometric $V^\star$ values
 > reported in this section are **descriptive**, not an independent
 > quantitative validation of the behavioral barrier — but the
 > *ordinal ranking* of conditions by $V^\star$ is robust to analyst
@@ -3001,8 +3021,9 @@ prompt-family grouping. Because the late-window basin a trajectory
 ends up in is partly determined by its prompt family — especially
 in dialog (D1) and replace-mode (O2/O3) regimes where the basin
 co-varies with stylistic / topical content — random k-fold lets the
-classifier exploit family identity as a feature. The reviewer
-flagged this in the revision (Weakness #7).
+classifier exploit family identity as a feature, inflating
+predictability above what is genuinely available from a held-out
+prompt family.
 
 To quantify the leakage, we re-ran the same basin-predictability
 classifier with `GroupKFold(n_splits=5, groups=prompt_family)` —
@@ -3245,9 +3266,9 @@ basins of *content* (specific topics) or basins of *style*
 absorbing in the sense of converging to common text, or only in a
 formal-template sense? We answered this by extracting representative
 trajectory text from each cluster (`scripts/extract_cluster_text_samples.py`)
-and having a separate LLM (`gpt-5.5` with high reasoning effort)
-characterise each cluster's content blind to the paper's regime
-labels. Results below; raw cluster-text-sample files at
+and having a separate LLM characterise each cluster's content
+blind to the paper's regime labels (using a frontier reasoning
+model held out from the rest of the pipeline). Results below; raw cluster-text-sample files at
 `data/aggregated/cluster_text_samples_*.md`.
 
 #### O1 — append-mode contractive (12 clusters, 1350 trajectories)
@@ -3489,12 +3510,12 @@ pulling trajectories back even after a cluster-boundary excursion.
 
 The persistent-escape ED50 (the dose where persistent escape rate
 crosses 50%) is **not reached in the tested range**. The dense
-rerun thus provides direct empirical confirmation of the gpt-5.5
-round-2 review point: the formal §3.1.1 barrier-height definition
-is a persistent-escape endpoint, and that endpoint is undefined in
-this experiment. The dense $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
-tokens is a raw-switching endpoint, established but distinct from
-the formal barrier definition (§3.1.1bis).
+rerun thus confirms a key conceptual distinction: the formal §3.1.1
+barrier-height definition is a persistent-escape endpoint, and
+that endpoint is undefined in this experiment. The dense
+$\mathrm{ED50}_{\mathrm{raw}} \approx 40$ tokens is a raw-switching
+endpoint, established but distinct from the formal barrier
+definition (§3.1.1bis).
 
 For comparison, the original sparse-pilot persistence numbers
 ($n=50$/cell, 4 doses) gave 8% kicked-and-persisted at dose 400 —
@@ -3505,11 +3526,13 @@ quantity from raw switching, and it is much smaller in O1 under
 in-distribution adversarial perturbation.
 
 **Multi-granularity persistence — does the persistent-escape ED50
-result survive different cluster definitions?** Per gpt-5.5
-round-3 review point #4, we re-ran the persistence test on the same
-dense data using three cluster granularities: K-means $k=12$
-(canonical), K-means $k=4$ (coarse), and HDBSCAN (auto, 18 clusters
-detected on the joint PCA-10 cloud). Computed via
+result survive different cluster definitions?** A natural
+robustness concern is that persistent escape, defined relative to
+K-means clusters, might be sensitive to the cluster granularity.
+We re-ran the persistence test on the same dense data using three
+cluster granularities: K-means $k=12$ (canonical), K-means $k=4$
+(coarse), and HDBSCAN (auto, 18 clusters detected on the joint
+PCA-10 cloud). Computed via
 `scripts/multi_granularity_persistence.py`.
 
 *Table — Persistent-escape rate under K-means $k{=}12$, $k{=}4$, and HDBSCAN per dose.*
@@ -3609,12 +3632,11 @@ empirical finding.
 
 **What this probe is for.** Replace-mode regimes (O2, O3) appear to switch at near-100% under the existing protocol, which would suggest a very low attractor barrier. This probe directly tests whether that vulnerability reflects a low basin barrier in the model or whether it is an artifact of the update rule erasing prior state. We isolate the two by re-running the same injection text and dose under two contrasting conditions: overwrite (the existing protocol — injection replaces the model's output at the injection step) versus insert (injection prepended to context, model generates normally and the model's own output remains).
 
-The reviewer (`paper/openai_review.md` Weakness #3 and round-2
-followup) observed that the original O2/O3 perturbation result —
-94–100% switching at all probed doses — is partly tautological,
-because the replace-mode operator in `adversarial_doseN`
-*overwrites* step 15's output entirely. Under that intervention,
-"the trajectory's state changed" is true by construction.
+The original O2/O3 perturbation result — 94–100% switching at all
+probed doses — is partly tautological, because the replace-mode
+operator in `adversarial_doseN` *overwrites* step 15's output
+entirely. Under that intervention, "the trajectory's state
+changed" is true by construction.
 
 To separate the operator's overwrite contribution from a genuine
 basin-reaching effect of the perturbation text, we ran a paired
@@ -3643,9 +3665,9 @@ $n=50$/cell × 5 conditions, paraphrase + replace operator.
 | `adversarial_dose200` (overwrite) | **0.98** | [0.90, 1.00] |
 | `adversarial_insert_dose200` | **0.18** | [0.10, 0.31] |
 
-**O3 results** (summarize + negate, replace operator) — added per
-gpt-5.5 round-3 review point #3, to test whether the overwrite
-artifact generalises across replace-mode operators:
+**O3 results** (summarize + negate, replace operator) — testing
+whether the overwrite artifact generalises across replace-mode
+operators:
 
 *Table — Insert-vs-overwrite switching at dose 80 / dose 200 for O3 (summarize + negate, replace).*
 
@@ -3728,7 +3750,7 @@ that O1 measurements use.
 
 ### 5.11 Cross-metric correlations: do the regime diagnostics agree?
 
-> **Caveat (added in revision).** The correlations reported in this
+> **Caveat.** The correlations reported in this
 > subsection are computed across only **n=4 regimes** (O1, O2, O3,
 > D1). Four points cannot support a meaningful correlation statistic
 > in any conventional sense — Pearson and Spearman *r/ρ* values for
@@ -4788,8 +4810,8 @@ PYTHONPATH=. python -m pytest tests/ -q
 
 ### 10.8 Repository layout (summary)
 
-The repository at <https://github.com/kaplan196883/llmattr> has the
-canonical layout: `src/` (analysis + api + core + experiments +
+The repository has the canonical layout: `src/` (analysis + api +
+core + experiments +
 reports + utils), `scripts/` (config builders, aggregators, audit
 tools), `configs/` (per-experiment YAML), `tests/` (99 pytest tests),
 and `data/` (37 experiment dirs + `aggregated/` outputs). Top-level
@@ -4819,11 +4841,17 @@ and the article structure.
 Conceptual lineage (by space):
 
 1. **Dynamical-systems framing of LLM inference loops.** The most
-   directly relevant prior work — arXiv:2512.10350, arXiv:2510.21258,
-   arXiv:2510.24797 — identifies or characterizes attractor regimes in
-   recursive LLM trajectories qualitatively. This paper extends them
-   with measured barrier heights and the multi-basin / drill-down
-   dialog regimes.
+   directly relevant prior work — arXiv:2512.10350 (regime taxonomy
+   on a single open-source generator), arXiv:2510.21258
+   (correlation-dimension collapse during degeneration), and
+   arXiv:2510.24797 (statistical convergence of self-referential
+   descriptions across frontier models) — identifies or
+   characterizes attractor-like phenomena in recursive LLM
+   trajectories at the level of qualitative existence claims or
+   single-observable measurements. This paper extends them with
+   measured perturbation barrier heights, the multi-basin /
+   drill-down dialog regimes, and a generator/nudge separation
+   that makes the context-update rule a first-class object.
 2. **Iterative refinement / self-correct / self-consistency.** Recent
    work (Madaan et al., 2023; Welleck et al., 2023; Pan et al., 2023;
    Wang et al., 2023; Huang et al., 2024) studies recursive prompting
@@ -4884,15 +4912,22 @@ References:
 
 - arXiv:2510.21258. Du, X., and Tanaka-Ishii, K. (2025).
   *Correlation Dimension of Auto-Regressive Large Language Models.*
-  Quantifies degeneration as a collapse from a higher-dimensional
-  trajectory in the model's state space into a lower-dimensional
-  attractor, validating our O3 absorbing-regime interpretation.
+  Introduces correlation dimension as a fractal-geometric measure
+  of "epistemological complexity of text" across autoregressive
+  architectures (Transformer and Mamba); reports sharp dimension
+  drops at pretraining phase transitions and during multiple forms
+  of generated-text degeneration. Compatible with — though not
+  explicitly framed by their paper as — the absorbing-regime
+  interpretation we report in O3.
 - arXiv:2510.24797. Berg, C., de Lucena, D., and Rosenblatt, J.
   (2025). *Large Language Models Report Subjective Experience Under
-  Self-Referential Processing.* Recursive self-attending dialogues
-  converge to a stable "spiritual-bliss" attractor across frontier
-  models — a strong cross-vendor validation of the multi-basin claim
-  we make for D1, on a different operator family.
+  Self-Referential Processing.* Reports that under sustained
+  self-referential prompting, frontier models (GPT, Claude, Gemini
+  families) produce structurally convergent descriptions of the
+  resulting state — independent cross-vendor evidence that
+  recursive self-referential loops have consistent, model-spanning
+  endpoints, complementary to the multi-basin claim we make for D1
+  on a different operator family.
 - arXiv:2512.10350. Tacheny, N. (2025). *Geometric Dynamics of
   Agentic Loops in Large Language Models.* Three-regime taxonomy
   (contractive, oscillatory, exploratory) for recursive LLM
@@ -5070,10 +5105,10 @@ References:
 
 ---
 
-*Repository: <https://github.com/kaplan196883/llmattr> (raw trajectories
-LFS-tracked; embeddings + plots regenerable from the documented
-pipeline). Reproducibility budget: ~\$30 in OpenAI embedding API + ~2
-hours wall-clock on a 40-core machine.*
+*Reproducibility: raw trajectories are released under git-LFS;
+embeddings and plots regenerate from the documented pipeline.
+Reproducibility budget: approximately \$30 in OpenAI embedding API
+calls plus 2 hours wall-clock on a 40-core machine. See §10.*
 
 ---
 
@@ -5217,10 +5252,9 @@ adversarial draws from `exp_pub_O1_continue`). Adversarial samples
 exclude the *family* of the trajectory being perturbed but may share
 its overall topic distribution.
 
-**Insert vs overwrite modes** (added in revision; see review §3 and
-`paper/ed50_rerun_plan.md`). The current `adversarial_doseN`
-condition implements *state overwrite* (the operator output for
-step $k$ is replaced wholesale by the injection text). A second
+**Insert vs overwrite modes.** The `adversarial_doseN` condition
+implements *state overwrite* (the operator output for step $k$ is
+replaced wholesale by the injection text). A second
 condition `adversarial_insert_doseN` implements *context insertion*
 (the injection text is prepended to the context for step $k$'s
 generation, but the model's normal generated output is preserved
@@ -5494,9 +5528,9 @@ The risk profile of each policy is qualitatively distinct (§3.1 table;
 
 ### 13.12 Operational attractor criteria — audit table
 
-Per gpt-5.5 round-4 review, the C1–C4 criteria from §3.1.1.5 should
-have an auditable table with the actual numeric values backing each
-PASS/FAIL. Tabulated below from publication-scale runs
+The C1–C4 criteria of §3.1.1.5 are operationally auditable. The
+table below records the actual numeric values backing each
+PASS/FAIL verdict. Tabulated below from publication-scale runs
 (`exp_pub_O1_continue` etc.; bootstrap statistics from
 `metrics/bootstrap_summary.csv`; basin-predictability from §5.10.5;
 embedder-robustness from §5.13). Empty cells are marked "n.t." (not
@@ -5717,8 +5751,7 @@ This template is the academic-paper equivalent of the eval-loop pseudocode that 
 ### 13.3 Pointers to remaining supplementary material
 
 The following content remains in the main body and is a candidate
-for further extraction in a future revision cycle (see
-`paper/STRUCTURE_REORG_PROPOSAL.md`):
+for further extraction in a future revision cycle:
 
 - §5.9 Cross-experiment aggregation (pipeline-script documentation).
 - §4.8 Static visualization battery, §4.9 Flow-field computation,
