@@ -13,11 +13,16 @@ text = ARTICLE.read_text(encoding="utf-8")
 descriptions = json.loads(DESC.read_text(encoding="utf-8"))
 
 # Strip the entire existing footnote-definitions block (everything after the
-# round-23 sentinel comment).
-sentinel = "<!-- Figure footnote definitions (round-23) -->"
-i = text.find(sentinel)
-if i == -1:
-    raise SystemExit("round-23 footnote sentinel not found")
+# sentinel comment — round-23 originally, round-25 in subsequent runs).
+for sentinel in (
+    "<!-- Figure footnote definitions (round-25 deeper) -->",
+    "<!-- Figure footnote definitions (round-23) -->",
+):
+    i = text.find(sentinel)
+    if i != -1:
+        break
+else:
+    raise SystemExit("no footnote-definitions sentinel found")
 
 text_before = text[:i].rstrip()
 

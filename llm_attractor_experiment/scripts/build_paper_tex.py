@@ -745,7 +745,20 @@ def _convert_footnotes(text: str) -> str:
     # Strip the definition blocks from the text
     text = def_pat.sub("", text)
 
-    # Replace inline references [^id] with \\protect\\footnote{def}
+    # Replace inline references [^id] with a CAPTION-CONTINUATION block.
+    #
+    # We do NOT use \protect\footnote{} here. \footnote{} inside a figure
+    # caption produces a footnote at the bottom of the page where the
+    # markdown text lived, which is often BEFORE the deferred figure float.
+    # The reader then sees the footnote first and the figure later, which
+    # is wrong. savenotes does not fix this because the footnote text is
+    # emitted at source position, not at float position.
+    #
+    # Instead, the description becomes a caption-continuation: an italic
+    # paragraph in \footnotesize that follows the existing caption text.
+    # The continuation stays inside \caption{}, so it is bound to the
+    # figure float and always appears under the figure regardless of
+    # which page LaTeX places the float on.
     def repl(m: re.Match) -> str:
         fid = m.group(1)
         if fid not in definitions:
@@ -758,7 +771,13 @@ def _convert_footnotes(text: str) -> str:
         body = body.replace("&", r"\&").replace("%", r"\%").replace("#", r"\#")
         body = body.replace("_", r"\_").replace("$", r"\$")
         body = body.replace("{", r"\{").replace("}", r"\}")
-        return r"\protect\footnote{" + body + "}"
+        # \\\\ ends the previous caption line; \footnotesize\itshape make
+        # the continuation visually distinct from the headline caption.
+        return (
+            r"\\[2pt]{\footnotesize\itshape "
+            + body
+            + r"}"
+        )
 
     text = re.sub(r"\[\^([A-Za-z0-9_]+)\]", repl, text)
 
