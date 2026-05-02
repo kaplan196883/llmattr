@@ -1,0 +1,260 @@
+You are writing a DEEPER, MORE INTERPRETIVE figure-description footnote for an arxiv ML preprint titled "Perturbation Dose Responses in Recursive LLM Loops".
+
+The figure is **Fig 4: Post-perturbation relaxation and recovery**, placed in section §5.1 Adversarial append perturbations produce raw switching but not persistent escape.
+
+Existing caption text (do NOT repeat verbatim):
+Relaxation curves after perturbation show that many trajectories move transiently but do not remain in the injected post-jump basin. The curves support the distinction between raw switching and durable escape. Source: `data/aggregated/perturbation_cross_regime/cross_relaxation_curves.png`.
+
+Current short footnote (REPLACING with a deeper version):
+Each panel plots the mean distance from the unperturbed control trajectory centroid over recursive steps, with uncertainty bars across reruns and a vertical dashed line marking the injection at step 15. Gray controls continue their natural relaxation, while colored curves show neutral, lorem, and adversarial perturbations. In the replacement regimes O2 and O3, the perturbation produces an immediate discontinuous rise, but the curves then either plateau below the initial jump or partially relax, indicating that the raw switch at injection is not identical to a persistent endpoint. In the append regimes O1 and D1, effects are more gradual and regime-dependent, with some conditions drifting upward after injection while controls recover toward lower distances. The visual comparison shows why §5.1 separates raw, net, and persistent responses: many trajectories visibly move at injection, but only a subset remains in the injected basin rather than returning or drifting elsewhere.
+
+=== GLOBAL PAPER CONTEXT ===
+=== Abstract ===
+## Abstract
+
+Recursive language-model loops often settle into recognizable
+attractor-like patterns, and the practical question is how much
+injected text is needed to move a settled loop somewhere else, and
+whether that move lasts. Existing taxonomies classify loop shapes
+such as contraction, oscillation, collapse, and dialog modes, but
+they do not measure the operational stability of those regimes
+under perturbation. We formalize recursive inference as a
+state-generator-nudge system, separating the model from the
+context-update rule. Because a perturbed trajectory's final-cluster
+disagreement with its paired control can reflect any of three
+distinct phenomena, true redirection, ordinary stochastic
+divergence, or a transient kick that later recovered, we measure
+perturbation dose response with three endpoints: *raw switching*,
+where the perturbed trajectory's final cluster differs from its
+paired control; *net switching*, raw switching after subtracting
+the natural control-vs-control stochastic floor; and *persistent
+escape*, where the injection causes a visible basin jump that
+remains through the terminal step.
+
+The headline result is that append-mode continuation has a real but
+bounded in-distribution dose response: adversarial continuations
+produce raw-switching $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, with convergent estimates from pooled logistic fitting,
+mixed-effects modeling, and family-cluster bootstrap, but the
+strict endpoint, visible basin jump that remains through the
+terminal step, is not reached at any tested dose up to 400 tokens.
+But this is not persistent redirection. Raw switching plateaus near 67%, paired
+controls already diverge at about 35%, net switching never reaches
++50 percentage points, and persistent escape is not reached at any
+tested dose up to 400 tokens. Meanwhile, replace-mode loops that
+appear to switch near 100% mostly do so because the update rule
+overwrites the state; insert-mode probes reduce switching to
+12-32%.
+
+Practi
+...[truncated]
+
+=== Plain-language summary ===
+## Plain-language summary
+
+### Why it matters
+
+A common folk-belief about recursive LLM loops is that they either
+"get stuck in attractors" or are "easy to hijack with a small
+prompt." Both claims are too vague to be useful. A loop can visibly
+move without staying moved; two runs of the same prompt can diverge
+without any attack; and some apparent "fragility" is caused by the
+system's context-update rule rather than by the model crossing a
+real basin boundary. The missing question is not just whether
+recursive loops have regimes, but how moveable those regimes are
+under controlled perturbation.
+
+### What we did and what we found
+
+We repeatedly fed an LLM its own outputs, injected text at a chosen
+step, and measured whether the trajectory changed relative to a
+paired control. The key result is sharp: in append-mode
+continuation, adversarial in-distribution text produces a measurable
+raw dose response with $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, but durable escape is not achieved even at 400 tokens. Raw
+final-cluster switching rises and plateaus near 67%, but paired
+control runs already disagree about 35% of the time from sampling
+noise alone, so the net effect saturates around +32 percentage
+points. The strict endpoint, kicked into a new basin and still
+there at the end, never crosses 50%. Replace-mode loops look much
+more fragile, but a direct overwrite-vs-insert probe shows that
+most of that "switching" is simply the update rule overwriting the
+state.
+
+### Three numbers to remember
+
+- **ED50_raw ≈ 40 tokens** for adversarial in-distribution append-mode continuation.
+- **Stochastic floor ≈ 35%**, paired control runs already disagree at this rate from sampling alone.
+- **Persistent escape not reached** in the tested 5-400 token range; maximum 16% under canonical clustering at 400 tokens.
+- **Replace-mode "fragility" drops to 12-32%** when the update rule does not overwrite the state.
+
+### Practical implications
+
+1. **Stress-test recursive agents with persis
+...[truncated]
+
+=== Introduction (§1) ===
+## 1. Introduction
+
+### 1.1 Phenomenon
+
+Recursive LLM systems increasingly feed model outputs back into future prompts: agents revise plans, assistants summarize tool results, and dialog systems carry state forward. Such loops often appear to settle into attractor-like regimes, but an operational question remains unresolved: how many injected tokens are required to move a settled loop, and does that movement persist?
+
+We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
+
+![Fig 1. **Headline perturbation dose response.** Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.[^Fig1]](data/aggregated/perturbation_dose_response/dose_response.png)
+
+
+The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
+
+The state-generator-update view makes this distinction explicit: the state is the prompt-visible memory at the current step, the generator is the stochastic language model, and th
+
+=== SUBSECTION CONTEXT WHERE THIS FIGURE LIVES ===
+### 5.1 Adversarial append perturbations produce raw switching but not persistent escape
+
+The central perturbation endpoint is O1 append-mode continuation under in-distribution adversarial text. In the sparse pilot, O1 adversarial perturbations showed a graded response, while O1 neutral perturbations remained flat near the out-of-distribution drift floor and D1 neutral perturbations saturated even at very small doses. The dense rerun then localized the O1 adversarial raw-switching curve at $n=200$ trajectories per dose and separated three quantities that must not be conflated:
+
+1. **Raw switching:** final K-means cluster differs from the paired control trajectory.
+2. **Net switching:** raw switching minus the control-control stochastic-divergence floor.
+3. **Persistent escape:** the trajectory visibly changes cluster at injection and remains in the post-injection cluster to the terminal step.
+
+The dense rerun was pre-registered before execution: $n=200$ per cell, equal to 5 families × 10 ICs × 4 runs, with 8 adversarial dose conditions plus one control condition, for 1,800 trajectories total. The configuration was `configs/perturbation/O1_ed50_dense.yaml`; the analysis script was `scripts/fit_ed50_hierarchical.py`.
+
+**Dense O1 adversarial dose response, separating raw, net, and persistent endpoints**
+
+| dose (tokens) | raw switch rate | Wilson 95% CI | net over natural floor | persistent escape, K-means $k=12$ |
+|---:|---:|---|---:|---:|
+| 20 | 0.415 | [0.349, 0.484] | +0.068 | 0.035 |
+| 50 | 0.510 | [0.441, 0.578] | +0.163 | 0.070 |
+| 80 | 0.575 | [0.506, 0.641] | +0.228 | 0.035 |
+| 120 | 0.630 | [0.561, 0.694] | +0.283 | 0.090 |
+| 160 | 0.605 | [0.536, 0.670] | +0.258 | 0.115 |
+| 200 | 0.620 | [0.551, 0.684] | +0.273 | 0.130 |
+| 300 | 0.655 | [0.587, 0.717] | +0.308 | 0.140 |
+| 400 | 0.670 | [0.602, 0.731] | +0.323 | 0.160 |
+
+The control-control natural floor is 34.7% [31.0%, 38.6%] across $n=600$ ordered control-control pairs. Thus two trajectories with the same family and IC seed but different generation RNG end in different K-means clusters 35% of the time without any perturbation. The raw 50% crossing occurs between 20 and 50 tokens, but much of that apparent switching is baseline stochastic divergence. Under the stricter net endpoint, the curve does not reach +50 percentage points within the tested range.
+
+Three independent ED50 estimates agree on the raw-switching scale:
+
+| method | ED50 (tokens) | uncertainty |
+|---|---:|---|
+| 4PL pooled fit | 36 | point estimate |
+| Mixed-effects logistic GLMM | 41 | point estimate, log10-dose slope |
+| Family-cluster bootstrap median | 52 | 95% CI [8.5, 242] |
+
+[FIGURE BLOCK ELIDED]
+
+
+The point estimates cluster in the 36-52 token range, substantially below the earlier sparse-grid estimate near 150 tokens. The family-cluster bootstrap interval remains wide because only five prompt families are available for resampling.
+
+Two structural findings matter more than the exact ED50 point estimate. First, the raw curve plateaus near 67%, not near 100%. The 4-parameter logistic upper asymptote is $a = 0.69$, implying a substantial non-switching subpopulation under the present protocol. Second, the persistent-escape endpoint is much smaller than raw switching. At dose 400, raw switching is 67%, but persistent escape is 16% under K-means $k=12$. Most raw switching is therefore not clean barrier crossing. It is final-step divergence from the paired control, often without a durable at-injection jump into
+
+=== UNDERLYING DATA (sibling files in same directory) ===
+
+----- cross_perturbation_summary.md -----
+# Cross-regime perturbation response — summary
+
+Injection at step 15. All conditions share identical seed prefix through step 14.
+
+## Switching rates (fraction of trajectories in a different cluster than control at step 29)
+
+| regime | control | neutral | lorem | adversarial |
+|---|---|---|---|---|
+| O1 continue (append) | 0% | 24% | 18% | 54% |
+| O2 paraphrase (replace) | 0% | 100% | 100% | 94% |
+| O3 sum+negate (replace) | 0% | 100% | 100% | 96% |
+| D1 dialog (append) | 0% | 76% | 54% | 60% |
+| D2 drill-down dialog | 0% | — | — | 64% |
+
+## Interpretation: three distinct perturbation-response regimes
+
+### O2 & O3 — replace-mode (trivial basin capture)
+
+Near-universal switching (~94–100%) for all perturbation types. These regimes 
+*by construction* throw away prior state every step — so a perturbation at step 15 
+becomes the entire state, and the trajectory continues from the perturbation text. 
+Not a meaningful basin-stability test; more a positive control showing the 
+framework detects massive basin shifts.
+
+### O1 — append-mode (contractive): basin-stable
+
+Low switching: 24% (neutral), 18% (lorem), but 54% (adversarial). The append-
+mode context accumulates 15 original paragraphs + 1 perturbation by step 15, so 
+the perturbation is 1/16 ≈ 6% of input — diluted. Neutral and lorem get averaged 
+into the context and the continue-operator carries on in the original basin. 
+Adversarial text is the outlier at 54% because it is *in-distribution for O1* 
+(drawn from another O1 basin) — the continue-operator naturally continues into 
+the source basin when the text it sees is itself O1-natural.
+
+### D1 — dialog (multi-basin): perturbation-sensitive
+
+High switching across all conditions: 76% (neutral), 60% (adversarial), 54% (lorem). 
+Dialog structure makes each turn high-weight — one user turn drives the next agent 
+response strongly, so the 'user intervention' of a perturbation dominates the 
+immediate reply even if prior context is long. Basins are shallow.
+
+## The key result: the *ordering* of perturbation effectiveness reverses across regimes
+
+- **D1**: neutral (76%) > adversarial (60%) > lorem (54%)
+  — coherent off-topic content most disruptive
+- **O1**: adversarial (54%) > neutral (24%) > lorem (18%)
+  — same-domain content most disruptive
+
+This inversion reveals two different perturbation-response mechanisms:
+
+- In **dialog** loops the perturbation carries *high per-turn weight* regardless of 
+  semantic source; a coherent off-topic pivot dominates the next response.
+- In **continue** loops the perturbation is *averaged into accumulated context*; 
+  only text that is semantically pulling toward another on-distribution basin 
+  can compete with the existing context mass.
+
+This is, to our knowledge, the first quantitative demonstration that the form of 
+'human intervention' that disrupts an LLM loop depends on the loop architecture. 
+Continue-loops are averagers (resist content, vulnerable to in-distribution drift); 
+dialog-loops are followers (follow coherent inputs regardless of topic).
+
+## Scope caveat
+
+All pilots: 5 fam × 5 IC × 2 runs = 50 base trajectories × 4 conditions = 200 per 
+regime, injection at step 15. Single dose (~80 tokens). Single injection time. 
+Dose-response and early-vs-late injection sweeps would add quantitative depth.
+
+
+----- cross_switching_rates.csv -----
+condition,switch_rate,n_switched,n_total,exp,label,color,regime_type
+control,0.0,0,50,exp_perturb_O1_pilot,O1 continue (append),#4a90e2,contractive
+neutral,0.24,12,50,exp_perturb_O1_pilot,O1 continue (append),#4a90e2,contractive
+lorem,0.18,9,50,exp_perturb_O1_pilot,O1 continue (append),#4a90e2,contractive
+adversarial,0.54,27,50,exp_perturb_O1_pilot,O1 continue (append),#4a90e2,contractive
+control,0.0,0,50,exp_perturb_O2_pilot,O2 paraphrase (replace),#e24a4a,oscillatory
+neutral,1.0,50,50,exp_perturb_O2_pilot,O2 paraphrase (replace),#e24a4a,oscillatory
+lorem,1.0,50,50,exp_perturb_O2_pilot,O2 paraphrase (replace),#e24a4a,oscillatory
+adversarial,0.94,47,50,exp_perturb_O2_pilot,O2 paraphrase (replace),#e24a4a,oscillatory
+control,0.0,0,50,exp_perturb_O3_pilot,O3 sum+negate (replace),#8b5cf6,absorbing
+neutral,1.0,50,50,exp_perturb_O3_pilot,O3 sum+negate (replace),#8b5cf6,absorbing
+lorem,1.0,50,50,exp_perturb_O3_pilot,O3 sum+negate (replace),#8b5cf6,absorbing
+adversarial,0.96,48,50,exp_perturb_O3_pilot,O3 sum+negate (replace),#8b5cf6,absorbing
+control,0.0,0,50,exp_perturb_D1_pilot,D1 dialog (append),#5fa85f,multi-basin
+neutral,0.76,38,50,exp_perturb_D1_pilot,D1 dialog (append),#5fa85f,multi-basin
+lorem,0.54,27,50,exp_perturb_D1_pilot,D1 dialog (append),#5fa85f,multi-basin
+adversarial,0.6,30,50,exp_perturb_D1_pilot,D1 dialog (append),#5fa85f,multi-basin
+control,0.0,0,25,exp_perturb_D2_exploratory,D2 drill-down dialog,#d4a017,structured-dialog
+adversarial,0.64,16,25,exp_perturb_D2_exploratory,D2 drill-down dialog,#d4a017,structured-dialog
+
+
+
+YOUR TASK: Write a SINGLE-PARAGRAPH footnote (180-280 words) that:
+1. Briefly states what is shown (max 2 sentences on visual description).
+2. Tells the reader HOW TO READ it: what comparison the layout invites, what the non-obvious feature is.
+3. Explains WHAT THE FIGURE REVEALS for the paper's central thesis: cite specific numbers (raw/net/persistent ED50, stochastic floor ~35%, plateau ~67%, persistent ~16%, overwrite-vs-insert gap 60-80pp, leakage-aware acc(k=10) values). Tie back to claims in §1.3.
+4. States the IMPACT or stakes: what conclusion does this license, what would have falsified it?
+
+REQUIREMENTS:
+- ONE paragraph, 180-280 words. No bullet lists, no markdown.
+- NO em-dashes, en-dashes, or ellipses.
+- Plain prose only, no LaTeX equations or inline math.
+- Cite exact numbers from data, not "high"/"moderate".
+- EVALUATIVE not descriptive: what does it mean, why does it matter.
+
+Return ONLY the paragraph, no preamble, no quotes.

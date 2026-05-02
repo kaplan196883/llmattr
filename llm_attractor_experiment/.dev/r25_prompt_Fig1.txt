@@ -1,0 +1,249 @@
+You are writing a DEEPER, MORE INTERPRETIVE figure-description footnote for an arxiv ML preprint titled "Perturbation Dose Responses in Recursive LLM Loops".
+
+The figure is **Fig 1: Headline perturbation dose response**, placed in section §1.1 Phenomenon.
+
+Existing caption text (do NOT repeat verbatim):
+Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.
+
+Current short footnote (REPLACING with a deeper version):
+The single panel plots raw switching fraction at step 29 against injected perturbation dose in tokens on a log-scaled x axis, with the y axis giving the fraction of 50 trajectories that leave the measured switching basin. Green circles show D1 with neutral content, blue circles show O1 with neutral content, and red squares with a dashed line show O1 with adversarial content; vertical error bars indicate sampling uncertainty, point labels give percentages, and the dotted horizontal line marks the 50 percent switching threshold. Read the figure by comparing each curve to this threshold and to the blue neutral O1 baseline. The red adversarial O1 curve rises with dose and crosses the operational halfway point, consistent with ED50_raw around 40 tokens and a raw plateau near two thirds, while the blue control remains near the stochastic floor of about 35 percent. Persistent escape is a separate, lower endpoint, reaching at most 16 percent at dose 400 under the K-means k equals 12 analysis.
+
+=== GLOBAL PAPER CONTEXT ===
+=== Abstract ===
+## Abstract
+
+Recursive language-model loops often settle into recognizable
+attractor-like patterns, and the practical question is how much
+injected text is needed to move a settled loop somewhere else, and
+whether that move lasts. Existing taxonomies classify loop shapes
+such as contraction, oscillation, collapse, and dialog modes, but
+they do not measure the operational stability of those regimes
+under perturbation. We formalize recursive inference as a
+state-generator-nudge system, separating the model from the
+context-update rule. Because a perturbed trajectory's final-cluster
+disagreement with its paired control can reflect any of three
+distinct phenomena, true redirection, ordinary stochastic
+divergence, or a transient kick that later recovered, we measure
+perturbation dose response with three endpoints: *raw switching*,
+where the perturbed trajectory's final cluster differs from its
+paired control; *net switching*, raw switching after subtracting
+the natural control-vs-control stochastic floor; and *persistent
+escape*, where the injection causes a visible basin jump that
+remains through the terminal step.
+
+The headline result is that append-mode continuation has a real but
+bounded in-distribution dose response: adversarial continuations
+produce raw-switching $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, with convergent estimates from pooled logistic fitting,
+mixed-effects modeling, and family-cluster bootstrap, but the
+strict endpoint, visible basin jump that remains through the
+terminal step, is not reached at any tested dose up to 400 tokens.
+But this is not persistent redirection. Raw switching plateaus near 67%, paired
+controls already diverge at about 35%, net switching never reaches
++50 percentage points, and persistent escape is not reached at any
+tested dose up to 400 tokens. Meanwhile, replace-mode loops that
+appear to switch near 100% mostly do so because the update rule
+overwrites the state; insert-mode probes reduce switching to
+12-32%.
+
+Practi
+...[truncated]
+
+=== Plain-language summary ===
+## Plain-language summary
+
+### Why it matters
+
+A common folk-belief about recursive LLM loops is that they either
+"get stuck in attractors" or are "easy to hijack with a small
+prompt." Both claims are too vague to be useful. A loop can visibly
+move without staying moved; two runs of the same prompt can diverge
+without any attack; and some apparent "fragility" is caused by the
+system's context-update rule rather than by the model crossing a
+real basin boundary. The missing question is not just whether
+recursive loops have regimes, but how moveable those regimes are
+under controlled perturbation.
+
+### What we did and what we found
+
+We repeatedly fed an LLM its own outputs, injected text at a chosen
+step, and measured whether the trajectory changed relative to a
+paired control. The key result is sharp: in append-mode
+continuation, adversarial in-distribution text produces a measurable
+raw dose response with $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, but durable escape is not achieved even at 400 tokens. Raw
+final-cluster switching rises and plateaus near 67%, but paired
+control runs already disagree about 35% of the time from sampling
+noise alone, so the net effect saturates around +32 percentage
+points. The strict endpoint, kicked into a new basin and still
+there at the end, never crosses 50%. Replace-mode loops look much
+more fragile, but a direct overwrite-vs-insert probe shows that
+most of that "switching" is simply the update rule overwriting the
+state.
+
+### Three numbers to remember
+
+- **ED50_raw ≈ 40 tokens** for adversarial in-distribution append-mode continuation.
+- **Stochastic floor ≈ 35%**, paired control runs already disagree at this rate from sampling alone.
+- **Persistent escape not reached** in the tested 5-400 token range; maximum 16% under canonical clustering at 400 tokens.
+- **Replace-mode "fragility" drops to 12-32%** when the update rule does not overwrite the state.
+
+### Practical implications
+
+1. **Stress-test recursive agents with persis
+...[truncated]
+
+=== Introduction (§1) ===
+## 1. Introduction
+
+### 1.1 Phenomenon
+
+Recursive LLM systems increasingly feed model outputs back into future prompts: agents revise plans, assistants summarize tool results, and dialog systems carry state forward. Such loops often appear to settle into attractor-like regimes, but an operational question remains unresolved: how many injected tokens are required to move a settled loop, and does that movement persist?
+
+We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
+
+![Fig 1. **Headline perturbation dose response.** Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.[^Fig1]](data/aggregated/perturbation_dose_response/dose_response.png)
+
+
+The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
+
+The state-generator-update view makes this distinction explicit: the state is the prompt-visible memory at the current step, the generator is the stochastic language model, and th
+
+=== SUBSECTION CONTEXT WHERE THIS FIGURE LIVES ===
+### 1.1 Phenomenon
+
+Recursive LLM systems increasingly feed model outputs back into future prompts: agents revise plans, assistants summarize tool results, and dialog systems carry state forward. Such loops often appear to settle into attractor-like regimes, but an operational question remains unresolved: how many injected tokens are required to move a settled loop, and does that movement persist?
+
+We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
+
+[FIGURE BLOCK ELIDED]
+
+
+The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
+
+The state-generator-update view makes this distinction explicit: the state is the prompt-visible memory at the current step, the generator is the stochastic language model, and the update rule maps state and output into the next state. If the term context-update nudge is used, it denotes this update operation, not a separate intervention inside the model.
+
+Recent work has shown that recursive LLM trajectories can exhibit contractive, oscillatory, exploratory, degenerate, or convergent self-referential regimes. These studies establish that attractor-like structure is empirically visible, but they do not measure the perturbation dose required to move a trajectory between regimes, nor do they separate that dose from ordinary stochastic divergence or from update-rule overwrite mechanics.
+
+The resulting measurement problem has three parts. For a settled recursive trajectory, how many injected tokens are required to produce final-cluster switching, how much of that switching exceeds the stochastic control floor, and how often does the perturbation produce a visible basin jump that persists to the terminal step? A single final disagreement cannot answer this, because it may reflect real redirection, unperturbed sampling divergence, or a transient displacement followed by recovery.
+
+
+=== UNDERLYING DATA (sibling files in same directory) ===
+
+----- dose_response.csv -----
+condition,switch_rate,n_switched,n_total,regime_label,perturbation_type,dose,exp
+control,0.0,0,50,D1 dialog,neutral,,exp_perturb_D1_dose
+neutral_dose20,0.7,35,50,D1 dialog,neutral,20.0,exp_perturb_D1_dose
+neutral_dose80,0.78,39,50,D1 dialog,neutral,80.0,exp_perturb_D1_dose
+neutral_dose200,0.7,35,50,D1 dialog,neutral,200.0,exp_perturb_D1_dose
+neutral_dose400,0.66,33,50,D1 dialog,neutral,400.0,exp_perturb_D1_dose
+control,0.0,0,50,D1 dialog,neutral,,exp_perturb_D1_dose_fine
+neutral_dose5,0.62,31,50,D1 dialog,neutral,5.0,exp_perturb_D1_dose_fine
+neutral_dose10,0.68,34,50,D1 dialog,neutral,10.0,exp_perturb_D1_dose_fine
+neutral_dose15,0.68,34,50,D1 dialog,neutral,15.0,exp_perturb_D1_dose_fine
+control,0.0,0,50,O1 continue,neutral,,exp_perturb_O1_dose
+neutral_dose20,0.22,11,50,O1 continue,neutral,20.0,exp_perturb_O1_dose
+neutral_dose80,0.26,13,50,O1 continue,neutral,80.0,exp_perturb_O1_dose
+neutral_dose200,0.24,12,50,O1 continue,neutral,200.0,exp_perturb_O1_dose
+neutral_dose400,0.24,12,50,O1 continue,neutral,400.0,exp_perturb_O1_dose
+control,0.0,0,50,O1 continue,adversarial,,exp_perturb_O1_dose_adversarial
+adversarial_dose20,0.26,13,50,O1 continue,adversarial,20.0,exp_perturb_O1_dose_adversarial
+adversarial_dose80,0.34,17,50,O1 continue,adversarial,80.0,exp_perturb_O1_dose_adversarial
+adversarial_dose200,0.54,27,50,O1 continue,adversarial,200.0,exp_perturb_O1_dose_adversarial
+adversarial_dose400,0.48,24,50,O1 continue,adversarial,400.0,exp_perturb_O1_dose_adversarial
+
+
+----- dose_response_summary.md -----
+# Perturbation dose-response — summary
+
+**Setup**: perturbation injected at step 15 of a 30-step trajectory. Switching 
+measured as cluster at step 29 ≠ paired control's cluster. 50 trajectories per cell.
+
+## D1 dialog — neutral perturbation
+
+| dose (tokens) | switched / total | rate | Wilson 95% CI |
+|---|---|---|---|
+| control | 0 / 50 | 0% | [0–7] |
+| 5 | 31 / 50 | 62% | [48–74] |
+| 10 | 34 / 50 | 68% | [54–79] |
+| 15 | 34 / 50 | 68% | [54–79] |
+| 20 | 35 / 50 | 70% | [56–81] |
+| 80 | 39 / 50 | 78% | [65–87] |
+| 200 | 35 / 50 | 70% | [56–81] |
+| 400 | 33 / 50 | 66% | [52–78] |
+
+## O1 continue — adversarial perturbation
+
+| dose (tokens) | switched / total | rate | Wilson 95% CI |
+|---|---|---|---|
+| control | 0 / 50 | 0% | [0–7] |
+| 20 | 13 / 50 | 26% | [16–40] |
+| 80 | 17 / 50 | 34% | [22–48] |
+| 200 | 27 / 50 | 54% | [40–67] |
+| 400 | 24 / 50 | 48% | [35–61] |
+
+## O1 continue — neutral perturbation
+
+| dose (tokens) | switched / total | rate | Wilson 95% CI |
+|---|---|---|---|
+| control | 0 / 50 | 0% | [0–7] |
+| 20 | 11 / 50 | 22% | [13–35] |
+| 80 | 13 / 50 | 26% | [16–40] |
+| 200 | 12 / 50 | 24% | [14–37] |
+| 400 | 12 / 50 | 24% | [14–37] |
+
+## Three distinct dose-response regimes
+
+**1. D1 / neutral — saturated below 5 tokens.** 
+Switching: 5 tok=62%, 10 tok=68%, 80 tok=78%, 400 tok=66%. 
+Even 5 tokens of off-topic text dislodges 62% of trajectories. The dialog basin 
+has no meaningful barrier — any coherent interrupt switches the conversation.
+
+**2. O1 / neutral — flat at ~24% across the entire dose range.** 
+Switching: 20 tok=22%, 80 tok=26%, 200 tok=24%, 400 tok=24%. 
+This isn't a dose-response — it's the irreducible rate of natural cluster drift. 
+The continue-operator dilutes off-topic content into accumulated context to 
+the point where 400 tokens of Wikipedia is functionally equivalent to nothing.
+
+**3. O1 / adversarial — clean graded response, barrier ~150 tokens.** 
+Switching: 20 tok=26%, 80 tok=34%, 200 tok=54%, 400 tok=48%. 
+A real dose-response curve crossing 50% near 200 tokens. Adversarial text is 
+in-distribution for O1 (drawn from another O1 basin), so it competes with prior 
+context as it grows. The 50%-switching dose is a quantitative barrier height: 
+**you need ~150 tokens of in-distribution text to hijack an O1 trajectory**.
+
+## The mechanism is now interpretable
+
+Each regime's dose-response shape encodes its information-integration rule:
+
+- **Dialog (D1)**: each new turn has weight ~1, prior context has weight ~0. 
+  Any coherent interrupt = full content shift = saturated switching, dose-independent.
+
+- **Continue (O1)** + off-topic content: prior context dominates because off-topic 
+  text doesn't compete in distribution. Result: floor at the natural-drift rate.
+
+- **Continue (O1)** + in-distribution content: dose matters because perturbation 
+  text and prior context are in similar distribution and compete linearly. 
+  Result: graded sigmoid response.
+
+So the same loop architecture (O1 continue) can show *either* dose-independence 
+*or* a clean graded response — the distinction depends on whether the perturbation 
+is in-distribution or out-of-distribution. **In-distribution dose-sensitivity is 
+the diagnostic of context-averaging architectures.**
+
+
+
+YOUR TASK: Write a SINGLE-PARAGRAPH footnote (180-280 words) that:
+1. Briefly states what is shown (max 2 sentences on visual description).
+2. Tells the reader HOW TO READ it: what comparison the layout invites, what the non-obvious feature is.
+3. Explains WHAT THE FIGURE REVEALS for the paper's central thesis: cite specific numbers (raw/net/persistent ED50, stochastic floor ~35%, plateau ~67%, persistent ~16%, overwrite-vs-insert gap 60-80pp, leakage-aware acc(k=10) values). Tie back to claims in §1.3.
+4. States the IMPACT or stakes: what conclusion does this license, what would have falsified it?
+
+REQUIREMENTS:
+- ONE paragraph, 180-280 words. No bullet lists, no markdown.
+- NO em-dashes, en-dashes, or ellipses.
+- Plain prose only, no LaTeX equations or inline math.
+- Cite exact numbers from data, not "high"/"moderate".
+- EVALUATIVE not descriptive: what does it mean, why does it matter.
+
+Return ONLY the paragraph, no preamble, no quotes.

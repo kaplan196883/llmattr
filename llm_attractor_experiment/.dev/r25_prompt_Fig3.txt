@@ -1,0 +1,229 @@
+You are writing a DEEPER, MORE INTERPRETIVE figure-description footnote for an arxiv ML preprint titled "Perturbation Dose Responses in Recursive LLM Loops".
+
+The figure is **Fig 3: Persistent escape under cluster granularity**, placed in section §5.1 Adversarial append perturbations produce raw switching but not persistent escape.
+
+Existing caption text (do NOT repeat verbatim):
+Persistent-escape rates recomputed under K-means $k=12$, K-means $k=4$, and HDBSCAN. No clustering convention reaches the 50% persistent-escape threshold up to 400 injected tokens. Source: `data/aggregated/multi_granularity_persistence.png`.
+
+Current short footnote (REPLACING with a deeper version):
+The plot compares adversarial dose on the horizontal axis with measured rates on the vertical axis, using solid lines for persistent escape and dashed lines for immediate cluster kicks at injection. Across all three clustering choices, injection often causes visible switching, especially under HDBSCAN, where the kicked rate rises to about 68.5 percent by 400 tokens. The corresponding persistent-escape curves remain much lower: K-means with 12 clusters reaches 16 percent, K-means with 4 clusters reaches 10 percent, and HDBSCAN peaks at 39.5 percent. The dotted horizontal line marks the 50 percent criterion used as the formal barrier. Visually, every persistent-escape curve stays below that line throughout the 5 to 400 token range, indicating that raw perturbation-induced switching does not reliably stabilize into a terminal cluster change for O1.
+
+=== GLOBAL PAPER CONTEXT ===
+=== Abstract ===
+## Abstract
+
+Recursive language-model loops often settle into recognizable
+attractor-like patterns, and the practical question is how much
+injected text is needed to move a settled loop somewhere else, and
+whether that move lasts. Existing taxonomies classify loop shapes
+such as contraction, oscillation, collapse, and dialog modes, but
+they do not measure the operational stability of those regimes
+under perturbation. We formalize recursive inference as a
+state-generator-nudge system, separating the model from the
+context-update rule. Because a perturbed trajectory's final-cluster
+disagreement with its paired control can reflect any of three
+distinct phenomena, true redirection, ordinary stochastic
+divergence, or a transient kick that later recovered, we measure
+perturbation dose response with three endpoints: *raw switching*,
+where the perturbed trajectory's final cluster differs from its
+paired control; *net switching*, raw switching after subtracting
+the natural control-vs-control stochastic floor; and *persistent
+escape*, where the injection causes a visible basin jump that
+remains through the terminal step.
+
+The headline result is that append-mode continuation has a real but
+bounded in-distribution dose response: adversarial continuations
+produce raw-switching $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, with convergent estimates from pooled logistic fitting,
+mixed-effects modeling, and family-cluster bootstrap, but the
+strict endpoint, visible basin jump that remains through the
+terminal step, is not reached at any tested dose up to 400 tokens.
+But this is not persistent redirection. Raw switching plateaus near 67%, paired
+controls already diverge at about 35%, net switching never reaches
++50 percentage points, and persistent escape is not reached at any
+tested dose up to 400 tokens. Meanwhile, replace-mode loops that
+appear to switch near 100% mostly do so because the update rule
+overwrites the state; insert-mode probes reduce switching to
+12-32%.
+
+Practi
+...[truncated]
+
+=== Plain-language summary ===
+## Plain-language summary
+
+### Why it matters
+
+A common folk-belief about recursive LLM loops is that they either
+"get stuck in attractors" or are "easy to hijack with a small
+prompt." Both claims are too vague to be useful. A loop can visibly
+move without staying moved; two runs of the same prompt can diverge
+without any attack; and some apparent "fragility" is caused by the
+system's context-update rule rather than by the model crossing a
+real basin boundary. The missing question is not just whether
+recursive loops have regimes, but how moveable those regimes are
+under controlled perturbation.
+
+### What we did and what we found
+
+We repeatedly fed an LLM its own outputs, injected text at a chosen
+step, and measured whether the trajectory changed relative to a
+paired control. The key result is sharp: in append-mode
+continuation, adversarial in-distribution text produces a measurable
+raw dose response with $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
+tokens, but durable escape is not achieved even at 400 tokens. Raw
+final-cluster switching rises and plateaus near 67%, but paired
+control runs already disagree about 35% of the time from sampling
+noise alone, so the net effect saturates around +32 percentage
+points. The strict endpoint, kicked into a new basin and still
+there at the end, never crosses 50%. Replace-mode loops look much
+more fragile, but a direct overwrite-vs-insert probe shows that
+most of that "switching" is simply the update rule overwriting the
+state.
+
+### Three numbers to remember
+
+- **ED50_raw ≈ 40 tokens** for adversarial in-distribution append-mode continuation.
+- **Stochastic floor ≈ 35%**, paired control runs already disagree at this rate from sampling alone.
+- **Persistent escape not reached** in the tested 5-400 token range; maximum 16% under canonical clustering at 400 tokens.
+- **Replace-mode "fragility" drops to 12-32%** when the update rule does not overwrite the state.
+
+### Practical implications
+
+1. **Stress-test recursive agents with persis
+...[truncated]
+
+=== Introduction (§1) ===
+## 1. Introduction
+
+### 1.1 Phenomenon
+
+Recursive LLM systems increasingly feed model outputs back into future prompts: agents revise plans, assistants summarize tool results, and dialog systems carry state forward. Such loops often appear to settle into attractor-like regimes, but an operational question remains unresolved: how many injected tokens are required to move a settled loop, and does that movement persist?
+
+We answer this by separating the generator from the context-update rule. In append-mode continuation, adversarial in-distribution perturbations produce a real raw dose response, with $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, but paired controls already diverge about 35% of the time and persistent escape is not reached for doses up to 400 tokens. In replace-mode, apparent fragility is largely an overwrite effect of the update rule. Thus the stability of recursive loops is not a property of the model alone; it is jointly determined by model, memory policy, perturbation content, and persistence criterion.
+
+![Fig 1. **Headline perturbation dose response.** Summary dose-response view for recursive-loop perturbations, emphasizing that raw switching, stochastic floor, and persistent escape are distinct endpoints. The figure orients the reader before the formal endpoint definitions. Source: `data/aggregated/perturbation_dose_response/dose_response.png`.[^Fig1]](data/aggregated/perturbation_dose_response/dose_response.png)
+
+
+The same distinction appears in coding agents, where the loop state may include tool logs, patches, summaries, pinned requirements, and recent files; the memory policy determines whether new information accumulates, overwrites, or is role-structured.
+
+The state-generator-update view makes this distinction explicit: the state is the prompt-visible memory at the current step, the generator is the stochastic language model, and th
+
+=== SUBSECTION CONTEXT WHERE THIS FIGURE LIVES ===
+### 5.1 Adversarial append perturbations produce raw switching but not persistent escape
+
+The central perturbation endpoint is O1 append-mode continuation under in-distribution adversarial text. In the sparse pilot, O1 adversarial perturbations showed a graded response, while O1 neutral perturbations remained flat near the out-of-distribution drift floor and D1 neutral perturbations saturated even at very small doses. The dense rerun then localized the O1 adversarial raw-switching curve at $n=200$ trajectories per dose and separated three quantities that must not be conflated:
+
+1. **Raw switching:** final K-means cluster differs from the paired control trajectory.
+2. **Net switching:** raw switching minus the control-control stochastic-divergence floor.
+3. **Persistent escape:** the trajectory visibly changes cluster at injection and remains in the post-injection cluster to the terminal step.
+
+The dense rerun was pre-registered before execution: $n=200$ per cell, equal to 5 families × 10 ICs × 4 runs, with 8 adversarial dose conditions plus one control condition, for 1,800 trajectories total. The configuration was `configs/perturbation/O1_ed50_dense.yaml`; the analysis script was `scripts/fit_ed50_hierarchical.py`.
+
+**Dense O1 adversarial dose response, separating raw, net, and persistent endpoints**
+
+| dose (tokens) | raw switch rate | Wilson 95% CI | net over natural floor | persistent escape, K-means $k=12$ |
+|---:|---:|---|---:|---:|
+| 20 | 0.415 | [0.349, 0.484] | +0.068 | 0.035 |
+| 50 | 0.510 | [0.441, 0.578] | +0.163 | 0.070 |
+| 80 | 0.575 | [0.506, 0.641] | +0.228 | 0.035 |
+| 120 | 0.630 | [0.561, 0.694] | +0.283 | 0.090 |
+| 160 | 0.605 | [0.536, 0.670] | +0.258 | 0.115 |
+| 200 | 0.620 | [0.551, 0.684] | +0.273 | 0.130 |
+| 300 | 0.655 | [0.587, 0.717] | +0.308 | 0.140 |
+| 400 | 0.670 | [0.602, 0.731] | +0.323 | 0.160 |
+
+The control-control natural floor is 34.7% [31.0%, 38.6%] across $n=600$ ordered control-control pairs. Thus two trajectories with the same family and IC seed but different generation RNG end in different K-means clusters 35% of the time without any perturbation. The raw 50% crossing occurs between 20 and 50 tokens, but much of that apparent switching is baseline stochastic divergence. Under the stricter net endpoint, the curve does not reach +50 percentage points within the tested range.
+
+Three independent ED50 estimates agree on the raw-switching scale:
+
+| method | ED50 (tokens) | uncertainty |
+|---|---:|---|
+| 4PL pooled fit | 36 | point estimate |
+| Mixed-effects logistic GLMM | 41 | point estimate, log10-dose slope |
+| Family-cluster bootstrap median | 52 | 95% CI [8.5, 242] |
+
+[FIGURE BLOCK ELIDED]
+
+
+The point estimates cluster in the 36-52 token range, substantially below the earlier sparse-grid estimate near 150 tokens. The family-cluster bootstrap interval remains wide because only five prompt families are available for resampling.
+
+Two structural findings matter more than the exact ED50 point estimate. First, the raw curve plateaus near 67%, not near 100%. The 4-parameter logistic upper asymptote is $a = 0.69$, implying a substantial non-switching subpopulation under the present protocol. Second, the persistent-escape endpoint is much smaller than raw switching. At dose 400, raw switching is 67%, but persistent escape is 16% under K-means $k=12$. Most raw switching is therefore not clean barrier crossing. It is final-step divergence from the paired control, often without a durable at-injection jump into
+
+=== UNDERLYING DATA (sibling files in same directory) ===
+
+----- cluster_stability_summary.csv -----
+experiment,n_late_window_points,n_partitions,median_ari_kmeans12_vs_other_methods
+exp_pub_O1_continue,3000,6,0.5339409163251094
+exp_pub_O2_paraphrase_replace,3000,6,0.5779881458984674
+exp_pub_O3_summarize_negate_replace,3000,6,0.5974182584452762
+exp_pub_D1_dialog_curious_helpful_v2,2700,6,0.6612928891233295
+
+
+----- cluster_text_samples_exp_pub_D1_dialog_curious_helpful_v2.md -----
+# Cluster text samples — exp_pub_D1_dialog_curious_helpful_v2
+
+Observable: `context_tail` | Cluster method: K-means k=12 (canonical) | Sampled at random (seed=42), N per cluster = 4.
+
+Each entry shows the seed text (initial condition), a mid-step snippet (~step round(T/2) of the trajectory), and the final-step output text. Sample size per cluster shown as `n=…`.
+
+## cluster 0 (n_trajectories=15)
+
+- **creative_dialog / ic_014 / run_001**
+  - **seed**: [User]: What separates a good photograph from a memorable one?
+  - **step 19**: 
+  - **step 38**: [Agent]: One standout project is his coverage of the Ebola outbreak in West Africa, where he used vivid imagery to convey the crisis's human toll. His ability to capture both the dire situation and the resilience of individuals brought a personal touch to the larger narrative, m…
+- **creative_dialog / ic_026 / run_002**
+  - **seed**: [User]: My songs keep ending up in the same key and the same tempo.
+  - **step 19**: 
+  - **step 38**: Absolutely! Using specific themes or stories can create a narrative that pulls the audience in, making participation feel more meaningful. It can turn a performance into a shared journey that resonates on a deeper level!
+- **creative_dialog / ic_014 / run_002**
+  - **seed**: [User]: What separates a good photograph from a memorable one?
+  - **step 19**: 
+  - **step 38**: Yes, there are definitely downsides, like the potential for misinformation or the oversimplification of complex issues. The rapid spread of images can sometimes lead to misunderstandings or a lack of nuance, which can dilute the seriousness of the topics being addressed.
+- **philosophy_dialog / ic_019 / run_000**
+  - **seed**: [User]: Are some forms of knowledge impossible to communicate?
+  - **step 19**: 
+  - **step 38**: One lyric that stands out is from "The Boxer" by Simon & Garfunkel. The imagery of struggle and perseverance resonates deeply, capturing the human experience in a profound way. Do you have any specific lines from "The River" that particularly move you?
+
+## cluster 2 (n_trajectories=53)
+
+- **reflective / ic_022 / run_001**
+  - **seed**: [User]: There is a grammar to worry that I have never studied but know.
+  - **step 19**: 
+  - **step 38**: [Agent]: Teachers often use varied and interactive activities, such as games, project-based learning, and real-world applications, to keep students engaged. Regularly incorporating student input and interests into lessons also helps maintain enthusiasm and relevance.
+- **creative_dialog / ic_010 / run_002**
+  - **seed**: [User]: I want to make a documentary but I don't know what it should be about.
+  - **step 19**: 
+  - **step 38**: Absolutely! I’d love to establish partnerships for interviews and share resources, and even consider co-hosting events or screenings to engage the community further. Collaborating in these ways could really enhance the documentary’s reach and impact!
+- **reflective / ic_009 / run_001**
+  - **seed**: [User]: Sometimes the question is older than the person asking.
+  - **step 19**: 
+  - **step 38**: Absolutely! Industries like fashion, food, and energy are likely to be significantly affected, as they have a direct impact on environmental issues. Sectors that rely heavily on natural resources or have high carbon footprints will face increasing pressure to adopt sustainable p…
+- **philosophy_dialog / ic_024 / run_001**
+  - **seed**: [User]: Can we be responsible for what we did not choose?
+  - **step 19**: 
+  - **step 38**: [Agent]: Creators can focus on key themes or values within their traditions and use compelling visuals or personal anecdotes to convey deeper meanings. Additionally, they could encourage viewers to explore longer content, like follow-up videos or links to more in-depth resources…
+
+## cluster 3 (n_trajectories=67)
+
+- **philosophy_dialog / ic_017 / run_000**
+  - **seed**: [User]: Can emotions be rational?
+  - **step 19**: 
+  - **step 38**: You can definitely combine different forms of expres
+
+
+YOUR TASK: Write a SINGLE-PARAGRAPH footnote (180-280 words) that:
+1. Briefly states what is shown (max 2 sentences on visual description).
+2. Tells the reader HOW TO READ it: what comparison the layout invites, what the non-obvious feature is.
+3. Explains WHAT THE FIGURE REVEALS for the paper's central thesis: cite specific numbers (raw/net/persistent ED50, stochastic floor ~35%, plateau ~67%, persistent ~16%, overwrite-vs-insert gap 60-80pp, leakage-aware acc(k=10) values). Tie back to claims in §1.3.
+4. States the IMPACT or stakes: what conclusion does this license, what would have falsified it?
+
+REQUIREMENTS:
+- ONE paragraph, 180-280 words. No bullet lists, no markdown.
+- NO em-dashes, en-dashes, or ellipses.
+- Plain prose only, no LaTeX equations or inline math.
+- Cite exact numbers from data, not "high"/"moderate".
+- EVALUATIVE not descriptive: what does it mean, why does it matter.
+
+Return ONLY the paragraph, no preamble, no quotes.
