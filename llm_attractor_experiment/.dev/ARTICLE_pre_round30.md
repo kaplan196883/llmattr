@@ -348,7 +348,7 @@ The canonical nudges used in the experiments are:
 \operatorname{clip}\!\left(X_t \Vert \operatorname{format\_turn}(r_t,Y_t)\right),
 \]
 
-where \(\Vert\) denotes string concatenation, \(r_t\) is the role label assigned to the turn (alternating according to the dialog protocol), and \(\operatorname{format\_turn}(r_t,Y_t)\) is the role-labeled rendering of the model output that is appended to the prior context.
+where \(r_t\) is the role label assigned to the turn and alternates according to the dialog protocol.
 
 | Formal nudge | Engineering analogue | Typical risk or behavior |
 |---|---|---|
@@ -462,7 +462,7 @@ The basin partition and predictor protocol are fixed in the Methods. This criter
 \quad
 \text{and}
 \quad
-\text{Cohen's } d\ge 0.5.
+d\ge 0.5.
 \]
 
 When both time-shuffled and no-feedback nulls are available, the stronger null gate is used. For dialog runs, the no-feedback null is structurally unavailable; the time-shuffled null is required.
@@ -476,7 +476,7 @@ b_e(r)\in
 
 for each embedding map \(e\). The criterion passes if the recurrence bin agrees in at least two of three embedders: the canonical embedder plus two alternatives. This criterion tests survival of the regime class under measurement change. It does not require scalar invariance of all diagnostics.
 
-**C4. Re-entry, contraction, or absorbing collapse.** Let \(\lambda_{1,r}^{\mathrm{late}}\) be the top finite-time ensemble-spread exponent for regime \(r\) computed in the late window (defined in §4.5.2), let \(R_r\) and \(SD_r\) denote regime-mean recurrence and sharpness dimension, and let \(\texttt{best\_period}\) and \(\texttt{period\_2\_score}\) denote the periodicity diagnostics from §4.5.1. The regime passes if at least one of the following holds:
+**C4. Re-entry, contraction, or absorbing collapse.** The regime passes if at least one of the following holds:
 
 \[
 \lambda_{1,r}^{\mathrm{late}}\le 0.015
@@ -633,7 +633,7 @@ We instantiate the formal recurrence from §3.1 with three context-update rules:
 \]
 
 \[
-\text{Dialog:}\quad X_{t+1}=\mathcal{N}_{\text{dialog}}(X_t,Y_t)=\operatorname{clip}\!\left(X_t\Vert \operatorname{format\_turn}(r_t,Y_t)\right)
+\text{Dialog:}\quad X_{t+1}=\mathcal{N}_{\text{dialog}}(X_t,Y_t)=X_t\Vert \operatorname{format\_turn}(r_t,Y_t)
 \]
 
 where
@@ -654,7 +654,7 @@ Each experiment runs
 N_{\text{traj}}=N_{\text{families}}\times N_{\text{ICs}}\times N_{\text{runs}}
 \]
 
-trajectories, where \(N_{\text{families}}\) is the number of distinct prompt families, \(N_{\text{ICs}}\) is the number of initial conditions per family, and \(N_{\text{runs}}\) is the number of independent runs per (family, IC) cell. Publication-scale defaults differ by experiment family:
+trajectories. Publication-scale defaults differ by experiment family:
 
 | experiment family | design | steps | point count |
 |---|---:|---:|---:|
@@ -751,7 +751,7 @@ Input: seed or task \(x\), generator \(P_\theta\), context-update rule \(\mathca
    \operatorname{jump}=\left[C(O(Z_{t_{\mathrm{inj}}+1}))\neq C(O(Z_{t_{\mathrm{inj}}-1}))\right]
    \]
 
-6. Define persistent escape (the strict variant: trajectory remains in the *post-injection* cluster, not merely in any cluster other than the reference):
+6. Define persistent escape:
    \[
    \operatorname{persist}=\operatorname{jump}\wedge
    \left[C(O(Z_T))=C(O(Z_{t_{\mathrm{inj}}+1}))\right]
@@ -944,20 +944,18 @@ Plots are rendered at 200 DPI to PNG. Each experiment's `reports/plots/` directo
 
 Flow-field visualizations share a bin-and-aggregate kernel that converts a trajectory ensemble into a spatially resolved displacement field on a two-dimensional projection. For each trajectory group, points are sorted by step. Each adjacent pair contributes a start location and a displacement vector. The collection of starts and displacements is binned over the projection plane.
 
-For each grid bin, the average displacement vector is computed from all transitions whose start point falls inside the bin. Empty bins are left undefined, so streamline integration does not pass through unsupported regions. This produces an empirical vector field \(v(x)=(u(x),w(x))\) that represents the average one-step projected motion observed in that region.
+For each grid bin, the average displacement vector is computed from all transitions whose start point falls inside the bin. Empty bins are left undefined, so streamline integration does not pass through unsupported regions. This produces an empirical vector field \(v(x)=(U(x),V(x))\) that represents the average one-step projected motion observed in that region.
 
 Density fields use a higher-resolution two-dimensional histogram followed by Gaussian smoothing. The smoothed density \(\hat\rho(x)\) is used as a background heatmap and, in perturbation analyses, as the basis for the effective potential
 
 \[
-V(x)=-\log(\hat\rho(x)+\epsilon),
+V(x)=-\log(\hat\rho(x)+\epsilon).
 \]
-
-where \(\epsilon>0\) is a small numerical stabilizer preventing log of zero in low-density grid cells.
 
 Streamlines are integral curves of the empirical vector field. Divergence is computed as
 
 \[
-\nabla\cdot v(x)=\frac{\partial u}{\partial x}+\frac{\partial w}{\partial y}.
+\nabla\cdot v(x)=\frac{\partial U}{\partial x}+\frac{\partial V}{\partial y}.
 \]
 
 Negative divergence indicates sink-like behavior, while positive divergence indicates source-like behavior. For recursive LLM loops, we expect weakly negative average divergence in contractive regimes, strong local minima at absorbing sinks, and saddle-like structure in oscillatory regimes. Implementation details and grid parameters are provided in Supplementary §11.8.
