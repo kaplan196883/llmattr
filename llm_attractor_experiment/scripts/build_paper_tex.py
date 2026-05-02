@@ -1044,7 +1044,12 @@ def _convert_figures(text: str, fig_target_dir: Path) -> str:
         caption = m.group(1)
         src_path = REPO / m.group(2)
         # Caption often starts with "Figure N. " — strip that prefix
-        cap_clean = re.sub(r"^Figure\s+\d+\.\s*", "", caption).strip()
+        # Strip leading "Figure N.", "Fig N.", or "ED Fig N." labels so we
+        # don't get "Figure 1: Fig 1. Title..." duplication. LaTeX inserts its
+        # own "Figure N:" via \caption{}; we just keep the title and body.
+        cap_clean = re.sub(
+            r"^(?:Figure|Fig|ED\s+Fig)\s+\d+\.\s*", "", caption
+        ).strip()
         if src_path.exists():
             target_name = f"fig{counter:02d}.png"
             shutil.copyfile(src_path, fig_target_dir / target_name)
