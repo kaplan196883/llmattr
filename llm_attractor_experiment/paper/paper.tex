@@ -338,8 +338,7 @@ remains through the terminal step.
 
 The headline result is that append-mode continuation has a real but
 bounded in-distribution dose response: adversarial continuations
-produce raw-switching $\mathrm{ED50}_{\mathrm{raw}} \approx 40$
-tokens, with convergent estimates from pooled logistic fitting,
+produce a raw-switching effective dose at 50\% ($\mathrm{ED50}_{\mathrm{raw}}$, the smallest injected-token dose at which the perturbed trajectory's final cluster differs from its paired control's final cluster with probability at least one half) of approximately 40 tokens, with convergent estimates from pooled logistic fitting,
 mixed-effects modeling, and family-cluster bootstrap, but the
 strict endpoint, visible basin jump that remains through the
 terminal step, is not reached at any tested dose up to 400 tokens.
@@ -567,7 +566,7 @@ The paper's contributions are best stated as five claim-level takeaways.
 
 \textbf{Claim 2: perturbation response decomposes into raw switching, net switching, and persistent escape (§3, §5).} These endpoints separate true redirection from sampling divergence and transient displacement. Raw switching measures final-cluster disagreement with a paired control. Net switching subtracts the natural control compared with control floor. Persistent escape is stricter: the injected text must produce a visible basin jump that remains through the terminal step. The strict stability question is therefore not whether a run moves immediately after injection, but whether it stays moved after subsequent recursive updates.
 
-\textbf{Claim 3: append-mode continuation has a finite raw dose response but no observed persistent-escape threshold in the tested range (§5.6).} In the dense adversarial in-distribution append-mode rerun, $\mathrm{ED50}_{\mathrm{raw}}$ estimates are 36, 41, and 52 tokens under pooled four-parameter logistic fitting, mixed-effects logistic modeling, and family-cluster bootstrap, respectively. Raw switching rises with dose but plateaus near 67\%, while paired controls already diverge about 35\% of the time. The largest observed net effect is therefore about +32 percentage points at 400 tokens, and $\mathrm{ED50}_{\mathrm{persist}}$ is not reached for any tested dose from 5 to 400 tokens. Out-of-distribution neutral and lorem perturbations remain close to a drift floor rather than matching the adversarial continuation response.
+\textbf{Claim 3: append-mode continuation has a finite raw dose response but no observed persistent-escape threshold in the tested range (§5.6).} In the dense adversarial in-distribution append-mode rerun, $\mathrm{ED50}_{\mathrm{raw}}$ estimates are 36, 41, and 52 tokens under pooled four-parameter logistic fitting, mixed-effects logistic modeling, and family-cluster bootstrap, respectively. Raw switching rises with dose but plateaus near 67\%, while paired controls already diverge about 35\% of the time. The largest observed net effect is therefore about +32 percentage points at 400 tokens, and the persistent-escape ED50 ($\mathrm{ED50}_{\mathrm{persist}}$, the smallest dose at which the perturbation produces a visible at-injection basin jump that is also retained at the terminal step with probability at least one half) is not reached for any tested dose from 5 to 400 tokens. Out-of-distribution neutral and lorem perturbations remain close to a drift floor rather than matching the adversarial continuation response.
 
 \textbf{Claim 4: replace-mode apparent fragility is largely update-rule overwrite, not necessarily weak attractor structure (§5.2).} Replace-mode paraphrase and summarize-and-negate loops show near-saturated raw switching across tested doses, but that result follows from the update operator discarding prior state. Insert-mode probes, which preserve the old state while adding the same content, reduce switching to 12 to 32\%. This separates overwrite access from durable redirection and makes memory policy a safety-relevant design choice.
 
@@ -683,6 +682,18 @@ Hybrid pinned plus summary & Pinned issue, tests, policy, plus compressed older 
 \end{table}
 
 In engineering terms, the nudge is the loop memory policy. It is therefore part of the system's robustness and security boundary, not merely an implementation detail. The hypotheses below use this factorization directly: changing the content instruction \(f\) can change the generator, while changing the nudge \(\eta\) can change which parts of the generated text become future state.
+
+Throughout the paper we refer to five concrete instantiations of the $(f, \eta)$ framework by short code:
+
+\begin{itemize}
+  \item \textbf{O1 (contractive append):} continuation operator $f=\text{continue}$ under append nudge.
+  \item \textbf{O2 (oscillatory replace):} paraphrase operator under replace nudge.
+  \item \textbf{O3 (absorbing replace):} summarize-and-negate operator under replace nudge.
+  \item \textbf{D1 (role-structured dialog):} curious-user / helpful-agent dialog under the dialog nudge.
+  \item \textbf{D2 (drill-down dialog):} explorer / expert dialog under the dialog nudge, with successive subtopic refinement.
+\end{itemize}
+
+The dialog regimes are append-style at the trajectory level but role-structured at the turn level. Wherever "O1", "O2", "O3", "D1", or "D2" appears below, it refers to the corresponding generator-nudge pair listed here.
 
 \subsubsection{Barrier height as a persistent-escape estimand}
 
@@ -901,7 +912,7 @@ The five primary endpoints are:
 
 \begin{enumerate}
   \item \textbf{Operational attractor score}, based on the C1-C4 attractor criteria: late-window basin persistence, recurrence or dwell above null, embedder robustness, and contraction, re-entry, or collapse.
-  \item \textbf{Group-aware basin predictability}, measured by predicting the late basin from early PCA-10 state while holding out prompt families.
+  \item \textbf{Group-aware basin predictability}, measured by predicting the late basin from early 10-component PCA projection (PCA-10) state while holding out prompt families.
   \item \textbf{Perturbation switching signature}, measured by paired treatment-control final-cluster disagreement, interpreted alongside the paired control-control stochastic floor.
   \item \textbf{Behavioral ED50}, the token dose at which the O1 adversarial perturbation reaches 50\% raw switching, with uncertainty estimated by family-cluster bootstrap and model-based fits.
   \item \textbf{Persistent escape}, the strict event in which a perturbation induces an injection-time cluster jump and the trajectory remains in that post-injection cluster at the terminal step.
@@ -1836,7 +1847,7 @@ The main limitation is parameter sensitivity. For the O1 perturbation pilot, we 
 
 The ordinal pattern was more stable. Across the 45 parameter combinations, control had the highest $V^\star$ in 98\% of combinations, adversarial had the lowest $V^\star$ in 89\%, and neutral and lorem occupied the middle. This supports a weak geometric statement: the density-landscape summaries preserve a robust rank ordering within the O1 perturbation pilot. It does not support a quantitative $V^\star$ to ED50 conversion.
 
-This distinction is especially important for replace-mode regimes. O2 and O3 can show high geometric separation while also showing high overwrite-protocol switching, because the perturbation and memory policy can create or occupy a different basin rather than cross a pre-existing ridge. Full $V^\star$ tables, RG merge-distance tables, and the parameter-grid sensitivity outputs are moved to §11.11.
+This distinction is especially important for replace-mode regimes. O2 and O3 can show high geometric separation while also showing high overwrite-protocol switching, because the perturbation and memory policy can create or occupy a different basin rather than cross a pre-existing ridge. Full $V^\star$ tables, renormalization-group-style merge-distance tables (RG merge-distance: maximum Ward-linkage merge height across $k=48$ fine cluster centroids, used as a coarse-graining diagnostic of trajectory-cloud expansion), and the parameter-grid sensitivity outputs are moved to §11.11.
 
 \subsection{Why exactly five regimes?}
 
@@ -1948,7 +1959,7 @@ The cross-model audit should consequently be read as evidence of shape preservat
 
 The basins and barriers reported here are measurements in an operational pipeline, not representation-free physical constants. Trajectories are observed through an embedding model, projected for analysis and visualization, and summarized with density, recurrence, switching, and dose-response statistics. §5.10 reports an explicit representation ablation against a larger OpenAI embedding model and a sentence-transformer model; the attractor-like structure is robust across those tested observables. That robustness does not make the absolute geometry independent of the representation.
 
-The empirical potential landscape, \(V(x)=-\log \rho(x)\), is a descriptive density summary. The Dijkstra barrier \(V^\star\) depends on the kernel-density estimator, PCA-2 reduction, grid resolution, and path construction. These quantities are useful because they impose a common geometric language on many trajectory families, and because their relative ordering can be compared with behavioral perturbation thresholds. They should not be interpreted as thermodynamic free energies or as absolute invariants of the underlying model.
+The empirical potential landscape, \(V(x)=-\log \rho(x)\), is a descriptive density summary. The Dijkstra barrier \(V^\star\) depends on the kernel density estimation (KDE), PCA-2 reduction, grid resolution, and path construction. These quantities are useful because they impose a common geometric language on many trajectory families, and because their relative ordering can be compared with behavioral perturbation thresholds. They should not be interpreted as thermodynamic free energies or as absolute invariants of the underlying model.
 
 The same caveat applies to token barriers. Tokens are directly measurable, practically interpretable, and closely aligned with how perturbations are injected in §4.5, but they are not the ultimate information unit. A more model-comparable version of these perturbation barriers would likely use conditional surprisal or log-probability cost; because generation logprobs were not stored, the present token-dose results should be treated as operational proxies. The reported token-dose thresholds are therefore useful for within-pipeline comparison, but they should not be read as universal energetic costs or as vendor-independent information barriers.
 
@@ -1994,7 +2005,7 @@ The proposed program proceeds from external validity, to mechanistic measurement
 
 \textit{Hypothesis: append/replace/dialog regime ordering is invariant across model families under matched perturbation dose and memory policy.}
 
-The highest-priority extension is an MVP cross-vendor replication rather than an exhaustive survey. The central question is not whether barrier heights match numerically across providers, but whether the ordering of append, replace, and dialog regimes survives across generators with different alignment methods, tokenizer families, refusal policies, context handling, and decoding implementations. If the same qualitative ordering appears under matched perturbations and matched analysis code, this would support the claim that regime structure is a property of the generator-nudge system rather than a peculiarity of one model family.
+The highest-priority extension is a minimum viable product (MVP) cross-vendor replication rather than an exhaustive survey. The central question is not whether barrier heights match numerically across providers, but whether the ordering of append, replace, and dialog regimes survives across generators with different alignment methods, tokenizer families, refusal policies, context handling, and decoding implementations. If the same qualitative ordering appears under matched perturbations and matched analysis code, this would support the claim that regime structure is a property of the generator-nudge system rather than a peculiarity of one model family.
 
 The MVP should include Anthropic, Google, Mistral, and open-weight models, with the current provider family retained as a reference where feasible. The design should use N=20-60 trajectories per cell as cost permits, with all three headline operators included: O1, D1, and D2. D2 is especially important because dialog topology is under-sampled in the present evidence base and may vary more strongly across vendors than simple append or replace loops. The goal is not to make every cell maximally powered at the first pass, but to establish a compact, reproducible panel that can detect whether the regime map is stable enough to justify larger audits.
 
@@ -2033,7 +2044,7 @@ The core ablation should use a factorial matrix:
 
 Primary endpoint: persistent-escape probability as a function of memory policy. Secondary endpoints should include immediate switching, recovery after neutral continuation, and recurrence after apparent recovery. This decomposition is essential because a scaffold may reduce immediate switching while increasing recurrence, or may recover quickly from ordinary irrelevant text while remaining vulnerable to a false summary or poisoned tool output.
 
-Longer contexts and longer per-step outputs should be included after the MVP matrix is stable. Longer recursive writes may deepen append basins, fragment replace basins, or create regimes in which short-horizon and long-horizon stability disagree. Periodic summarization may suppress benign drift while amplifying a malicious or misleading summary error. A summary that converts an injected claim into a compact durable belief can be more damaging than the original perturbation. The relevant endpoint is therefore not compression quality alone, but perturbation response under controlled dose, position, and provenance.
+Longer contexts and longer per-step outputs should be included after the minimum-viable matrix is stable. Longer recursive writes may deepen append basins, fragment replace basins, or create regimes in which short-horizon and long-horizon stability disagree. Periodic summarization may suppress benign drift while amplifying a malicious or misleading summary error. A summary that converts an injected claim into a compact durable belief can be more damaging than the original perturbation. The relevant endpoint is therefore not compression quality alone, but perturbation response under controlled dose, position, and provenance.
 
 Perturbation position should be treated as a first-class variable. A perturbation inserted at the beginning of memory, immediately before the model response, inside a generated summary, inside a pinned instruction field, or inside a tool-output buffer may have different persistence even at the same token dose. Controlled adversarial perturbations should include irrelevant long logs, misleading documentation, targeted false explanations, malicious package-style content, and false failing-test logs. The output should be a memory-policy ablation harness that measures whether a scaffold reduces persistent escape without merely suppressing ordinary adaptation or hiding state changes in an uninspected summary.
 
