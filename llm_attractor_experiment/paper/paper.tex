@@ -633,7 +633,7 @@ For this reason, dialog is not merely a larger prompt class in this study. It is
 
 \subsection{Terminology}
 
-We use "attractor-like" operationally rather than as a claim about a smooth deterministic system. The analysis proceeds from visible text state \(X\_t\), to an observable text view \(\mathcal{O}(X\_t)\), to an embedding \(z\_t\), to clusters, basin candidates, and finally regime labels. A "nudge" is the context-update rule that writes text into the next state; a "perturbation" is externally injected text used to test stability. A "switch" denotes final-cluster disagreement under the stated perturbation protocol, whereas "persistent escape" requires a durable post-injection basin change.
+We use "attractor-like" operationally rather than as a claim about a smooth deterministic system. The analysis proceeds from visible text state \(X_t\), to an observable text view \(\mathcal{O}(X_t)\), to an embedding \(z_t\), to clusters, basin candidates, and finally regime labels. A "nudge" is the context-update rule that writes text into the next state; a "perturbation" is externally injected text used to test stability. A "switch" denotes final-cluster disagreement under the stated perturbation protocol, whereas "persistent escape" requires a durable post-injection basin change.
 
 \section{Formal framework and hypotheses}
 
@@ -643,37 +643,29 @@ This section defines the recursive-loop object studied in the paper, the perturb
 
 Every recursive loop studied here has two distinct moving parts. The \textbf{generator} is the model itself, which samples the next piece of text. The \textbf{nudge} is the memory policy that decides how that text is written back into the next prompt. Prior work often treats these as one object, but they play different roles: the generator determines what can be produced from a state, while the nudge determines what persists as state.
 
-Let \(X\_t \in \mathcal{C}\) denote the bounded visible context at step \(t\), where \(\mathcal{C}\) is the space of valid clipped contexts. In this paper, \(\mathcal{C}\) is instantiated as finite-length character strings produced by tail-clipping at 12,000 characters. Let \(f\) denote the content instruction and \(\eta\) the memory policy. The recurrence is
+Let \(X_t \in \mathcal{C}\) denote the bounded visible context at step \(t\), where \(\mathcal{C}\) is the space of valid clipped contexts. In this paper, \(\mathcal{C}\) is instantiated as finite-length character strings produced by tail-clipping at 12,000 characters. Let \(f\) denote the content instruction and \(\eta\) the memory policy. The recurrence is
 
-\[
-Y\_t \sim P\_\theta(\cdot \mid X\_t; f),
+\[Y_t \sim P_\theta(\cdot \mid X_t; f),
 \qquad
-X\_{t+1} = \mathcal{N}\_\eta(X\_t, Y\_t).
-\]
+X_{t+1} = \mathcal{N}_\eta(X_t, Y_t).\]
 
-Here \(P\_\theta(\cdot \mid X\_t; f)\) is the language-model generator under instruction \(f\), for example continuation, paraphrase, summarize-and-negate, or role-alternating dialog. The map \(\mathcal{N}\_\eta : \mathcal{C} \times \mathcal{Y} \to \mathcal{C}\) is the nudge, or context-update operator. The pair \((f,\eta)\), not either component alone, defines the loop dynamics.
+Here \(P_\theta(\cdot \mid X_t; f)\) is the language-model generator under instruction \(f\), for example continuation, paraphrase, summarize-and-negate, or role-alternating dialog. The map \(\mathcal{N}_\eta : \mathcal{C} \times \mathcal{Y} \to \mathcal{C}\) is the nudge, or context-update operator. The pair \((f,\eta)\), not either component alone, defines the loop dynamics.
 
 The canonical nudges used in the experiments are:
 
-\[
-\mathcal{N}\_{\mathrm{append}}(X\_t,Y\_t)
+\[\mathcal{N}_{\mathrm{append}}(X_t,Y_t)
 =
-\operatorname{clip}(X\_t \Vert Y\_t),
-\]
+\operatorname{clip}(X_t \Vert Y_t),\]
 
-\[
-\mathcal{N}\_{\mathrm{replace}}(X\_t,Y\_t)
+\[\mathcal{N}_{\mathrm{replace}}(X_t,Y_t)
 =
-\operatorname{clip}(Y\_t),
-\]
+\operatorname{clip}(Y_t),\]
 
-\[
-\mathcal{N}\_{\mathrm{dialog}}(X\_t,Y\_t)
+\[\mathcal{N}_{\mathrm{dialog}}(X_t,Y_t)
 =
-\operatorname{clip}\!\left(X\_t \Vert \operatorname{format\_turn}(r\_t,Y\_t)\right),
-\]
+\operatorname{clip}\!\left(X_t \Vert \operatorname{format\_turn}(r_t,Y_t)\right),\]
 
-where \(r\_t\) is the role label assigned to the turn and alternates according to the dialog protocol.
+where \(r_t\) is the role label assigned to the turn and alternates according to the dialog protocol.
 
 \begin{table}[h!]
 \centering
@@ -682,9 +674,9 @@ where \(r\_t\) is the role label assigned to the turn and alternates according t
 \toprule
 Formal nudge & Engineering analogue & Typical risk or behavior \\
 \midrule
-Append: \(\operatorname{clip}(X\_t \Vert Y\_t)\) & Full transcript, rolling recent context, accumulated tool logs & Prior evidence remains as ballast; perturbations compete with accumulated state \\
-Replace: \(\operatorname{clip}(Y\_t)\) & Summarize-and-continue, scratchpad replacement, single-state whiteboard & Old state is discarded; whatever enters the replacement becomes privileged \\
-Dialog: \(\operatorname{clip}(X\_t \Vert \operatorname{format\_turn}(r\_t,Y\_t))\) & Role-structured chat state, multi-role agents, user/assistant/tool buffers & Recent role-local turns may dominate despite longer accumulated context \\
+Append: \(\operatorname{clip}(X_t \Vert Y_t)\) & Full transcript, rolling recent context, accumulated tool logs & Prior evidence remains as ballast; perturbations compete with accumulated state \\
+Replace: \(\operatorname{clip}(Y_t)\) & Summarize-and-continue, scratchpad replacement, single-state whiteboard & Old state is discarded; whatever enters the replacement becomes privileged \\
+Dialog: \(\operatorname{clip}(X_t \Vert \operatorname{format\_turn}(r_t,Y_t))\) & Role-structured chat state, multi-role agents, user/assistant/tool buffers & Recent role-local turns may dominate despite longer accumulated context \\
 Hybrid pinned plus summary & Pinned issue, tests, policy, plus compressed older history & Robustness depends on which facts can be overwritten and which remain invariant \\
 \bottomrule
 \end{tabularx}
@@ -694,73 +686,59 @@ In engineering terms, the nudge is the loop memory policy. It is therefore part 
 
 \subsubsection{Barrier height as a persistent-escape estimand}
 
-Let \(B\_1,B\_2 \subset \mathcal{C}\) be basin sets in the late-window basin partition defined operationally in the Methods. Let \(t\_{\mathrm{inj}}\) be the injection step and let \(X\_{t\_{\mathrm{inj}}^-}\) denote the state immediately before injection. For an injected dose of \(\tau\) tokens, define the persistent-escape barrier from \(B\_1\) to \(B\_2\) as
+Let \(B_1,B_2 \subset \mathcal{C}\) be basin sets in the late-window basin partition defined operationally in the Methods. Let \(t_{\mathrm{inj}}\) be the injection step and let \(X_{t_{\mathrm{inj}}^-}\) denote the state immediately before injection. For an injected dose of \(\tau\) tokens, define the persistent-escape barrier from \(B_1\) to \(B_2\) as
 
-\[
-\mathrm{B}\_{\mathrm{persist}}(B\_1 \to B\_2)
+\[\mathrm{B}_{\mathrm{persist}}(B_1 \to B_2)
 =
 \inf\Bigl\{\tau:
-\Pr\bigl[J\_\tau(B\_1\to B\_2)=1,\ X\_T\in B\_2
-\mid X\_{t\_{\mathrm{inj}}^-}\in B\_1,\ \mathrm{inject}\_\tau\bigr]
+\Pr\bigl[J_\tau(B_1\to B_2)=1,\ X_T\in B_2
+\mid X_{t_{\mathrm{inj}}^-}\in B_1,\ \mathrm{inject}_\tau\bigr]
 \ge \tfrac12
-\Bigr\}.
-\]
+\Bigr\}.\]
 
-Here \(J\_\tau(B\_1\to B\_2)\) is the operational injection-step jump indicator defined by the late-window basin partition. Without \(J\_\tau\), the same formula defines a terminal raw-switching barrier, not a persistent-escape barrier.
+Here \(J_\tau(B_1\to B_2)\) is the operational injection-step jump indicator defined by the late-window basin partition. Without \(J_\tau\), the same formula defines a terminal raw-switching barrier, not a persistent-escape barrier.
 
-The unit of \(\mathrm{B}\_{\mathrm{persist}}\) is injected tokens. This unit is intentionally operational: it asks how much text must be inserted into the loop, under a declared injection protocol, for an injection-step basin jump that persists to the terminal measurement to occur with probability at least one half. Because the nudge determines how injected text is retained, overwritten, or role-labeled, this token-valued barrier is expected to vary with \(\eta\).
+The unit of \(\mathrm{B}_{\mathrm{persist}}\) is injected tokens. This unit is intentionally operational: it asks how much text must be inserted into the loop, under a declared injection protocol, for an injection-step basin jump that persists to the terminal measurement to occur with probability at least one half. Because the nudge determines how injected text is retained, overwritten, or role-labeled, this token-valued barrier is expected to vary with \(\eta\).
 
-The definition separates two events that are often conflated. A trajectory may terminate in \(B\_2\) without an injection-step jump, because it would have drifted there under sampling noise. Conversely, a trajectory may jump at injection and later return to its reference basin. Persistent escape requires both the injection-step jump and the terminal outcome.
+The definition separates two events that are often conflated. A trajectory may terminate in \(B_2\) without an injection-step jump, because it would have drifted there under sampling noise. Conversely, a trajectory may jump at injection and later return to its reference basin. Persistent escape requires both the injection-step jump and the terminal outcome.
 
 \subsubsection{Operational endpoints for switching and dose response}
 
 A perturbed trajectory can finish in a different cluster than its reference trajectory for several reasons: the injection genuinely redirected it, stochastic sampling would have produced a different terminal cluster anyway, or the injection caused a transient jump that later recovered. The following endpoints separate these cases.
 
-Let \(C\_{\mathrm{ref}}\) denote the declared reference basin for a perturbed trajectory: in this paper, the pre-injection basin of that same trajectory. Let \(C\_T^{(D)}\) be the terminal basin after injected dose \(D\). Let \(p\_0=\Pr(C\_T^{(0,1)}\neq C\_T^{(0,2)})\) be the control-vs-control natural switching floor under the same sampling protocol.
+Let \(C_{\mathrm{ref}}\) denote the declared reference basin for a perturbed trajectory: in this paper, the pre-injection basin of that same trajectory. Let \(C_T^{(D)}\) be the terminal basin after injected dose \(D\). Let \(p_0=\Pr(C_T^{(0,1)}\neq C_T^{(0,2)})\) be the control-vs-control natural switching floor under the same sampling protocol.
 
 Define
 
-\[
-S\_{\mathrm{raw}}(D)
+\[S_{\mathrm{raw}}(D)
 =
-\Pr(C\_T^{(D)}\neq C\_{\mathrm{ref}}),
-\]
+\Pr(C_T^{(D)}\neq C_{\mathrm{ref}}),\]
 
-\[
-S\_{\mathrm{net}}(D)
+\[S_{\mathrm{net}}(D)
 =
-S\_{\mathrm{raw}}(D)-p\_0,
-\]
+S_{\mathrm{raw}}(D)-p_0,\]
 
-\[
-S\_{\mathrm{persist}}(D)
+\[S_{\mathrm{persist}}(D)
 =
-\Pr(J\_D=1,\ C\_T^{(D)}\neq C\_{\mathrm{ref}}).
-\]
+\Pr(J_D=1,\ C_T^{(D)}\neq C_{\mathrm{ref}}).\]
 
 The corresponding ED50 endpoints are
 
-\[
-\mathrm{ED50}\_{\mathrm{raw}}
+\[\mathrm{ED50}_{\mathrm{raw}}
 =
-\inf\{D:S\_{\mathrm{raw}}(D)\ge 0.5\},
-\]
+\inf\{D:S_{\mathrm{raw}}(D)\ge 0.5\},\]
 
-\[
-\mathrm{ED50}\_{\mathrm{net}}
+\[\mathrm{ED50}_{\mathrm{net}}
 =
-\inf\{D:S\_{\mathrm{net}}(D)\ge 0.5\},
-\]
+\inf\{D:S_{\mathrm{net}}(D)\ge 0.5\},\]
 
-\[
-\mathrm{ED50}\_{\mathrm{persist}}
+\[\mathrm{ED50}_{\mathrm{persist}}
 =
-\inf\{D:S\_{\mathrm{persist}}(D)\ge 0.5\}.
-\]
+\inf\{D:S_{\mathrm{persist}}(D)\ge 0.5\}.\]
 
 If the relevant set is empty over the tested dose range, the corresponding endpoint is not reached in that range.
 
-These endpoints are different estimands. \(S\_{\mathrm{raw}}\) measures terminal disagreement from the declared reference basin. It includes natural stochastic divergence. \(S\_{\mathrm{net}}\) subtracts the control-vs-control floor \(p\_0\), so it estimates excess terminal switching above natural drift, but it is not itself a probability. \(S\_{\mathrm{persist}}\) measures the stricter event used by the persistent-escape barrier: a jump at injection followed by terminal non-return to the reference basin.
+These endpoints are different estimands. \(S_{\mathrm{raw}}\) measures terminal disagreement from the declared reference basin. It includes natural stochastic divergence. \(S_{\mathrm{net}}\) subtracts the control-vs-control floor \(p_0\), so it estimates excess terminal switching above natural drift, but it is not itself a probability. \(S_{\mathrm{persist}}\) measures the stricter event used by the persistent-escape barrier: a jump at injection followed by terminal non-return to the reference basin.
 
 This distinction is central to interpreting perturbation experiments. A raw-switching ED50 can be small if the natural switching floor is large. A persistent-escape ED50 can be unreached even when raw switching is substantial, if most injection-step jumps recover before terminal measurement or if terminal disagreement is dominated by sampling drift. The Results report these endpoints separately.
 
@@ -776,60 +754,48 @@ The thresholds are:
 
 \textbf{C1. Basin predictability.} Cross-validated accuracy for predicting the late-window basin from the final pre-terminal state must satisfy
 
-\[
-A\_r^{\mathrm{final}} \ge \tau\_{\mathrm{acc}},
+\[A_r^{\mathrm{final}} \ge \tau_{\mathrm{acc}},
 \qquad
-\tau\_{\mathrm{acc}}=0.70.
-\]
+\tau_{\mathrm{acc}}=0.70.\]
 
 The basin partition and predictor protocol are fixed in the Methods. This criterion tests whether late-window basin identity is legible from the measured state rather than being arbitrary cluster noise.
 
-\textbf{C2. Recurrence or dwell above null.} Let \(R\_r\) be recurrence and \(D\_r\) be dwell for regime \(r\). Let the declared null ensemble provide \((\mu\_R^{\mathrm{null}},\sigma\_R^{\mathrm{null}})\) and \((\mu\_D^{\mathrm{null}},\sigma\_D^{\mathrm{null}})\). The regime passes if
+\textbf{C2. Recurrence or dwell above null.} Let \(R_r\) be recurrence and \(D_r\) be dwell for regime \(r\). Let the declared null ensemble provide \((\mu_R^{\mathrm{null}},\sigma_R^{\mathrm{null}})\) and \((\mu_D^{\mathrm{null}},\sigma_D^{\mathrm{null}})\). The regime passes if
 
-\[
-\max\left\{
-\frac{R\_r-\mu\_R^{\mathrm{null}}}{\sigma\_R^{\mathrm{null}}},
-\frac{D\_r-\mu\_D^{\mathrm{null}}}{\sigma\_D^{\mathrm{null}}}
+\[\max\left\{
+\frac{R_r-\mu_R^{\mathrm{null}}}{\sigma_R^{\mathrm{null}}},
+\frac{D_r-\mu_D^{\mathrm{null}}}{\sigma_D^{\mathrm{null}}}
 \right\}
 \ge 2
 \quad
 \text{and}
 \quad
-d\ge 0.5.
-\]
+d\ge 0.5.\]
 
 When both time-shuffled and no-feedback nulls are available, the stronger null gate is used. For dialog runs, the no-feedback null is structurally unavailable; the time-shuffled null is required.
 
 \textbf{C3. Embedder-robust recurrence class.} Recurrence is assigned to a coarse bin
 
-\[
-b\_e(r)\in
-\{\text{high}\ge 0.70,\ \text{low}\le 0.40,\ \text{mid otherwise}\}
-\]
+\[b_e(r)\in
+\{\text{high}\ge 0.70,\ \text{low}\le 0.40,\ \text{mid otherwise}\}\]
 
 for each embedding map \(e\). The criterion passes if the recurrence bin agrees in at least two of three embedders: the canonical embedder plus two alternatives. This criterion tests survival of the regime class under measurement change. It does not require scalar invariance of all diagnostics.
 
 \textbf{C4. Re-entry, contraction, or absorbing collapse.} The regime passes if at least one of the following holds:
 
-\[
-\lambda\_{1,r}^{\mathrm{late}}\le 0.015
-\]
+\[\lambda_{1,r}^{\mathrm{late}}\le 0.015\]
 
 for late-window contraction;
 
-\[
-\texttt{best\_period}=2
+\[\texttt{best\_period}=2
 \quad\text{and}\quad
-\texttt{period\_2\_score}>0
-\]
+\texttt{period\_2\_score}>0\]
 
 for period-two re-entry;
 
-\[
-R\_r\ge 0.90
+\[R_r\ge 0.90
 \quad\text{and}\quad
-SD\_r\le 1.50
-\]
+SD_r\le 1.50\]
 
 for absorbing collapse; or exit-return exceeds the C2 null gate. These alternatives allow different geometric signatures to qualify while still requiring a measured return, contraction, or collapse property.
 
@@ -841,27 +807,23 @@ Replace mode discards the previous context after each generation step. In this r
 
 For \(m\) post-injection replace steps, define
 
-\[
-G\_m
+\[G_m
 =
-\sum\_{s=t\_{\mathrm{inj}}}^{t\_{\mathrm{inj}}+m-1} |Y\_s|,
+\sum_{s=t_{\mathrm{inj}}}^{t_{\mathrm{inj}}+m-1} |Y_s|,
 \qquad
-\bar G\_m=\mathbb{E}G\_m.
-\]
+\bar G_m=\mathbb{E}G_m.\]
 
-The quantity \(G\_m\) is not injected text. It is the number of tokens generated by the model after the injection.
+The quantity \(G_m\) is not injected text. It is the number of tokens generated by the model after the injection.
 
-\textbf{Proposition. Replace-mode access bound.} In replace mode, suppose every reachable non-target state has one-step probability at least \(q\_0\) of generating a target-basin replacement, target entry persists to terminal measurement with probability at least \(r\_0\), and expected generation length is at most \(\kappa\) per step. Then after \(m\) post-injection replace steps,
+\textbf{Proposition. Replace-mode access bound.} In replace mode, suppose every reachable non-target state has one-step probability at least \(q_0\) of generating a target-basin replacement, target entry persists to terminal measurement with probability at least \(r_0\), and expected generation length is at most \(\kappa\) per step. Then after \(m\) post-injection replace steps,
 
-\[
-\Pr(X\_T\in B\_2)\ge r\_0[1-(1-q\_0)^m],
+\[\Pr(X_T\in B_2)\ge r_0[1-(1-q_0)^m],
 \qquad
-\mathbb{E}G\_m\le \kappa m .
-\]
+\mathbb{E}G_m\le \kappa m .\]
 
 This bounds post-injection generated tokens, not injected-token dose. Full lemma, corollaries, and proof in §11.3.
 
-The proposition captures the structural distinction between replace and append memory. In replace mode, once the loop reaches a state from which target-basin replacement is accessible, repeated replacement attempts accumulate probability through generation steps. The relevant finite quantity in the proposition is \(\mathbb{E}G\_m\), the expected post-injection generation budget. It is not \(\tau\), the length of the injected string.
+The proposition captures the structural distinction between replace and append memory. In replace mode, once the loop reaches a state from which target-basin replacement is accessible, repeated replacement attempts accumulate probability through generation steps. The relevant finite quantity in the proposition is \(\mathbb{E}G_m\), the expected post-injection generation budget. It is not \(\tau\), the length of the injected string.
 
 Consequently, the proposition should not be read as an injected-token barrier bound. If the access assumptions hold only after a particular injected string of length \(\tau\), then the injection protocol may certify an injected-dose upper bound of at most that \(\tau\) under those conditions. The factor \(\kappa m\) certifies only the generated-token budget after injection. If comparable access holds without injected text, then replace-mode switching is better understood as endogenous reachability of the replacement dynamics rather than as evidence of a positive injected-token barrier.
 
@@ -869,59 +831,51 @@ Consequently, the proposition should not be read as an injected-token barrier bo
 
 Append mode retains prior context:
 
-\[
-X\_{t+1}
+\[X_{t+1}
 =
-\operatorname{clip}(X\_t \Vert Y\_t),
+\operatorname{clip}(X_t \Vert Y_t),
 \qquad
-Y\_t\sim P\_\theta(\cdot\mid X\_t;f).
-\]
+Y_t\sim P_\theta(\cdot\mid X_t;f).\]
 
 A perturbation injected into an append-mode loop therefore does not overwrite the current state in one step. Instead, it is incorporated into an already formed bounded context and must compete with incumbent basin evidence that remains visible until displaced by clipping. The injected text, subsequent model outputs, and pre-existing context all coexist inside the same clipped state.
 
-This motivates an injected-token accumulation conjecture rather than a generation-budget theorem. Let \(B\_1,B\_2\subset\mathcal{C}\) be basin sets for an append-mode loop. There is no reason to expect a one-step overwrite bound analogous to replace mode. Instead, switching should depend on how much basin-relevant counter-context survives inside the effective context window.
+This motivates an injected-token accumulation conjecture rather than a generation-budget theorem. Let \(B_1,B_2\subset\mathcal{C}\) be basin sets for an append-mode loop. There is no reason to expect a one-step overwrite bound analogous to replace mode. Instead, switching should depend on how much basin-relevant counter-context survives inside the effective context window.
 
-\textbf{Conjecture. Append-mode accumulation barrier.} For append-mode loops, basin switching from \(B\_1\) to \(B\_2\) is governed by the accumulated share of semantically legible counter-context inside the clipped state. In particular, there exists a basin-dependent threshold such that subthreshold injections remain near the stochastic floor, while injections that supply sufficient basin-relevant counter-context produce a rising switching curve.
+\textbf{Conjecture. Append-mode accumulation barrier.} For append-mode loops, basin switching from \(B_1\) to \(B_2\) is governed by the accumulated share of semantically legible counter-context inside the clipped state. In particular, there exists a basin-dependent threshold such that subthreshold injections remain near the stochastic floor, while injections that supply sufficient basin-relevant counter-context produce a rising switching curve.
 
-A testable response-curve formulation is as follows. Let \(a\_\tau\) be the semantically weighted share of the clipped context occupied by basin-relevant injected text. Append-mode accumulation predicts a nondecreasing switching curve
+A testable response-curve formulation is as follows. Let \(a_\tau\) be the semantically weighted share of the clipped context occupied by basin-relevant injected text. Append-mode accumulation predicts a nondecreasing switching curve
 
-\[
-S\_{B\_1\to B\_2}(\tau)
+\[S_{B_1\to B_2}(\tau)
 =
-\Pr(X\_T\in B\_2\mid X\_{t\_{\mathrm{inj}}}\in B\_1,\tau)
+\Pr(X_T\in B_2\mid X_{t_{\mathrm{inj}}}\in B_1,\tau)
 \approx
-p\_{\mathrm{floor}}+
-(p\_{\max}-p\_{\mathrm{floor}})
-F(a\_\tau-\alpha^\star\_{B\_1\to B\_2}),
-\]
+p_{\mathrm{floor}}+
+(p_{\max}-p_{\mathrm{floor}})
+F(a_\tau-\alpha^\star_{B_1\to B_2}),\]
 
 where \(F\) is increasing and the threshold \(\alpha^\star\) is lower for in-distribution counter-context than for out-of-distribution text.
 
-Here \(p\_{\mathrm{floor}}\) is the relevant stochastic floor, \(p\_{\max}\) is the attainable upper switching level under the protocol, and \(\alpha^\star\_{B\_1\to B\_2}\) is a basin-pair threshold in effective context share. The word "semantically" is important: two injections with the same token count can have different \(a\_\tau\) if one is in-distribution counter-context for \(B\_2\) and the other is irrelevant or out-of-distribution text. This makes the conjecture falsifiable. It predicts dose dependence for append-mode in-distribution perturbations, weaker or absent dose response for semantically irrelevant perturbations at the same token count, and a threshold that shifts when the perturbation family changes.
+Here \(p_{\mathrm{floor}}\) is the relevant stochastic floor, \(p_{\max}\) is the attainable upper switching level under the protocol, and \(\alpha^\star_{B_1\to B_2}\) is a basin-pair threshold in effective context share. The word "semantically" is important: two injections with the same token count can have different \(a_\tau\) if one is in-distribution counter-context for \(B_2\) and the other is irrelevant or out-of-distribution text. This makes the conjecture falsifiable. It predicts dose dependence for append-mode in-distribution perturbations, weaker or absent dose response for semantically irrelevant perturbations at the same token count, and a threshold that shifts when the perturbation family changes.
 
-A geometric refinement is possible. Let \(V(x)=-\log\rho(x)\) be an empirical potential over the representation space, and let \(V^\star(B\_1,B\_2)\) denote the saddle height along a minimum-cost path between basins. One may hypothesize that injected-token barriers in append mode scale with this saddle height up to representation and perturbation-family factors. This geometric relation is not used as a theorem in the framework. It is a secondary hypothesis to be evaluated empirically.
+A geometric refinement is possible. Let \(V(x)=-\log\rho(x)\) be an empirical potential over the representation space, and let \(V^\star(B_1,B_2)\) denote the saddle height along a minimum-cost path between basins. One may hypothesize that injected-token barriers in append mode scale with this saddle height up to representation and perturbation-family factors. This geometric relation is not used as a theorem in the framework. It is a secondary hypothesis to be evaluated empirically.
 
-All barrier quantities in this section are operational token counts unless explicitly stated otherwise. Token-valued barriers are tokenizer-dependent and model-specific. A model-normalized alternative would measure injected information in nats using per-token conditional log probabilities under \(P\_\theta\). That requires log-probability capture during generation. The present framework therefore treats nat-valued barriers as a future measurement target rather than as reported quantities.
+All barrier quantities in this section are operational token counts unless explicitly stated otherwise. Token-valued barriers are tokenizer-dependent and model-specific. A model-normalized alternative would measure injected information in nats using per-token conditional log probabilities under \(P_\theta\). That requires log-probability capture during generation. The present framework therefore treats nat-valued barriers as a future measurement target rather than as reported quantities.
 
 \subsection{Observable maps and embedding}
 
 Attractor-like structure is not measured directly from raw recurrence definitions alone. We introduce observable maps that select text views of the trajectory, and embedding maps that lift those views into vector space. Let
 
-\[
-O\_t=h(X\_t,Y\_t,\mathrm{metadata})
-\]
+\[O_t=h(X_t,Y_t,\mathrm{metadata})\]
 
 be an observable string selected from the state, generation, and recorded metadata. Let
 
-\[
-z\_t=\phi(O\_t)\in\mathbb{R}^m
-\]
+\[z_t=\phi(O_t)\in\mathbb{R}^m\]
 
-be its vector representation. For the canonical embedding used in the main battery, \(m=1536\) for \texttt{text-embedding-3-small}. A trajectory therefore produces one or more embedded polylines \(\{z\_t^{(O)}\}\_{t=0}^{T-1}\), depending on the observable family.
+be its vector representation. For the canonical embedding used in the main battery, \(m=1536\) for \texttt{text-embedding-3-small}. A trajectory therefore produces one or more embedded polylines \(\{z_t^{(O)}\}_{t=0}^{T-1}\), depending on the observable family.
 
-Observable maps are post-hoc measurement functions; they do not feed back into the recurrence unless explicitly used as part of a nudge. Thus \(X\_t\) is the dynamical state, \(Y\_t\) is the sampled continuation, \(O\_t=h(X\_t,Y\_t,\mathrm{metadata})\) is the text view selected for measurement, and \(z\_t=\phi(O\_t)\) is the vector representation used for clustering, recurrence, dwell, and basin-predictability metrics. The Methods section fixes the observable family, embedding normalization, clustering procedures, and null ensembles before applying the C1-C4 criteria.
+Observable maps are post-hoc measurement functions; they do not feed back into the recurrence unless explicitly used as part of a nudge. Thus \(X_t\) is the dynamical state, \(Y_t\) is the sampled continuation, \(O_t=h(X_t,Y_t,\mathrm{metadata})\) is the text view selected for measurement, and \(z_t=\phi(O_t)\) is the vector representation used for clustering, recurrence, dwell, and basin-predictability metrics. The Methods section fixes the observable family, embedding normalization, clustering procedures, and null ensembles before applying the C1-C4 criteria.
 
-This separation matters for interpretation. The loop dynamics are defined by \((P\_\theta,f,\mathcal{N}\_\eta)\). The observables and embeddings define the measurement apparatus. A claimed attractor-like regime must therefore survive not only within one projection, but also under the robustness checks in C3. Conversely, failure under one observable does not by itself imply absence of structure in the text dynamics; it implies that the declared measurement battery did not certify the operational definition.
+This separation matters for interpretation. The loop dynamics are defined by \((P_\theta,f,\mathcal{N}_\eta)\). The observables and embeddings define the measurement apparatus. A claimed attractor-like regime must therefore survive not only within one projection, but also under the robustness checks in C3. Conversely, failure under one observable does not by itself imply absence of structure in the text dynamics; it implies that the declared measurement battery did not certify the operational definition.
 
 \subsection{Hypotheses}
 
@@ -959,25 +913,17 @@ All thresholds, pass rules, and current endpoint status are consolidated in §4.
 
 We instantiate the formal recurrence from §3.1 with three context-update rules:
 
-\[
-\text{Append:}\quad X\_{t+1}=\mathcal{N}\_{\text{append}}(X\_t,Y\_t)=\operatorname{clip}(X\_t\Vert Y\_t)
-\]
+\[\text{Append:}\quad X_{t+1}=\mathcal{N}_{\text{append}}(X_t,Y_t)=\operatorname{clip}(X_t\Vert Y_t)\]
 
-\[
-\text{Replace:}\quad X\_{t+1}=\mathcal{N}\_{\text{replace}}(X\_t,Y\_t)=\operatorname{clip}(Y\_t)
-\]
+\[\text{Replace:}\quad X_{t+1}=\mathcal{N}_{\text{replace}}(X_t,Y_t)=\operatorname{clip}(Y_t)\]
 
-\[
-\text{Dialog:}\quad X\_{t+1}=\mathcal{N}\_{\text{dialog}}(X\_t,Y\_t)=X\_t\Vert \operatorname{format\_turn}(r\_t,Y\_t)
-\]
+\[\text{Dialog:}\quad X_{t+1}=\mathcal{N}_{\text{dialog}}(X_t,Y_t)=X_t\Vert \operatorname{format\_turn}(r_t,Y_t)\]
 
 where
 
-\[
-Y\_t \sim P\_\theta(\cdot \mid X\_t; f)
-\]
+\[Y_t \sim P_\theta(\cdot \mid X_t; f)\]
 
-and \(P\_\theta\) is the language-model distribution parameterized by \(\theta\), here \texttt{gpt-4o-mini}. The clipping operator \(\operatorname{clip}(\cdot)\) truncates context from the head, namely the oldest text, once the running string exceeds 12,000 characters, preserving the most recent state. The content operator \(f\) enters through the system prompt fed to \(P\_\theta\), for example "Continue the text" for \(f=\text{continue}\) and "Paraphrase the following" for \(f=\text{paraphrase}\).
+and \(P_\theta\) is the language-model distribution parameterized by \(\theta\), here \texttt{gpt-4o-mini}. The clipping operator \(\operatorname{clip}(\cdot)\) truncates context from the head, namely the oldest text, once the running string exceeds 12,000 characters, preserving the most recent state. The content operator \(f\) enters through the system prompt fed to \(P_\theta\), for example "Continue the text" for \(f=\text{continue}\) and "Paraphrase the following" for \(f=\text{paraphrase}\).
 
 Append mode creates a growing memory trace until the context cap is reached. Replace mode overwrites the state with the latest output, making the loop maximally sensitive to the current sample. Dialog mode alternates formatted turns between two roles and retains the conversation history subject to the same context-management principles. These three update rules define the operator families used throughout the experiments.
 
@@ -985,9 +931,7 @@ Append mode creates a growing memory trace until the context cap is reached. Rep
 
 Each experiment runs
 
-\[
-N\_{\text{traj}}=N\_{\text{families}}\times N\_{\text{ICs}}\times N\_{\text{runs}}
-\]
+\[N_{\text{traj}}=N_{\text{families}}\times N_{\text{ICs}}\times N_{\text{runs}}\]
 
 trajectories. Publication-scale defaults differ by experiment family:
 
@@ -1020,7 +964,7 @@ All trajectories are embedded with \texttt{text-embedding-3-small}, producing 15
 \toprule
 observable & source location & what it captures \\
 \midrule
-\texttt{output} & \texttt{core/observables.py} & the model's \(Y\_t\) text alone, with no context \\
+\texttt{output} & \texttt{core/observables.py} & the model's \(Y_t\) text alone, with no context \\
 \texttt{rolling\_k3} & \texttt{core/observables.py} & concatenation of the last 3 outputs \\
 \texttt{context\_tail} & \texttt{core/observables.py} & the last 4000 characters of the running context \\
 \texttt{context\_full} & \texttt{core/observables.py} & fixed-window 8000-character tail, used in longer-memory pilot configurations \\
@@ -1041,7 +985,7 @@ The token budget is held below the 8,191-token embedding limit by construction. 
 
 \subsection{Perturbation materials and paired-run protocol}
 
-Perturbation experiments use paired recursive runs from the same seed, prompt family, initial condition, and generation settings. The treatment run receives injected text at a pre-specified injection step \(t\_{\mathrm{inj}}\), recorded in the experiment configuration and held fixed within a condition unless the experiment is explicitly an injection-step sweep. Terminal steps are 29 for 30-step perturbation pilots and 49 for 50-step perturbation runs.
+Perturbation experiments use paired recursive runs from the same seed, prompt family, initial condition, and generation settings. The treatment run receives injected text at a pre-specified injection step \(t_{\mathrm{inj}}\), recorded in the experiment configuration and held fixed within a condition unless the experiment is explicitly an injection-step sweep. Terminal steps are 29 for 30-step perturbation pilots and 49 for 50-step perturbation runs.
 
 \subsubsection*{Perturbation corpora}
 
@@ -1066,7 +1010,7 @@ The neutral word pool was curated to avoid emotional, introspective, or obviousl
 
 A perturbation dose \(\tau\) is measured in tokens. For dose-parametrized variants, the perturbation text is resized to the requested token length before injection. Sparse O1 adversarial dose sweeps use \(\tau \in \{20,80,200,400\}\). Dense reruns use more dose levels and larger per-cell sample sizes. Pilot conditions that do not carry an explicit dose label use their default corpus length, for example a full neutral paragraph or a 70-word lorem sample.
 
-The injection is applied to the recursive state at \(t\_{\mathrm{inj}}\) in a condition-specific but pre-specified manner. In append and dialog settings, the injected text is inserted into the context stream as an additional state fragment. In replace settings, the intervention is partly tautological because the state update rule already overwrites context with the current text; this is why replace-mode perturbation results are interpreted as a capitulation signature rather than as evidence of a subtle barrier-crossing mechanism.
+The injection is applied to the recursive state at \(t_{\mathrm{inj}}\) in a condition-specific but pre-specified manner. In append and dialog settings, the injected text is inserted into the context stream as an additional state fragment. In replace settings, the intervention is partly tautological because the state update rule already overwrites context with the current text; this is why replace-mode perturbation results are interpreted as a capitulation signature rather than as evidence of a subtle barrier-crossing mechanism.
 
 \subsubsection*{Adversarial-source rule}
 
@@ -1080,52 +1024,34 @@ A trajectory unit is excluded from perturbation endpoint aggregation if any requ
 
 \subsubsection*{Algorithm 1: paired perturbation evaluation}
 
-Input: seed or task \(x\), generator \(P\_\theta\), context-update rule \(\mathcal{N}\), injection condition \(c\), injection step \(t\_{\mathrm{inj}}\), terminal step \(T\), observable map \(O\), and equivalence rule \(C\). In this paper \(C\) is a K-means cluster in joint PCA-10 space, but the algorithm only requires a pre-specified equivalence rule.
+Input: seed or task \(x\), generator \(P_\theta\), context-update rule \(\mathcal{N}\), injection condition \(c\), injection step \(t_{\mathrm{inj}}\), terminal step \(T\), observable map \(O\), and equivalence rule \(C\). In this paper \(C\) is a K-means cluster in joint PCA-10 space, but the algorithm only requires a pre-specified equivalence rule.
 
 \begin{enumerate}
   \item Run two unperturbed controls:
-   \[
-   A=\operatorname{RunLoop}(x,P\_\theta,\mathcal{N},\text{no injection})
-   \]
-   \[
-   B=\operatorname{RunLoop}(x,P\_\theta,\mathcal{N},\text{no injection})
-   \]
+   \[A=\operatorname{RunLoop}(x,P_\theta,\mathcal{N},\text{no injection})\]
+   \[B=\operatorname{RunLoop}(x,P_\theta,\mathcal{N},\text{no injection})\]
 
   \item Estimate the stochastic-floor event:
-   \[
-   \operatorname{floor}=\left[C(O(A\_T))\neq C(O(B\_T))\right]
-   \]
+   \[\operatorname{floor}=\left[C(O(A_T))\neq C(O(B_T))\right]\]
 
   \item Run the matched treatment:
-   \[
-   Z=\operatorname{RunLoop}(x,P\_\theta,\mathcal{N},\text{inject }c\text{ at }t\_{\mathrm{inj}})
-   \]
+   \[Z=\operatorname{RunLoop}(x,P_\theta,\mathcal{N},\text{inject }c\text{ at }t_{\mathrm{inj}})\]
 
   \item Define raw switching:
-   \[
-   \operatorname{raw}=\left[C(O(Z\_T))\neq C(O(A\_T))\right]
-   \]
+   \[\operatorname{raw}=\left[C(O(Z_T))\neq C(O(A_T))\right]\]
 
   \item Define the injection-time jump:
-   \[
-   \operatorname{jump}=\left[C(O(Z\_{t\_{\mathrm{inj}}+1}))\neq C(O(Z\_{t\_{\mathrm{inj}}-1}))\right]
-   \]
+   \[\operatorname{jump}=\left[C(O(Z_{t_{\mathrm{inj}}+1}))\neq C(O(Z_{t_{\mathrm{inj}}-1}))\right]\]
 
   \item Define persistent escape:
-   \[
-   \operatorname{persist}=\operatorname{jump}\wedge
-   \left[C(O(Z\_T))=C(O(Z\_{t\_{\mathrm{inj}}+1}))\right]
-   \]
+   \[\operatorname{persist}=\operatorname{jump}\wedge
+   \left[C(O(Z_T))=C(O(Z_{t_{\mathrm{inj}}+1}))\right]\]
 
   \item Aggregate over seeds, tasks, and families:
-   \[
-   \operatorname{raw\_rate}=\mathbb{E}[\operatorname{raw}],\quad
+   \[\operatorname{raw\_rate}=\mathbb{E}[\operatorname{raw}],\quad
    \operatorname{floor}=\mathbb{E}[\operatorname{floor}],\quad
-   \operatorname{net\_rate}=\operatorname{raw\_rate}-\operatorname{floor}
-   \]
-   \[
-   \operatorname{persistent\_escape\_rate}=\mathbb{E}[\operatorname{persist}]
-   \]
+   \operatorname{net\_rate}=\operatorname{raw\_rate}-\operatorname{floor}\]
+   \[\operatorname{persistent\_escape\_rate}=\mathbb{E}[\operatorname{persist}]\]
 \end{enumerate}
 
 This same endpoint decomposition applies to non-embedding observables in engineering settings, including final patch family, files touched, test pass/fail sets, tool-call sequences, plan categories, security-policy violations, or embeddings of full traces.
@@ -1144,28 +1070,24 @@ In perturbation experiments, PCA and clustering are fit jointly across all condi
 
 \textbf{Definition.} Regime-structure diagnostics summarize the temporal organization of a single trajectory or a set of trajectories in PCA-10 cluster space.
 
-Recurrence for trajectory points \(z\_0,\ldots,z\_{T-1}\) is
+Recurrence for trajectory points \(z_0,\ldots,z_{T-1}\) is
 
-\[
-\operatorname{recurrence}(\epsilon,\tau)=
-\frac{\#\{(t,s):\lVert z\_t-z\_s\rVert\_2<\epsilon\ \wedge\ |t-s|>\tau\}}
-{T(T-1)/2}
-\]
+\[\operatorname{recurrence}(\epsilon,\tau)=
+\frac{\#\{(t,s):\lVert z_t-z_s\rVert_2<\epsilon\ \wedge\ |t-s|>\tau\}}
+{T(T-1)/2}\]
 
 with \(\epsilon=0.15\) and \(\tau=3\). The lag exclusion suppresses trivially nearby adjacent steps.
 
 Dwell is computed after K-means clustering with \(k=12\) in PCA-10. It is the run-length distribution within a cluster. Long dwell times indicate basin persistence; short dwell times indicate transience or rapid cycling.
 
-A target region is defined as the K-means cluster containing the trajectory's final 30\% of points. Basin score is the fraction of post-\(t^*\) points in that cluster, with \(t^*=0.7T\). Basin entry is the first step at which the trajectory's cluster matches its late-window target.
+A target region is defined as the K-means cluster containing the trajectory's final 30\% of points. Basin score is the fraction of post-\(t^\*\) points in that cluster, with \(t^\*=0.7T\). Basin entry is the first step at which the trajectory's cluster matches its late-window target.
 
 Late recurrence restricts the recurrence statistic to the second half of the trajectory. Exit-return asks whether a trajectory that has visited its target basin subsequently leaves and re-enters it. This separates tight basins from metastable basins.
 
 Periodicity is measured by lag-distance autocorrelation. For lag \(k\),
 
-\[
-\operatorname{mean\_dist}(k)=
-\mathbb{E}\_t\left[\lVert z\_t-z\_{t+k}\rVert\_{\cos}\right].
-\]
+\[\operatorname{mean\_dist}(k)=
+\mathbb{E}_t\left[\lVert z_t-z_{t+k}\rVert_{\cos}\right].\]
 
 The period-2 score is \(\operatorname{mean\_dist}(1)-\operatorname{mean\_dist}(2)\). Positive values indicate that lag-2 points are closer than lag-1 points. Analogous scores are computed for period 3, and the best period is the lag \(k\in[1,T/2]\) minimizing the mean distance.
 
@@ -1181,32 +1103,24 @@ Dispersion compares ensemble spread early and late in the trajectory. Initial di
 
 For each family-initial-condition cell with \(N\) runs, the embeddings at step \(t\) define a covariance matrix
 
-\[
-\Sigma\_t=\frac{1}{N-1}\sum\_i (z\_i^t-\bar z^t)(z\_i^t-\bar z^t)^\top .
-\]
+\[\Sigma_t=\frac{1}{N-1}\sum_i (z_i^t-\bar z^t)(z_i^t-\bar z^t)^\top .\]
 
-Let \(\mu\_k(t)\) be the \(k\)-th eigenvalue of \(\Sigma\_t\). The \(k\)-th finite-time ensemble-spread exponent over a window from \(t\_{\mathrm{baseline}}\) to \(T-1\) is
+Let \(\mu_k(t)\) be the \(k\)-th eigenvalue of \(\Sigma_t\). The \(k\)-th finite-time ensemble-spread exponent over a window from \(t_{\mathrm{baseline}}\) to \(T-1\) is
 
-\[
-\lambda\_k=
-\frac{1}{2(T-1-t\_{\mathrm{baseline}})}
-\log\left(\frac{\mu\_k(T-1)}{\mu\_k(t\_{\mathrm{baseline}})}\right).
-\]
+\[\lambda_k=
+\frac{1}{2(T-1-t_{\mathrm{baseline}})}
+\log\left(\frac{\mu_k(T-1)}{\mu_k(t_{\mathrm{baseline}})}\right).\]
 
 The factor \(1/2\) converts variance growth to amplitude growth. We compute early and late windows. The early window captures transient divergence as runs move away from the seed. The late window captures on-attractor or post-transient behavior.
 
 We also compute sharpness dimension and effective rank as secondary diagnostics. Sharpness dimension uses the ordered spectrum and the Tuci-style fractional form
 
-\[
-j^*=\max\left\{i:\sum\_{k\leq i}\lambda\_k\geq0\right\}
-\]
+\[j^\*=\max\left\{i:\sum_{k\leq i}\lambda_k\geq0\right\}\]
 
-with \(j^*=0\) if \(\lambda\_1<0\), and
+with \(j^\*=0\) if \(\lambda_1<0\), and
 
-\[
-\operatorname{SD}=j^*+
-\frac{\sum\_{k\leq j^*}\lambda\_k}{|\lambda\_{j^*+1}|}.
-\]
+\[\operatorname{SD}=j^\*+
+\frac{\sum_{k\leq j^\*}\lambda_k}{|\lambda_{j^\*+1}|}.\]
 
 If the spectrum is everywhere negative, SD is 0. If the cumulative sum remains non-negative through the full spectrum, SD is \(d\). Effective rank counts exponents above \(-0.01\).
 
@@ -1218,21 +1132,17 @@ If the spectrum is everywhere negative, SD is 0. If the cumulative sum remains n
 
 \textbf{Definition.} Basin predictability asks whether the late-window basin can be predicted from early state. For each trajectory, the target label \(y\) is the K-means cluster occupied in the late window. For each early step \(k\), we train a multinomial logistic regression from the PCA-10 state at step \(k\) to \(y\).
 
-Two cross-validation schemes are reported. The first is stratified \(k\)-fold cross-validation after dropping singleton classes that cannot be split into train and test folds. The number of folds is adaptive: \(n\_{\mathrm{splits}}=\min(5,\text{smallest class size})\). If fewer than two non-singleton classes remain, the cell is recorded as missing. The second is group-aware cross-validation with prompt family held out as the grouping variable. This GroupKFold analysis tests whether predictability generalizes across prompt families rather than exploiting family identity.
+Two cross-validation schemes are reported. The first is stratified \(k\)-fold cross-validation after dropping singleton classes that cannot be split into train and test folds. The number of folds is adaptive: \(n_{\mathrm{splits}}=\min(5,\text{smallest class size})\). If fewer than two non-singleton classes remain, the cell is recorded as missing. The second is group-aware cross-validation with prompt family held out as the grouping variable. This GroupKFold analysis tests whether predictability generalizes across prompt families rather than exploiting family identity.
 
 Audit columns record the number of dropped singleton classes and trajectories. Publication-scale runs usually reach 5 stratified folds. Reduced-scope sweeps and pilots can fall back to 2 to 4 folds.
 
 \textbf{Use in claims.} Group-aware basin predictability is one of the five primary endpoints. To claim cross-family basin predictability, accuracy at step \(k=10\) must satisfy
 
-\[
-\operatorname{acc}\_{\mathrm{group}}(k=10)\geq0.70.
-\]
+\[\operatorname{acc}_{\mathrm{group}}(k=10)\geq0.70.\]
 
 To claim that the original stratified estimate is leakage-free, the difference
 
-\[
-\Delta=\operatorname{acc}\_{\mathrm{stratified}}-\operatorname{acc}\_{\mathrm{group}}
-\]
+\[\Delta=\operatorname{acc}_{\mathrm{stratified}}-\operatorname{acc}_{\mathrm{group}}\]
 
 must be below 0.10. Stratified accuracy is reported as a diagnostic, but it is not sufficient for the leakage-free endpoint.
 
@@ -1272,7 +1182,7 @@ Basin score/entry and exit-return & time-shuffled and recursive baselines by obs
 Periodicity & time-shuffled trajectory order and non-oscillatory regimes & O2 recurrence or oscillation support & positive period-2 score with best-period evidence above threshold \\
 Dispersion and finite-time ensemble spread & matched-run ensemble spread and no-feedback baselines where applicable & contraction component of attractor score & late spread contraction or collapse relative to baseline \\
 Switching & paired control-control floor & perturbation signature & raw, net, and persistent reported separately \\
-Predictability & GroupKFold by family & basin predictability & \(\operatorname{acc}\_{\mathrm{group}}(k=10)\geq0.70\) \\
+Predictability & GroupKFold by family & basin predictability & \(\operatorname{acc}_{\mathrm{group}}(k=10)\geq0.70\) \\
 Behavioral ED50 & family-cluster bootstrap and model-based dose fit & token barrier endpoint & finite estimate with 95\% interval contained within the probed dose range \\
 Persistent escape & injection-time cluster jump plus terminal retention & persistent basin-escape endpoint & persistent escape rate at least 0.50 at the claimed barrier dose \\
 \bottomrule
@@ -1325,15 +1235,11 @@ For each grid bin, the average displacement vector is computed from all transiti
 
 Density fields use a higher-resolution two-dimensional histogram followed by Gaussian smoothing. The smoothed density \(\hat\rho(x)\) is used as a background heatmap and, in perturbation analyses, as the basis for the effective potential
 
-\[
-V(x)=-\log(\hat\rho(x)+\epsilon).
-\]
+\[V(x)=-\log(\hat\rho(x)+\epsilon).\]
 
 Streamlines are integral curves of the empirical vector field. Divergence is computed as
 
-\[
-\nabla\cdot v(x)=\frac{\partial U}{\partial x}+\frac{\partial V}{\partial y}.
-\]
+\[\nabla\cdot v(x)=\frac{\partial U}{\partial x}+\frac{\partial V}{\partial y}.\]
 
 Negative divergence indicates sink-like behavior, while positive divergence indicates source-like behavior. For recursive LLM loops, we expect weakly negative average divergence in contractive regimes, strong local minima at absorbing sinks, and saddle-like structure in oscillatory regimes. Implementation details and grid parameters are provided in Supplementary §11.8.
 
@@ -1389,8 +1295,8 @@ The five primary endpoints introduced in §4.0 are now defined operationally. Th
 endpoint & definition & measured at & threshold for "regime claim is supported" & defined in \\
 \midrule
 \textbf{Operational attractor score C1-C4} & Count of the four attractor criteria passed: late-window basin persistence, recurrence or dwell above null, embedder robustness, and contraction, re-entry, or collapse. & Publication-scale O1, O2, O3, and D1 on canonical observables. D2 exploratory status is checked separately. & \textbf{Strong attractor:} 4/4 criteria pass. \textbf{Attractor-like:} at least 3/4 pass. \textbf{Not attractor:} fewer than 3/4 pass. Missing publication-scale measurements count as fail unless structurally inapplicable. & §4.5.1, §4.5.2, §4.6, Supplementary §11.2 \\
-\textbf{Leakage-free basin predictability acc\_group(k=10)} & GroupKFold-by-prompt-family accuracy of predicting the late-window K-means basin from the PCA-10 state at step \(k=10\). & Publication-scale O1, O2, O3, and D1, \texttt{context\_tail}, K-means \(k=12\), \texttt{data/aggregated/group\_aware\_basin\_pred.csv}. & To claim \textbf{cross-family basin predictability:} \(\operatorname{acc}\_{\mathrm{group}}(k=10)\geq0.70\). To claim the original stratified number is \textbf{leakage-free:} \(\Delta=\operatorname{acc}\_{\mathrm{stratified}}-\operatorname{acc}\_{\mathrm{group}}<0.10\). & §4.5.3, Supplementary §11.3 \\
-\textbf{Perturbation switching signature} & Final-step switching rate: fraction of perturbed trajectories whose final K-means cluster differs from the paired control trajectory. & O1 dose-response at matched 200-token dose; O2, O3, and D1 perturbation pilots; \texttt{data/aggregated/perturbation\_cross\_regime/} and \texttt{data/aggregated/perturbation\_dose\_response/}. & \textbf{O1 selective sensitivity:} \(S\_{\mathrm{adv}}(200)\geq0.50\) and \(S\_{\mathrm{adv}}(200)/\max(S\_{\mathrm{neutral}}(200),S\_{\mathrm{lorem}}(200))\geq2.0\), with maximum out-of-distribution switching at most 0.30. \textbf{Replace-mode capitulation:} minimum non-control switching across O2/O3 neutral, lorem, and adversarial conditions at least 0.85. & §4.4, §4.5.4, Supplementary §11.5 \\
+\textbf{Leakage-free basin predictability acc\_group(k=10)} & GroupKFold-by-prompt-family accuracy of predicting the late-window K-means basin from the PCA-10 state at step \(k=10\). & Publication-scale O1, O2, O3, and D1, \texttt{context\_tail}, K-means \(k=12\), \texttt{data/aggregated/group\_aware\_basin\_pred.csv}. & To claim \textbf{cross-family basin predictability:} \(\operatorname{acc}_{\mathrm{group}}(k=10)\geq0.70\). To claim the original stratified number is \textbf{leakage-free:} \(\Delta=\operatorname{acc}_{\mathrm{stratified}}-\operatorname{acc}_{\mathrm{group}}<0.10\). & §4.5.3, Supplementary §11.3 \\
+\textbf{Perturbation switching signature} & Final-step switching rate: fraction of perturbed trajectories whose final K-means cluster differs from the paired control trajectory. & O1 dose-response at matched 200-token dose; O2, O3, and D1 perturbation pilots; \texttt{data/aggregated/perturbation\_cross\_regime/} and \texttt{data/aggregated/perturbation\_dose\_response/}. & \textbf{O1 selective sensitivity:} \(S_{\mathrm{adv}}(200)\geq0.50\) and \(S_{\mathrm{adv}}(200)/\max(S_{\mathrm{neutral}}(200),S_{\mathrm{lorem}}(200))\geq2.0\), with maximum out-of-distribution switching at most 0.30. \textbf{Replace-mode capitulation:} minimum non-control switching across O2/O3 neutral, lorem, and adversarial conditions at least 0.85. & §4.4, §4.5.4, Supplementary §11.5 \\
 \textbf{Behavioral ED50 token barrier} & The perturbation dose \(\tau\) at which a four-parameter logistic fit to the O1 adversarial dose-response reaches 50\% switching, with prompt-family-cluster bootstrap uncertainty. & O1 adversarial dose sweep. Sparse run: \(\tau\in\{20,80,200,400\}\), \(n=50\) per cell. Dense rerun: \(n=200\) per cell across 8 doses. & To claim a \textbf{localized token barrier:} ED50 point estimate finite and the 95\% family-cluster bootstrap interval lies wholly inside the probed interval \([20,400]\) tokens. If the point estimate is inside but the interval crosses the boundary, report only "finite but unlocalized" or "in flight." & §4.5.4, Supplementary §11.1 \\
 \textbf{Persistent basin-escape rate} & Fraction of trajectories that visibly change cluster at injection and remain in that post-injection cluster at the terminal step. & O1 adversarial dose sweeps using \texttt{joint\_pca10\_clusters.csv}; summary in \texttt{data/aggregated/persistence\_summary.csv}. & To interpret switching as \textbf{persistent basin escape} rather than final-step divergence: persistent escape rate at least 0.50 at the claimed barrier dose. If below 0.50, switching may still be reported, but not as clean basin escape. & §4.4, §4.5.4, Supplementary §11.6 \\
 \bottomrule
@@ -1401,14 +1307,14 @@ On the current data, after the dense-dose rerun and the endpoint-decomposition a
 
 \begin{itemize}
   \item \textbf{Operational attractor score C1-C4:} O1, O2, O3, and D1 pass the omnibus attractor criterion; D2 does not.
-  \item \textbf{Leakage-free basin predictability:} only O1 passes the stricter \(\operatorname{acc}\_{\mathrm{group}}(k=10)\geq0.70\) and \(\Delta<0.10\) rule. O2, O3, and D1 fail under group-aware cross-validation.
-  \item \textbf{Perturbation switching signature:} O1 selective sensitivity passes, with \(S\_{\mathrm{adv}}(200)=0.620\) in the dense rerun and a ratio to neutral or lorem switching of approximately 2.8. Replace-mode O2/O3 capitulation passes by point estimate but is partly tautological because replace-mode intervention overwrites state.
-  \item \textbf{Behavioral \(\mathrm{ED50}\_{\mathrm{raw}}\) token barrier:} passes at approximately 40 tokens, with estimates of 36 from the four-parameter logistic fit, 41 from the generalized linear mixed model, and 52 as the bootstrap median. The 95\% interval \([8.5,242]\) is wide because of the 5-family-cluster heavy tail.
-  \item \textbf{\(\mathrm{ED50}\_{\mathrm{net}}\) above natural floor:} does not pass. The net effect saturates at +32 percentage points at dose 400, below the +50 percentage-point threshold.
-  \item \textbf{Persistent basin-escape rate:} does not pass. At dose 400, only 16\% of dense-data trajectories are kicked and persisted, well below the 50\% threshold. Thus switching is not claimed as clean basin escape, and the strict \(\mathrm{ED50}\_{\mathrm{persist}}\) is undefined in the tested range.
+  \item \textbf{Leakage-free basin predictability:} only O1 passes the stricter \(\operatorname{acc}_{\mathrm{group}}(k=10)\geq0.70\) and \(\Delta<0.10\) rule. O2, O3, and D1 fail under group-aware cross-validation.
+  \item \textbf{Perturbation switching signature:} O1 selective sensitivity passes, with \(S_{\mathrm{adv}}(200)=0.620\) in the dense rerun and a ratio to neutral or lorem switching of approximately 2.8. Replace-mode O2/O3 capitulation passes by point estimate but is partly tautological because replace-mode intervention overwrites state.
+  \item \textbf{Behavioral \(\mathrm{ED50}_{\mathrm{raw}}\) token barrier:} passes at approximately 40 tokens, with estimates of 36 from the four-parameter logistic fit, 41 from the generalized linear mixed model, and 52 as the bootstrap median. The 95\% interval \([8.5,242]\) is wide because of the 5-family-cluster heavy tail.
+  \item \textbf{\(\mathrm{ED50}_{\mathrm{net}}\) above natural floor:} does not pass. The net effect saturates at +32 percentage points at dose 400, below the +50 percentage-point threshold.
+  \item \textbf{Persistent basin-escape rate:} does not pass. At dose 400, only 16\% of dense-data trajectories are kicked and persisted, well below the 50\% threshold. Thus switching is not claimed as clean basin escape, and the strict \(\mathrm{ED50}_{\mathrm{persist}}\) is undefined in the tested range.
 \end{itemize}
 
-In the present experiments, the equivalence rule \(C(O(X\_T))\) is a K-means cluster of an embedding-space observable. In tool-using coding agents, the same endpoint structure can be instantiated with engineering observables: final patch family, files touched, the failing or passing test set, the selected plan category, the tool-call sequence, a security-policy violation, or an embedding of the full trajectory trace. Algorithm 1 requires only a consistent, pre-specified equivalence rule and paired controls; it does not require that "cluster" literally mean an embedding cluster.
+In the present experiments, the equivalence rule \(C(O(X_T))\) is a K-means cluster of an embedding-space observable. In tool-using coding agents, the same endpoint structure can be instantiated with engineering observables: final patch family, files touched, the failing or passing test set, the selected plan category, the tool-call sequence, a security-policy violation, or an embedding of the full trajectory trace. Algorithm 1 requires only a consistent, pre-specified equivalence rule and paired controls; it does not require that "cluster" literally mean an embedding cluster.
 
 \section{Results}
 
@@ -1972,7 +1878,7 @@ Robustness in recursive LLM systems is not a scalar model property but emergent 
 
 \subsection{Recursive-loop robustness is determined by memory policy and endpoint choice}
 
-The central lesson is that recursive-loop behavior is determined jointly by the generator and the context-update rule. In the formalism of §3.1, the model samples \(Y\_t \sim P\_\theta(\cdot \mid X\_t; f)\), while the nudge \(\mathcal{N}\_f\) decides how that sampled text becomes the next state. Two loops with the same generator and similar prompt instructions can therefore have different perturbation responses solely because one preserves prior context and the other overwrites it.
+The central lesson is that recursive-loop behavior is determined jointly by the generator and the context-update rule. In the formalism of §3.1, the model samples \(Y_t \sim P_\theta(\cdot \mid X_t; f)\), while the nudge \(\mathcal{N}_f\) decides how that sampled text becomes the next state. Two loops with the same generator and similar prompt instructions can therefore have different perturbation responses solely because one preserves prior context and the other overwrites it.
 
 The second lesson is that robustness is endpoint-dependent. A loop can move without staying moved; two unperturbed runs can diverge without any perturbation; and an overwrite-style update can make a system appear fragile even when inserted text has little effect. In O1, adversarial append-mode perturbations produce a finite raw-switching dose response, but the stochastic floor and lack of persistent crossing prevent interpreting that response as durable escape. Raw switching is appropriate for detecting sensitivity; net switching estimates perturbation effect above stochastic drift; persistent escape is the relevant endpoint when the safety concern is durable redirection after recovery turns.
 
@@ -1988,9 +1894,9 @@ The expected signatures differ: append should show specificity and graded dose r
 
 \subsection{A raw-switching ED50 is not a persistent-escape barrier}
 
-The most important interpretive correction is that \(\mathrm{ED50}\_{\mathrm{raw}}\) is not the same quantity as a persistent-escape barrier. Raw switching asks whether the perturbed trajectory's terminal cluster differs from its paired control. That endpoint is useful, but it conflates true redirection, ordinary stochastic divergence, and transient movement that later recovers. Persistent escape is stricter: the trajectory must visibly jump at injection and remain in the post-injection basin through the terminal step (§3.1.2). Persistent escape is the appropriate strict endpoint for durable basin change, but transient raw switching may still matter in applications where a single action is consequential.
+The most important interpretive correction is that \(\mathrm{ED50}_{\mathrm{raw}}\) is not the same quantity as a persistent-escape barrier. Raw switching asks whether the perturbed trajectory's terminal cluster differs from its paired control. That endpoint is useful, but it conflates true redirection, ordinary stochastic divergence, and transient movement that later recovers. Persistent escape is stricter: the trajectory must visibly jump at injection and remain in the post-injection basin through the terminal step (§3.1.2). Persistent escape is the appropriate strict endpoint for durable basin change, but transient raw switching may still matter in applications where a single action is consequential.
 
-Under the permissive raw endpoint, O1 adversarial append-mode continuation has a clear dose response: \(\mathrm{ED50}\_{\mathrm{raw}} \approx 40\) tokens, with estimates 36, 41, and 52 tokens across the 4PL, GLMM, and family-cluster-bootstrap analyses (§5.6.1). But the raw curve plateaus near 67\%, not 100\%. Moreover, paired controls already disagree at about 35\%, so subtracting the stochastic floor leaves a maximum net effect of only +32 pp at 400 tokens, below the +50 pp criterion for \(\mathrm{ED50}\_{\mathrm{net}}\).
+Under the permissive raw endpoint, O1 adversarial append-mode continuation has a clear dose response: \(\mathrm{ED50}_{\mathrm{raw}} \approx 40\) tokens, with estimates 36, 41, and 52 tokens across the 4PL, GLMM, and family-cluster-bootstrap analyses (§5.6.1). But the raw curve plateaus near 67\%, not 100\%. Moreover, paired controls already disagree at about 35\%, so subtracting the stochastic floor leaves a maximum net effect of only +32 pp at 400 tokens, below the +50 pp criterion for \(\mathrm{ED50}_{\mathrm{net}}\).
 
 The persistent endpoint is smaller still. At the highest tested dose, persistent escape reaches only 16\% under canonical K-means \(k=12\), 10\% under K-means \(k=4\), and 39.5\% under HDBSCAN (§5.15). None crosses 50\% in the tested 5 to 400 token range. The correct conclusion is therefore: O1 has a finite raw-switching dose response, but no measured persistent-escape barrier in this experiment.
 
@@ -1998,7 +1904,7 @@ The persistent endpoint is smaller still. At the highest tested dose, persistent
 
 The empirical potential landscape \(V(x) = -\log \rho(x)\) is useful as a diagnostic picture of trajectory density, but it should not be read as a calibrated token barrier. The landscape is computed after embedding, projection, smoothing, and basin detection, so its absolute values depend on the representation and analysis choices. The parameter-grid sensitivity analysis confirms this: per-condition \(V^\star\) values vary with coefficient of variation 14 to 24\% across KDE bandwidths, grid resolutions, and basin-count settings (§5.16).
 
-Their value is diagnostic: they show whether trajectories occupy one or several basins, whether perturbations move mass toward alternative density regions, and whether basin structure is stable under analysis choices. What survives here is the ordinal claim. In the O1 perturbation pilot, the rank ordering of \(V^\star\) is stable across 89 to 98\% of parameter combinations: control is usually highest, adversarial usually lowest, and neutral or lorem occupy the middle (§5.16). This supports the use of density landscapes as descriptive basin-geometry tools. It does not justify converting \(V^\star\) into tokens, nor does it independently validate \(\mathrm{ED50}\_{\mathrm{raw}}\).
+Their value is diagnostic: they show whether trajectories occupy one or several basins, whether perturbations move mass toward alternative density regions, and whether basin structure is stable under analysis choices. What survives here is the ordinal claim. In the O1 perturbation pilot, the rank ordering of \(V^\star\) is stable across 89 to 98\% of parameter combinations: control is usually highest, adversarial usually lowest, and neutral or lorem occupy the middle (§5.16). This supports the use of density landscapes as descriptive basin-geometry tools. It does not justify converting \(V^\star\) into tokens, nor does it independently validate \(\mathrm{ED50}_{\mathrm{raw}}\).
 
 \subsection{Robust recursive-loop evaluations must report floors, persistence, and overwrite mechanics}
 

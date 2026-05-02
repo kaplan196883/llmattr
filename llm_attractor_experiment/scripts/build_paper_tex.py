@@ -420,27 +420,32 @@ def _escape_special_chars(text: str) -> str:
 
 
 def _convert_math_blocks(text: str) -> tuple[str, list[str]]:
-    """Replace $$...$$ display-math blocks AND inline $..$ math with
-    placeholders so they pass through inline-text rewriters unchanged.
-    The placeholders distinguish the two so we can restore differently.
+    """Replace markdown ($..$, $$..$$) AND LaTeX-style (\\(..\\), \\[..\\])
+    math with placeholders so they pass through inline-text rewriters
+    unchanged. The placeholders distinguish the four so we can restore
+    differently.
     Returns (rewritten_text, list_of_blocks_typed)."""
     blocks: list[tuple[str, str]] = []  # list of (kind, body)
-    def _stash_display(m: re.Match) -> str:
-        blocks.append(("display", m.group(1)))
-        return f"\x00MATHBLOCK{len(blocks)-1}\x00"
-    def _stash_inline(m: re.Match) -> str:
-        blocks.append(("inline", m.group(1)))
-        return f"\x00MATHBLOCK{len(blocks)-1}\x00"
-    # Display math first (avoid re-matching $..$ inside $$..$$)
-    rewritten = re.sub(r"\$\$([\s\S]*?)\$\$", _stash_display, text)
-    # Inline math: $...$ — body excludes `$`, may span single
-    # newlines (multi-line inline math like
-    # `$\mathrm{B} \le \kappa\n\approx 80$`) but NOT paragraph
-    # breaks (\n\s*\n) — otherwise a stray `$30` (currency) would
-    # swallow text up to the next `$` arbitrarily far away.
+
+    def _stash(kind: str):
+        def _f(m: re.Match) -> str:
+            blocks.append((kind, m.group(1)))
+            return f"\x00MATHBLOCK{len(blocks)-1}\x00"
+        return _f
+
+    rewritten = text
+    # 1. \[...\] display math (LaTeX-style). Greedy body up to next \].
+    rewritten = re.sub(r"\\\[([\s\S]*?)\\\]", _stash("ltx_display"), rewritten)
+    # 2. $$...$$ display math (markdown).
+    rewritten = re.sub(r"\$\$([\s\S]*?)\$\$", _stash("display"), rewritten)
+    # 3. \(...\) inline math (LaTeX-style). Lazy body up to next \).
+    rewritten = re.sub(r"\\\(([\s\S]*?)\\\)", _stash("ltx_inline"), rewritten)
+    # 4. $...$ inline math (markdown). Body excludes `$`, may span single
+    #    newlines but NOT paragraph breaks. The negative lookbehind/lookahead
+    #    avoid matching $$ that the earlier pass already stashed.
     rewritten = re.sub(
         r"(?<!\$)\$((?:(?!\$|\n\s*\n)[\s\S])+?)\$(?!\$)",
-        _stash_inline, rewritten,
+        _stash("inline"), rewritten,
     )
     return rewritten, blocks
 
@@ -449,7 +454,13 @@ def _restore_math_blocks(text: str, blocks: list[tuple[str, str]]) -> str:
     for i, (kind, b) in enumerate(blocks):
         if kind == "display":
             replacement = "\\begin{equation*}\n" + b.strip() + "\n\\end{equation*}"
-        else:
+        elif kind == "ltx_display":
+            # Preserve the author's \[ \] (LaTeX renders them as a numbered or
+            # unnumbered display equation; here we keep the unnumbered form).
+            replacement = "\\[" + b.strip() + "\\]"
+        elif kind == "ltx_inline":
+            replacement = "\\(" + b + "\\)"
+        else:  # inline ($...$)
             replacement = "$" + b + "$"
         text = text.replace(f"\x00MATHBLOCK{i}\x00", replacement)
     return text
