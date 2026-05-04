@@ -40,13 +40,23 @@ llm_attractor_experiment/data/run*.out
 llm_attractor_experiment/data/*.log
 
 # ============================================================================
-# Derived binary artifacts (regeneratable from raw/steps.jsonl via `embed`)
-# Kept excluded to keep repo size reasonable. Cost to regen all: ~$30.
+# Experiment artifacts — DO NOT track in git. Released to Zenodo at paper
+# acceptance (see §9 of ARTICLE.md). Local tree may exceed 30 GB; pushing
+# any of this through plain git or LFS will exceed quotas/timeouts.
+# History was stripped on 2026-05-05 via git filter-repo --invert-paths
+# --path llm_attractor_experiment/data; do not undo that by re-tracking.
 # ============================================================================
+llm_attractor_experiment/data/exp_*/
+llm_attractor_experiment/data/aggregated/
+llm_attractor_experiment/data/pub_dynamics_plots/
+llm_attractor_experiment/data/dynamics_cross_experiment.csv
+llm_attractor_experiment/data/dynamics_plots/
+llm_attractor_experiment/data/cross_model_logs/
+
+# Older derived-artifact patterns (kept as belt-and-suspenders for any
+# experiment dir that escapes the broader exp_*/ rule above)
 llm_attractor_experiment/data/**/embeddings/**/*.npy
 llm_attractor_experiment/data/**/embeddings/**/*.parquet
-
-# Animations and large rendered outputs (regeneratable from embeddings)
 llm_attractor_experiment/data/**/*.mp4
 llm_attractor_experiment/data/**/*.gif
 
