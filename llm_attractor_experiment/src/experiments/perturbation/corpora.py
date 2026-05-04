@@ -140,6 +140,8 @@ def sample_adversarial_text(
     min_step: int = 20,
     role: str | None = "agent",
     seed: int | None = None,
+    target_chars: int | None = None,
+    homogeneous: bool = False,
 ) -> str:
     """
     Pull a late-step output from a completed trajectory in the source experiment.
@@ -149,7 +151,12 @@ def sample_adversarial_text(
       - role == role  (if given; for dialog experiments)
       - prompt_family != exclude_family  (cross-family ensures clearly off-basin)
 
-    Returns the output_text of a single randomly-drawn record.
+    If `target_chars` is None or the first sampled output already meets it,
+    returns a single randomly-drawn output. If `target_chars` exceeds a
+    typical output length, concatenates multiple sampled outputs (separator
+    "\\n\\n") until the target is reached. Used by the extreme-dose pilot
+    where the requested perturbation length exceeds any single late-step
+    output (max ~1000 chars vs requested ~24000 chars).
     """
     steps_path = source_experiment_dir / "raw" / "steps.jsonl"
     if not steps_path.exists():
@@ -179,7 +186,40 @@ def sample_adversarial_text(
             f"no adversarial candidates found in {steps_path} "
             f"(exclude_family={exclude_family}, min_step={min_step}, role={role})"
         )
-    return rng.choice(candidates)
+    if target_chars is None:
+        return rng.choice(candidates)
+    if homogeneous:
+        # Homogeneous mode: pick ONE source output and repeat it (with a
+        # newline separator between repetitions) until target_chars is reached.
+        # Used as a control for the heterogeneity-of-destination hypothesis
+        # in §5.1.3: if the destination-coherent dip at high doses is caused
+        # by perturbation heterogeneity, then a homogeneous repeat of one
+        # source should produce LESS scatter and a higher destination-coherent
+        # rate at matched dose.
+        source = rng.choice(candidates)
+        parts = [source]
+        total = len(source)
+        while total < target_chars:
+            parts.append(source)
+            total += len(source) + 1  # account for "\n" separator
+        return "\n".join(parts)
+    # Heterogeneous mode (default): concatenate distinct sampled outputs until
+    # target_chars is reached. Sampling without replacement; if we exhaust
+    # candidates before hitting target, we restart with re-shuffled order.
+    pool = list(candidates)
+    rng.shuffle(pool)
+    parts: list[str] = []
+    total = 0
+    idx = 0
+    while total < target_chars:
+        if idx >= len(pool):
+            rng.shuffle(pool)
+            idx = 0
+        chunk = pool[idx]
+        parts.append(chunk)
+        total += len(chunk) + 2  # account for "\n\n" separator
+        idx += 1
+    return "\n\n".join(parts)
 
 
 __all__ = [

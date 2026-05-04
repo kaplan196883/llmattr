@@ -1,0 +1,21 @@
+2026-05-03 21:08:25 [INFO] src.experiments.perturbation.analyze: perturbation analyze: override_step=15 is_dialog=False agent_role=agent
+2026-05-03 21:08:25 [INFO] src.experiments.perturbation.analyze: joint PCA-10 explained variance: 0.499
+2026-05-03 21:08:30 [INFO] src.experiments.perturbation.analyze: wrote relaxation_table.csv (7500 rows)
+2026-05-03 21:08:30 [INFO] src.experiments.perturbation.analyze: wrote relaxation_curves.png
+2026-05-03 21:08:31 [INFO] src.experiments.perturbation.analyze: wrote switching_rates.png and switching_summary.csv
+2026-05-03 21:08:31 [INFO] src.experiments.perturbation.analyze: switching summary:
+                 condition  switch_rate  n_switched  n_total  switch_rate_ci_lo  switch_rate_ci_hi
+                   control         0.00           0       50           0.000000           0.071286
+        adversarial_dose80         0.38          19       50           0.258677           0.518432
+ adversarial_insert_dose80         0.18           9       50           0.097730           0.307893
+       adversarial_dose200         0.52          26       50           0.385177           0.651972
+adversarial_insert_dose200         0.18           9       50           0.097730           0.307893
+D:\ROOT\llmattr\llm_attractor_experiment\src\experiments\perturbation\analyze.py:273: UserWarning: *c* argument looks like a single numeric RGB or RGBA sequence, which should be avoided as value-mapping will have precedence in case its length matches with *x* & *y*.  Please use the *color* keyword-argument or provide a 2D array with a single row if you intend to specify the same RGB or RGBA value for all points.
+  ax.scatter(post["pc1"], post["pc2"], c=cond_colors[cond], s=14, alpha=0.6,
+D:\ROOT\llmattr\llm_attractor_experiment\src\experiments\perturbation\analyze.py:273: UserWarning: *c* argument looks like a single numeric RGB or RGBA sequence, which should be avoided as value-mapping will have precedence in case its length matches with *x* & *y*.  Please use the *color* keyword-argument or provide a 2D array with a single row if you intend to specify the same RGB or RGBA value for all points.
+  ax.scatter(post["pc1"], post["pc2"], c=cond_colors[cond], s=14, alpha=0.6,
+D:\ROOT\llmattr\llm_attractor_experiment\src\experiments\perturbation\analyze.py:273: UserWarning: *c* argument looks like a single numeric RGB or RGBA sequence, which should be avoided as value-mapping will have precedence in case its length matches with *x* & *y*.  Please use the *color* keyword-argument or provide a 2D array with a single row if you intend to specify the same RGB or RGBA value for all points.
+  ax.scatter(post["pc1"], post["pc2"], c=cond_colors[cond], s=14, alpha=0.6,
+D:\ROOT\llmattr\llm_attractor_experiment\src\experiments\perturbation\analyze.py:273: UserWarning: *c* argument looks like a single numeric RGB or RGBA sequence, which should be avoided as value-mapping will have precedence in case its length matches with *x* & *y*.  Please use the *color* keyword-argument or provide a 2D array with a single row if you intend to specify the same RGB or RGBA value for all points.
+  ax.scatter(post["pc1"], post["pc2"], c=cond_colors[cond], s=14, alpha=0.6,
+2026-05-03 21:08:32 [INFO] src.experiments.perturbation.analyze: wrote trajectory_map.png

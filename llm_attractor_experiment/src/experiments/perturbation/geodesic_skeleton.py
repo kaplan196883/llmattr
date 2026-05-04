@@ -118,9 +118,9 @@ def _draw_panel(
     basin_j_x, basin_j_y, V_star, n_basins}.
     """
     color = COND_COLORS.get(cond, "#5fa85f")
-    cs = ax.contourf(X, Y, V, levels=20, cmap="magma_r", alpha=0.85)
-    ax.contour(X, Y, V, levels=10, colors="white", linewidths=0.4, alpha=0.5)
-    ax.scatter(pts[:, 0], pts[:, 1], s=0.4, alpha=0.06, color="#444", linewidths=0)
+    cs = ax.contourf(X, Y, V, levels=20, cmap="magma", alpha=0.55)
+    ax.contour(X, Y, V, levels=10, colors="#555", linewidths=0.4, alpha=0.5)
+    ax.scatter(pts[:, 0], pts[:, 1], s=0.4, alpha=0.10, color="#222", linewidths=0)
 
     centers = _find_basin_centers(V, n_max=n_basins)
     if not centers:
@@ -130,7 +130,7 @@ def _draw_panel(
     # Plot basin centers
     for (r, c) in centers:
         ax.scatter(X[r, c], Y[r, c], s=120, marker="*", color=color,
-                   edgecolors="white", linewidths=1.0, zorder=10)
+                   edgecolors="black", linewidths=1.0, zorder=10)
 
     # Compute pairwise geodesics for the top n basins
     records: list[dict] = []

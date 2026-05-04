@@ -1,0 +1,8 @@
+2026-05-04 02:22:31 [INFO] src.main: loaded 54000 step records
+2026-05-04 02:22:37 [INFO] src.main: embedding 54000 texts for observable 'output'
+2026-05-04 02:27:29 [INFO] src.main: wrote embeddings ((54000, 1536)) to data\exp_perturb_O1_ed50_dense_noclip\embeddings\output
+2026-05-04 02:27:34 [INFO] src.main: embedding 54000 texts for observable 'rolling_k3'
+2026-05-04 02:35:26 [INFO] src.main: wrote embeddings ((54000, 1536)) to data\exp_perturb_O1_ed50_dense_noclip\embeddings\rolling_k3
+2026-05-04 02:35:31 [INFO] src.main: embedding 54000 texts for observable 'context_tail'
+2026-05-04 02:50:22 [INFO] src.main: wrote embeddings ((54000, 1536)) to data\exp_perturb_O1_ed50_dense_noclip\embeddings\context_tail
+2026-05-04 02:50:23 [INFO] src.main: embedding phase done

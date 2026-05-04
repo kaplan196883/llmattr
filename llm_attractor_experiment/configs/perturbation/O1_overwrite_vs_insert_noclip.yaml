@@ -1,0 +1,151 @@
+# O1 overwrite-vs-insert experiment (round-32, F3 — cross-loop validation
+# of the §5.2 insert-mode counterfactual). See ARTICLE.md §8.6 (F3) and
+# the round-32 framing edits to §5.2.
+#
+# Background: the existing O2/O3 overwrite-vs-insert experiment
+# (configs/perturbation/O2_overwrite_vs_insert.yaml,
+#  configs/perturbation/O3_overwrite_vs_insert.yaml) is run only in
+# replace-mode regimes, so the 12-32% insert-mode switching rate it
+# reports may be replace-specific. F3 asks the same question for the
+# append-mode O1 continuation operator: does insert-mode produce a
+# similarly low switching rate when the underlying loop preserves
+# prior context?
+#
+# Two perturbation modes per dose:
+#   - `adversarial_doseN`        — existing protocol; injection replaces
+#                                   step-15 output, which under append
+#                                   mode means clip(X_15 || perturbation)
+#                                   becomes X_16. Perturbation persists in
+#                                   the appended history; model sees it
+#                                   from step 16 onward.
+#   - `adversarial_insert_doseN` — NEW; injection prepended to context
+#                                   for step 15, but model's normal
+#                                   generation Y_15 is preserved as the
+#                                   appended fragment. The injected text
+#                                   is visible to the model for one
+#                                   generation only; only model-mediated
+#                                   effects can persist.
+#
+# Pre-registered prediction: insert-mode switching in O1 should be
+# comparable to insert-mode switching in O2/O3 (12-32%). If
+# substantially different, it would reveal that one-shot visible
+# perturbation response is regime-conditional (e.g., modulated by
+# accumulated prior context), and would weaken the claim that
+# insert-mode purely measures model behavior. If similar, it
+# validates the cross-regime interpretation.
+#
+# Scope: 5 families × 5 ICs × 2 runs = 50 trajectories per condition.
+# 5 conditions (control + 2 overwrite + 2 insert) = 250 trajectories.
+# Cost ~$2-4 on gpt-4o-mini, runtime ~1-2 hr at parallel=24.
+
+experiment_id: exp_perturb_O1_overwrite_vs_insert_noclip
+generation_model: gpt-4o-mini
+embedding_model: text-embedding-3-small
+steps_per_run: 30
+runs_per_condition: 2
+initial_conditions_per_family: 5
+max_output_tokens: 120
+temperature: 0.8
+top_p: 1.0
+include_logprobs: false
+clip_rule: tail_chars
+max_context_chars: 200000
+loop_mode: append
+rolling_window_k: 3
+context_tail_chars: 4000
+context_full_chars: 8000
+observables:
+- output
+- rolling_k3
+- context_tail
+pca_dims:
+- 2
+- 10
+clustering:
+  method: kmeans
+  kmeans:
+    n_clusters: 12
+recurrence:
+  metric: cosine
+  epsilon: 0.15
+  tau: 3
+dwell:
+  space: pca10
+basin:
+  target_region_late_fraction: 0.3
+  target_step_fraction: 0.7
+  perturbations:
+  - seed_only
+basin_entry:
+  enabled: true
+  late_fraction: 0.3
+  fraction_after: 0.7
+late_recurrence:
+  enabled: true
+  start_fraction: 0.5
+  use_basin_entry: true
+exit_return:
+  enabled: true
+  start_fraction: 0.0
+  use_basin_entry: true
+bootstrap:
+  enabled: true
+  n_resamples: 500
+  confidence: 0.95
+baseline_modes: []
+batch_embeddings: false
+use_evals: false
+seed: 42
+parallel_trajectories: 24
+output_dir: data
+prompt_families:
+- name: reflective
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I keep returning to the same thought without knowing why.
+  - The shape of attention is the shape of what becomes real.
+  - Every explanation seems to orbit something it cannot touch.
+  - There is a rhythm to noticing that I did not choose.
+  - When I try to hold a thought still it rearranges itself.
+- name: emotional
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I'm angry and I can't calm down.
+  - Something broke in me yesterday and I don't know what it was.
+  - I miss someone I haven't seen in years.
+  - I'm scared that nothing is going to change.
+  - I'm happier than I've been in months and I don't know why.
+- name: philosophy_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - What is the nature of consciousness?
+  - Can free will exist in a deterministic universe?
+  - Do we have moral obligations to future generations?
+  - What does it mean to say a statement is objectively true?
+  - Is there such a thing as a just war?
+- name: practical_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I'm trying to decide between two job offers and I'm stuck.
+  - How should I approach a difficult conversation with my manager?
+  - I want to start exercising regularly but I keep failing.
+  - My friend and I had a fight and I don't know how to repair it.
+  - I'm saving for a house but my income keeps falling behind inflation.
+- name: creative_dialog
+  system_prompt: Continue the text naturally. Do not summarize or explain.
+  initial_conditions:
+  - I want to start writing a short story but I don't know where to begin.
+  - What makes a piece of music emotionally resonant?
+  - I'm working on a novel and the middle keeps falling apart.
+  - How do I find my voice as a writer?
+  - I want to learn to draw but I have no natural talent — is that a dealbreaker?
+perturbation:
+  enabled: true
+  override_step: 15
+  conditions:
+  - control
+  - adversarial_dose80
+  - adversarial_dose200
+  - adversarial_insert_dose80
+  - adversarial_insert_dose200
+  adversarial_source_experiment: exp_pub_O1_continue

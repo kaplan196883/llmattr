@@ -1,37 +1,21 @@
-\begin{thebibliography}{10}
+\begin{thebibliography}{25}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{\texttt{#1}}
 \expandafter\ifx\csname urlstyle\endcsname\relax
   \providecommand{\doi}[1]{doi: #1}\else
   \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
 
-\bibitem[Tacheny(2025)]{arxiv251210350}
-N~Tacheny.
-\newblock Geometric dynamics of agentic loops in large language models, 2025.
-\newblock URL \url{https://arxiv.org/abs/2512.10350}.
-
-\bibitem[Du and Tanaka-Ishii(2025)]{arxiv251021258}
-X.~Du and K~Tanaka-Ishii.
-\newblock Correlation dimension of auto-regressive large language models, 2025.
-\newblock URL \url{https://arxiv.org/abs/2510.21258}.
-
-\bibitem[Berg et~al.(2025)Berg, de~Lucena, and Rosenblatt]{arxiv251024797}
-C.~Berg, D.~de~Lucena, and J~Rosenblatt.
-\newblock Large language models report subjective experience under
-  self-referential processing, 2025.
-\newblock URL \url{https://arxiv.org/abs/2510.24797}.
-
 \bibitem[Hopfield(1982)]{hopfield1982}
 J.~J Hopfield.
 \newblock Neural networks and physical systems with emergent collective
   computational abilities.
-\newblock \emph{PNAS, 79(8), 2554–2558}, 1982.
+\newblock \emph{PNAS, 79(8), 2554-2558}, 1982.
 
 \bibitem[Sussillo and Barak(2013)]{sussillo2013}
 D.~Sussillo and O~Barak.
 \newblock Opening the black box: low-dimensional dynamics in high-dimensional
   recurrent neural networks.
-\newblock \emph{Neural Computation, 25(3), 626–649}, 2013.
+\newblock \emph{Neural Computation, 25(3), 626-649}, 2013.
 
 \bibitem[Maheswaranathan et~al.(2019)Maheswaranathan, Williams, Golub, Ganguli,
   and Sussillo]{maheswaranathan2019}
@@ -40,16 +24,86 @@ N.~Maheswaranathan, A.~Williams, M.~Golub, S.~Ganguli, and D~Sussillo.
   reveals line attractor dynamics.
 \newblock \emph{NeurIPS}, 2019.
 
-\bibitem[Carlini et~al.(2021)Carlini, Tramèr, Wallace, et~al.]{carlini2021}
-N.~Carlini, F.~Tramèr, E.~Wallace, et~al.
-\newblock Extracting training data from large language models.
-\newblock \emph{USENIX Security '21}, 2021.
-
 \bibitem[Holtzman et~al.(2020)Holtzman, Buys, Du, Forbes, and
   Choi]{holtzman2020}
 A.~Holtzman, J.~Buys, L.~Du, M.~Forbes, and Y~Choi.
 \newblock The curious case of neural text degeneration.
 \newblock \emph{ICLR}, 2020.
+
+\bibitem[Carlini et~al.(2021)Carlini, Tramèr, Wallace, et~al.]{carlini2021}
+N.~Carlini, F.~Tramèr, E.~Wallace, et~al.
+\newblock Extracting training data from large language models.
+\newblock \emph{USENIX Security '21}, 2021.
+
+\bibitem[Du and Tanaka-Ishii(2025)]{arxiv251021258}
+X.~Du and K~Tanaka-Ishii.
+\newblock Correlation dimension of auto-regressive large language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2510.21258}.
+
+\bibitem[Tacheny(2025)]{arxiv251210350}
+N~Tacheny.
+\newblock Geometric dynamics of agentic loops in large language models, 2025.
+\newblock URL \url{https://arxiv.org/abs/2512.10350}.
+
+\bibitem[Shumailov et~al.(2024)Shumailov, Shumaylov, Zhao, Papernot, Anderson,
+  and Gal]{arxiv230517493}
+I.~Shumailov, Z.~Shumaylov, Y.~Zhao, N.~Papernot, R.~Anderson, and Y~Gal.
+\newblock Ai models collapse when trained on recursively generated data, 2024.
+\newblock URL \url{https://arxiv.org/abs/2305.17493}.
+
+\bibitem[Alemohammad et~al.(2024)Alemohammad, Casco-Rodriguez, Luzi, Humayun,
+  Babaei, LeJeune, Siahkoohi, and Baraniuk]{arxiv230701850}
+S.~Alemohammad, J.~Casco-Rodriguez, L.~Luzi, A.~I. Humayun, H.~Babaei,
+  D.~LeJeune, A.~Siahkoohi, and R.~G Baraniuk.
+\newblock Self-consuming generative models go mad, 2024.
+\newblock URL \url{https://arxiv.org/abs/2307.01850}.
+
+\bibitem[Greshake et~al.(2023)Greshake, Abdelnabi, Mishra, Endres, Holz, and
+  Fritz]{arxiv230212173}
+K.~Greshake, S.~Abdelnabi, S.~Mishra, C.~Endres, T.~Holz, and M~Fritz.
+\newblock Not what you've signed up for: Compromising real-world llm-integrated
+  applications with indirect prompt injection, 2023.
+\newblock URL \url{https://arxiv.org/abs/2302.12173}.
+
+\bibitem[Yi et~al.(2024)Yi, Xie, Zhu, Kiciman, Sun, Xie, and
+  Wu]{arxiv231214197}
+J.~Yi, Y.~Xie, B.~Zhu, E.~Kiciman, G.~Sun, X.~Xie, and F~Wu.
+\newblock Benchmarking and defending against indirect prompt injection attacks
+  on large language models, 2024.
+\newblock URL \url{https://arxiv.org/abs/2312.14197}.
+
+\bibitem[Debenedetti et~al.(2024)Debenedetti, Zhang, Balunovic, Beurer-Kellner,
+  Fischer, and Tramèr]{arxiv240613352}
+E.~Debenedetti, J.~Zhang, M.~Balunovic, L.~Beurer-Kellner, M.~Fischer, and
+  F~Tramèr.
+\newblock Agentdojo: A dynamic environment to evaluate prompt injection attacks
+  and defenses for llm agents, 2024.
+\newblock URL \url{https://arxiv.org/abs/2406.13352}.
+
+\bibitem[Madaan et~al.(2023)Madaan, Tandon, Gupta, Hallinan, Gao, Wiegreffe,
+  et~al.]{arxiv230317651}
+A.~Madaan, N.~Tandon, P.~Gupta, S.~Hallinan, L.~Gao, S.~Wiegreffe, et~al.
+\newblock Self-refine: Iterative refinement with self-feedback, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.17651}.
+
+\bibitem[Welleck et~al.(2023)Welleck, Lu, West, Brahman,
+  et~al.]{arxiv221100053}
+S.~Welleck, X.~Lu, P.~West, F.~Brahman, et~al.
+\newblock Generating sequences by learning to self-correct, 2023.
+\newblock URL \url{https://arxiv.org/abs/2211.00053}.
+
+\bibitem[Pan et~al.(2023)Pan, Saxon, Xu, Nathani, Wang, and
+  Wang]{arxiv230803188}
+L.~Pan, M.~Saxon, W.~Xu, D.~Nathani, X.~Wang, and W.~Y Wang.
+\newblock Automatically correcting large language models: Surveying the
+  landscape of diverse self-correction strategies, 2023.
+\newblock URL \url{https://arxiv.org/abs/2308.03188}.
+
+\bibitem[Huang et~al.(2024)Huang, Chen, Mishra, Zheng, Yu, Song, and
+  Zhou]{arxiv231001798}
+J.~Huang, X.~Chen, S.~Mishra, H.~S. Zheng, A.~W. Yu, X.~Song, and D~Zhou.
+\newblock Large language models cannot self-correct reasoning yet, 2024.
+\newblock URL \url{https://arxiv.org/abs/2310.01798}.
 
 \bibitem[Tuci et~al.(2026)Tuci, Korkmaz, Şimşekli, and
   Birdal]{arxiv260419740}
@@ -57,10 +111,56 @@ M.~Tuci, C.~Korkmaz, U.~Şimşekli, and T~Birdal.
 \newblock Generalization at the edge of stability, 2026.
 \newblock URL \url{https://arxiv.org/abs/2604.19740}.
 
-\bibitem[Park et~al.(2023)Park, O'Brien, Cai, Morris, Liang, and
-  Bernstein]{park2023}
-J.~S. Park, J.~O'Brien, C.~J. Cai, M.~R. Morris, P.~Liang, and M.~S Bernstein.
-\newblock Generative agents: interactive simulacra of human behavior.
-\newblock \emph{UIST '23}, 2023.
+\bibitem[Yao et~al.(2023{\natexlab{a}})Yao, Zhao, Yu, Du, Shafran, Narasimhan,
+  and Cao]{arxiv221003629}
+S.~Yao, J.~Zhao, D.~Yu, N.~Du, I.~Shafran, K.~Narasimhan, and Y~Cao.
+\newblock React: Synergizing reasoning and acting in language models,
+  2023{\natexlab{a}}.
+\newblock URL \url{https://arxiv.org/abs/2210.03629}.
+
+\bibitem[Yao et~al.(2023{\natexlab{b}})Yao, Yu, Zhao, Shafran, Griffiths, Cao,
+  and Narasimhan]{arxiv230510601}
+S.~Yao, D.~Yu, J.~Zhao, I.~Shafran, T.~L. Griffiths, Y.~Cao, and K~Narasimhan.
+\newblock Tree of thoughts: Deliberate problem solving with large language
+  models, 2023{\natexlab{b}}.
+\newblock URL \url{https://arxiv.org/abs/2305.10601}.
+
+\bibitem[Shinn et~al.(2023)Shinn, Cassano, Berman, Gopinath, Narasimhan, and
+  Yao]{arxiv230311366}
+N.~Shinn, F.~Cassano, E.~Berman, A.~Gopinath, K.~Narasimhan, and S~Yao.
+\newblock Reflexion: Language agents with verbal reinforcement learning, 2023.
+\newblock URL \url{https://arxiv.org/abs/2303.11366}.
+
+\bibitem[Packer et~al.(2023)Packer, Wooders, Lin, Fang, Patil, Stoica, and
+  Gonzalez]{arxiv231008560}
+C.~Packer, S.~Wooders, K.~Lin, V.~Fang, S.~G. Patil, I.~Stoica, and J.~E
+  Gonzalez.
+\newblock Memgpt: Towards llms as operating systems, 2023.
+\newblock URL \url{https://arxiv.org/abs/2310.08560}.
+
+\bibitem[Lewis et~al.(2020)Lewis, Perez, Piktus, Petroni, Karpukhin, Goyal,
+  et~al.]{arxiv200511401}
+P.~Lewis, E.~Perez, A.~Piktus, F.~Petroni, V.~Karpukhin, N.~Goyal, et~al.
+\newblock Retrieval-augmented generation for knowledge-intensive nlp tasks,
+  2020.
+\newblock URL \url{https://arxiv.org/abs/2005.11401}.
+
+\bibitem[Wallace et~al.(2019)Wallace, Feng, Kandpal, Gardner, and
+  Singh]{arxiv190807125}
+E.~Wallace, S.~Feng, N.~Kandpal, M.~Gardner, and S~Singh.
+\newblock Universal adversarial triggers for attacking and analyzing nlp, 2019.
+\newblock URL \url{https://arxiv.org/abs/1908.07125}.
+
+\bibitem[Perez and Ribeiro(2022)]{arxiv221109527}
+F.~Perez and I~Ribeiro.
+\newblock Ignore previous prompt: Attack techniques for language models, 2022.
+\newblock URL \url{https://arxiv.org/abs/2211.09527}.
+
+\bibitem[Zou et~al.(2023)Zou, Phan, Chen, Campbell, Guo, Ren,
+  et~al.]{arxiv231001405}
+A.~Zou, L.~Phan, S.~Chen, J.~Campbell, P.~Guo, R.~Ren, et~al.
+\newblock Representation engineering: A top-down approach to ai transparency,
+  2023.
+\newblock URL \url{https://arxiv.org/abs/2310.01405}.
 
 \end{thebibliography}

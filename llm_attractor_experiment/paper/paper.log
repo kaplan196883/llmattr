@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.29)  29 APR 2026 11:50
+This is pdfTeX, Version 3.141592653-2.6-1.40.29 (MiKTeX 26.2) (preloaded format=pdflatex 2026.4.29)  4 MAY 2026 14:30
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -8,8 +8,8 @@ LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
 (C:\Program Files\MiKTeX\tex/latex/base\article.cls
 Document Class: article 2025/01/22 v1.4n Standard LaTeX document class
-(C:\Program Files\MiKTeX\tex/latex/base\size11.clo
-File: size11.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
+(C:\Program Files\MiKTeX\tex/latex/base\size10.clo
+File: size10.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 )
 \c@part=\count275
 \c@section=\count276
@@ -22,7 +22,7 @@ File: size11.clo 2025/01/22 v1.4n Standard LaTeX file (size option)
 \abovecaptionskip=\skip49
 \belowcaptionskip=\skip50
 \bibindent=\dimen150
-)
+) (arxiv.sty
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/geometry\geometry.sty
 Package: geometry 2026/03/07 v6.0 Page Geometry
 
@@ -50,52 +50,44 @@ Package: iftex 2024/12/12 v1.0g TeX engine tests
 \Gm@dimlist=\toks18
 
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/geometry\geometry.cfg))
-(C:\Program Files\MiKTeX\tex/latex/lm\lmodern.sty
-Package: lmodern 2015/05/01 v1.6.1 Latin Modern Fonts
-LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/cmr/m/n --> OT1/lmr/m/n on input line 22.
-LaTeX Font Info:    Overwriting symbol font `letters' in version `normal'
-(Font)                  OML/cmm/m/it --> OML/lmm/m/it on input line 23.
-LaTeX Font Info:    Overwriting symbol font `symbols' in version `normal'
-(Font)                  OMS/cmsy/m/n --> OMS/lmsy/m/n on input line 24.
-LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `normal'
-(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 25.
-LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 26.
-LaTeX Font Info:    Overwriting symbol font `letters' in version `bold'
-(Font)                  OML/cmm/b/it --> OML/lmm/b/it on input line 27.
-LaTeX Font Info:    Overwriting symbol font `symbols' in version `bold'
-(Font)                  OMS/cmsy/b/n --> OMS/lmsy/b/n on input line 28.
-LaTeX Font Info:    Overwriting symbol font `largesymbols' in version `bold'
-(Font)                  OMX/cmex/m/n --> OMX/lmex/m/n on input line 29.
-LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 31.
-LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 32.
-LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/cmr/m/it --> OT1/lmr/m/it on input line 33.
-LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 34.
-LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/cmr/bx/n --> OT1/lmr/bx/n on input line 35.
-LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/cmss/bx/n --> OT1/lmss/bx/n on input line 36.
-LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/cmr/bx/it --> OT1/lmr/bx/it on input line 37.
-LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/cmtt/m/n --> OT1/lmtt/m/n on input line 38.
+(C:\Program Files\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty
+Package: fancyhdr 2025/02/07 v5.2 Extensive control of page headers and footers
+
+\f@nch@headwidth=\skip51
+\f@nch@offset@elh=\skip52
+\f@nch@offset@erh=\skip53
+\f@nch@offset@olh=\skip54
+\f@nch@offset@orh=\skip55
+\f@nch@offset@elf=\skip56
+\f@nch@offset@erf=\skip57
+\f@nch@offset@olf=\skip58
+\f@nch@offset@orf=\skip59
+\f@nch@height=\skip60
+\f@nch@footalignment=\skip61
+\f@nch@widthL=\skip62
+\f@nch@widthC=\skip63
+\f@nch@widthR=\skip64
+\@temptokenb=\toks19
+)
+\@abovecaptionskip=\skip65
+\@belowcaptionskip=\skip66
+)
+(C:\Program Files\MiKTeX\tex/latex/base\inputenc.sty
+Package: inputenc 2024/02/08 v1.3d Input encoding file
+\inpenc@prehook=\toks20
+\inpenc@posthook=\toks21
 )
 (C:\Program Files\MiKTeX\tex/latex/base\fontenc.sty
 Package: fontenc 2025/07/18 v2.1d Standard LaTeX package
-LaTeX Font Info:    Trying to load font information for T1+lmr on input line 11
+LaTeX Font Info:    Trying to load font information for T1+ptm on input line 11
 6.
 
-(C:\Program Files\MiKTeX\tex/latex/lm\t1lmr.fd
-File: t1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
+(C:\Program Files\MiKTeX\tex/latex/psnfss\t1ptm.fd
+File: t1ptm.fd 2001/06/04 font definitions for T1/ptm.
 ))
 (C:\Program Files\MiKTeX\tex/latex/amsmath\amsmath.sty
 Package: amsmath 2025/07/09 v2.17z AMS math features
-\@mathmargin=\skip51
+\@mathmargin=\skip67
 
 For additional information on amsmath, use the `?' option.
 (C:\Program Files\MiKTeX\tex/latex/amsmath\amstext.sty
@@ -103,7 +95,7 @@ Package: amstext 2024/11/17 v2.01 AMS text
 
 (C:\Program Files\MiKTeX\tex/latex/amsmath\amsgen.sty
 File: amsgen.sty 1999/11/30 v2.0 generic functions
-\@emptytoks=\toks19
+\@emptytoks=\toks22
 \ex@=\dimen159
 ))
 (C:\Program Files\MiKTeX\tex/latex/amsmath\amsbsy.sty
@@ -143,21 +135,21 @@ LaTeX Info: Redefining \Relbar on input line 970.
 \dotsspace@=\muskip17
 \c@parentequation=\count293
 \dspbrk@lvl=\count294
-\tag@help=\toks20
+\tag@help=\toks23
 \row@=\count295
 \column@=\count296
 \maxfields@=\count297
-\andhelp@=\toks21
+\andhelp@=\toks24
 \eqnshift@=\dimen162
 \alignsep@=\dimen163
 \tagshift@=\dimen164
 \tagwidth@=\dimen165
 \totwidth@=\dimen166
 \lineht@=\dimen167
-\@envbody=\toks22
-\multlinegap=\skip52
-\multlinetaggap=\skip53
-\mathdisplay@stack=\toks23
+\@envbody=\toks25
+\multlinegap=\skip68
+\multlinetaggap=\skip69
+\mathdisplay@stack=\toks26
 LaTeX Info: Redefining \[ on input line 2950.
 LaTeX Info: Redefining \] on input line 2951.
 )
@@ -174,15 +166,15 @@ LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
 ))
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/amscls\amsthm.sty
 Package: amsthm 2020/05/29 v2.20.6
-\thm@style=\toks24
-\thm@bodyfont=\toks25
-\thm@headfont=\toks26
-\thm@notefont=\toks27
-\thm@headpunct=\toks28
-\thm@preskip=\skip54
-\thm@postskip=\skip55
-\thm@headsep=\skip56
-\dth@everypar=\toks29
+\thm@style=\toks27
+\thm@bodyfont=\toks28
+\thm@headfont=\toks29
+\thm@notefont=\toks30
+\thm@headpunct=\toks31
+\thm@preskip=\skip70
+\thm@postskip=\skip71
+\thm@headsep=\skip72
+\dth@everypar=\toks32
 )
 (C:\Program Files\MiKTeX\tex/latex/graphics\graphicx.sty
 Package: graphicx 2024/12/31 v1.2e Enhanced LaTeX Graphics (DPC,SPQR)
@@ -224,38 +216,80 @@ Package: booktabs 2020/01/12 v1.61803398 Publication quality tables
 \@lastruleclass=\count301
 \@thisrulewidth=\dimen182
 )
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/caption\caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/caption\caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen183
+\captionmargin=\dimen184
+\caption@leftmargin=\dimen185
+\caption@rightmargin=\dimen186
+\caption@width=\dimen187
+\caption@indent=\dimen188
+\caption@parindent=\dimen189
+\caption@hangindent=\dimen190
+Package caption Info: Standard document class detected.
+)
+\c@caption@flags=\count302
+\c@continuedfloat=\count303
+)
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/placeins\placeins.sty
+Package: placeins 2005/04/18  v 2.2
+)
+(C:\Program Files\MiKTeX\tex/latex/mdwtools\footnote.sty
+Package: footnote 1997/01/28 1.13 Save footnotes around boxes
+\fn@notes=\box55
+\fn@width=\dimen191
+)
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\microtype.sty
 Package: microtype 2026/03/01 v3.2d Micro-typographical refinements (RS)
 
 (C:\Program Files\MiKTeX\tex/latex/etoolbox\etoolbox.sty
 Package: etoolbox 2025/10/02 v2.5m e-TeX tools for LaTeX (JAW)
-\etb@tempcnta=\count302
+\etb@tempcnta=\count304
 )
-\MT@toks=\toks30
-\MT@tempbox=\box55
-\MT@count=\count303
+\MT@toks=\toks33
+\MT@tempbox=\box56
+\MT@count=\count305
 LaTeX Info: Redefining \noprotrusionifhmode on input line 1084.
 LaTeX Info: Redefining \leftprotrusion on input line 1085.
-\MT@prot@toks=\toks31
+\MT@prot@toks=\toks34
 LaTeX Info: Redefining \rightprotrusion on input line 1104.
 LaTeX Info: Redefining \textls on input line 1449.
-\MT@outer@kern=\dimen183
+\MT@outer@kern=\dimen192
 LaTeX Info: Redefining \microtypecontext on input line 2053.
 LaTeX Info: Redefining \textmicrotypecontext on input line 2070.
-\MT@listname@count=\count304
+\MT@listname@count=\count306
 
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\microtype-pdftex.def
 File: microtype-pdftex.def 2026/03/01 v3.2d Definitions specific to pdftex (RS)
 
 LaTeX Info: Redefining \lsstyle on input line 944.
 LaTeX Info: Redefining \lslig on input line 944.
-\MT@outer@space=\skip57
+\MT@outer@space=\skip73
 )
 Package microtype Info: Loading configuration file microtype.cfg.
  (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\microtype.cfg
 File: microtype.cfg 2026/03/01 v3.2d microtype main configuration file (RS)
 )
 LaTeX Info: Redefining \microtypesetup on input line 3065.
+)
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/enumitem\enumitem.sty
+Package: enumitem 2025/02/06 v3.11 Customized lists
+\labelindent=\skip74
+\enit@outerparindent=\dimen193
+\enit@toks=\toks35
+\enit@inbox=\box57
+\enit@count@id=\count307
+\enitdp@description=\count308
+)
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/natbib\natbib.sty
+Package: natbib 2010/09/13 8.31b (PWD, AO)
+\bibhang=\skip75
+\bibsep=\skip76
+LaTeX Info: Redefining \cite on input line 694.
+\c@NAT@ctr=\count309
 )
 (C:\Program Files\MiKTeX\tex/latex/hyperref\hyperref.sty
 Package: hyperref 2026-01-29 v7.01p Hypertext links for LaTeX
@@ -298,14 +332,14 @@ Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
  (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/kvoptions\kvoptions.sty
 Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
 ))
-\c@section@level=\count305
+\c@section@level=\count310
 ) (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/generic/stringenc\stringenc.sty
 Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
 )
 )
-\@linkdim=\dimen184
-\Hy@linkcounter=\count306
-\Hy@pagecounter=\count307
+\@linkdim=\dimen194
+\Hy@linkcounter=\count311
+\Hy@pagecounter=\count312
 
 (C:\Program Files\MiKTeX\tex/latex/hyperref\pd1enc.def
 File: pd1enc.def 2026-01-29 v7.01p Hyperref: PDFDocEncoding definition (HO)
@@ -315,7 +349,7 @@ Now handling font encoding PD1 ...
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/generic/intcalc\intcalc.sty
 Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
 )
-\Hy@SavedSpaceFactor=\count308
+\Hy@SavedSpaceFactor=\count313
 
 (C:\Program Files\MiKTeX\tex/latex/hyperref\puenc.def
 File: puenc.def 2026-01-29 v7.01p Hyperref: PDF Unicode definition (HO)
@@ -329,14 +363,14 @@ Package hyperref Info: Plain pages OFF on input line 4216.
 Package hyperref Info: Backreferencing OFF on input line 4221.
 Package hyperref Info: Implicit mode ON; LaTeX internals redefined.
 Package hyperref Info: Bookmarks ON on input line 4468.
-\c@Hy@tempcnt=\count309
+\c@Hy@tempcnt=\count314
 
 (C:\Program Files\MiKTeX\tex/latex/url\url.sty
 \Urlmuskip=\muskip18
 Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
 )
 LaTeX Info: Redefining \url on input line 4807.
-\XeTeXLinkMargin=\dimen185
+\XeTeXLinkMargin=\dimen195
 
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/generic/bitset\bitset.sty
 Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
@@ -345,9 +379,9 @@ Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
 Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
 )
 ))
-\Fld@menulength=\count310
-\Field@Width=\dimen186
-\Fld@charsize=\dimen187
+\Fld@menulength=\count315
+\Field@Width=\dimen196
+\Fld@charsize=\dimen197
 Package hyperref Info: Hyper figures OFF on input line 6084.
 Package hyperref Info: Link nesting OFF on input line 6089.
 Package hyperref Info: Hyper index ON on input line 6092.
@@ -355,15 +389,15 @@ Package hyperref Info: backreferencing OFF on input line 6099.
 Package hyperref Info: Link coloring OFF on input line 6104.
 Package hyperref Info: Link coloring with OCG OFF on input line 6109.
 Package hyperref Info: PDF/A mode OFF on input line 6114.
-\Hy@abspage=\count311
-\c@Item=\count312
-\c@Hfootnote=\count313
+\Hy@abspage=\count316
+\c@Item=\count317
+\c@Hfootnote=\count318
 )
 Package hyperref Info: Driver (autodetected): hpdftex.
 (C:\Program Files\MiKTeX\tex/latex/hyperref\hpdftex.def
 File: hpdftex.def 2026-01-29 v7.01p Hyperref driver for pdfTeX
-\Fld@listcount=\count314
-\c@bookmark@seq@number=\count315
+\Fld@listcount=\count319
+\c@bookmark@seq@number=\count320
 
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/rerunfilecheck\rerunfilecheck.
 sty
@@ -376,230 +410,708 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 84.
 )
-\Hy@SectionHShift=\skip58
-) (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/enumitem\enumitem.sty
-Package: enumitem 2025/02/06 v3.11 Customized lists
-\labelindent=\skip59
-\enit@outerparindent=\dimen188
-\enit@toks=\toks32
-\enit@inbox=\box56
-\enit@count@id=\count316
-\enitdp@description=\count317
-)
-(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/placeins\placeins.sty
-Package: placeins 2005/04/18  v 2.2
-)
-(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/caption\caption.sty
-Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+\Hy@SectionHShift=\skip77
+) (C:\Program Files\MiKTeX\tex/latex/orcidlink\orcidlink.sty
+Package: orcidlink 2026/04/09 v1.1.1 Add explicit etoolbox dependency.
 
-(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/caption\caption3.sty
-Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
-\caption@tempdima=\dimen189
-\captionmargin=\dimen190
-\caption@leftmargin=\dimen191
-\caption@rightmargin=\dimen192
-\caption@width=\dimen193
-\caption@indent=\dimen194
-\caption@parindent=\dimen195
-\caption@hangindent=\dimen196
-Package caption Info: Standard document class detected.
+(C:\Program Files\MiKTeX\tex/latex/pgf/frontendlayer\tikz.sty
+(C:\Program Files\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
+(C:\Program Files\MiKTeX\tex/latex/pgf/utilities\pgfrcs.sty
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfutil-common.tex
+\pgfutil@everybye=\toks36
+\pgfutil@tempdima=\dimen198
+\pgfutil@tempdimb=\dimen199
 )
-\c@caption@flags=\count318
-\c@continuedfloat=\count319
-Package caption Info: hyperref package is loaded.
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfutil-latex.def
+\pgfutil@abb=\box58
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 21.
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfrcs.code.tex
+(C:\Program Files\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+Package: pgfrcs 2025-08-29 v3.1.11a (3.1.11a)
+))
+Package: pgf 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.sty
+(C:\Program Files\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.sty
+(C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgfsys.code.tex
+Package: pgfsys 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks37
+\pgfkeys@temptoks=\toks38
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfkeyslibraryfiltered.code.
+tex
+\pgfkeys@tmptoks=\toks39
+))
+\pgf@x=\dimen256
+\pgf@y=\dimen257
+\pgf@xa=\dimen258
+\pgf@ya=\dimen259
+\pgf@xb=\dimen260
+\pgf@yb=\dimen261
+\pgf@xc=\dimen262
+\pgf@yc=\dimen263
+\pgf@xd=\dimen264
+\pgf@yd=\dimen265
+\w@pgf@writea=\write3
+\r@pgf@reada=\read2
+\c@pgf@counta=\count321
+\c@pgf@countb=\count322
+\c@pgf@countc=\count323
+\c@pgf@countd=\count324
+\t@pgf@toka=\toks40
+\t@pgf@tokb=\toks41
+\t@pgf@tokc=\toks42
+\pgf@sys@id@count=\count325
+ (C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgf.cfg
+File: pgf.cfg 2025-08-29 v3.1.11a (3.1.11a)
+)
+Driver file for pgf: pgfsys-pdftex.def
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-pdftex.def
+File: pgfsys-pdftex.def 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgfsyssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfsyssoftpath@smallbuffer@items=\count326
+\pgfsyssoftpath@bigbuffer@items=\count327
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/systemlayer\pgfsysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))
+(C:\Program Files\MiKTeX\tex/latex/xcolor\xcolor.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
+
+(C:\Program Files\MiKTeX\tex/latex/graphics-cfg\color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: pdftex.def on input line 274.
+
+(C:\Program Files\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcore.code.tex
+Package: pgfcore 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathutil.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathparser.code.tex
+\pgfmath@dimen=\dimen266
+\pgfmath@count=\count328
+\pgfmath@box=\box59
+\pgfmath@toks=\toks43
+\pgfmath@stack@operand=\toks44
+\pgfmath@stack@operation=\toks45
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.basic.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.trigonometric.co
+de.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.random.code.tex)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.comparison.code.
+tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.base.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.round.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.misc.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.integerarithmeti
+cs.code.tex) (C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathcalc.code.tex
+) (C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count329
+))
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfint.code.tex)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepoints.code.tex
+File: pgfcorepoints.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@picminx=\dimen267
+\pgf@picmaxx=\dimen268
+\pgf@picminy=\dimen269
+\pgf@picmaxy=\dimen270
+\pgf@pathminx=\dimen271
+\pgf@pathmaxx=\dimen272
+\pgf@pathminy=\dimen273
+\pgf@pathmaxy=\dimen274
+\pgf@xx=\dimen275
+\pgf@xy=\dimen276
+\pgf@yx=\dimen277
+\pgf@yy=\dimen278
+\pgf@zx=\dimen279
+\pgf@zy=\dimen280
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathconstruct.code.t
+ex
+File: pgfcorepathconstruct.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@path@lastx=\dimen281
+\pgf@path@lasty=\dimen282
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathusage.code.tex
+File: pgfcorepathusage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@shorten@end@additional=\dimen283
+\pgf@shorten@start@additional=\dimen284
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorescopes.code.tex
+File: pgfcorescopes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfpic=\box60
+\pgf@hbox=\box61
+\pgf@layerbox@main=\box62
+\pgf@picture@serial@count=\count330
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoregraphicstate.code.te
+x
+File: pgfcoregraphicstate.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgflinewidth=\dimen285
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransformations.code
+.tex
+File: pgfcoretransformations.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@pt@x=\dimen286
+\pgf@pt@y=\dimen287
+\pgf@pt@temp=\dimen288
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorequick.code.tex
+File: pgfcorequick.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreobjects.code.tex
+File: pgfcoreobjects.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepathprocessing.code.
+tex
+File: pgfcorepathprocessing.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorearrows.code.tex
+File: pgfcorearrows.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowsep=\dimen289
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreshade.code.tex
+File: pgfcoreshade.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@max=\dimen290
+\pgf@sys@shading@range@num=\count331
+\pgf@shadingcount=\count332
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreimage.code.tex
+File: pgfcoreimage.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoreexternal.code.tex
+File: pgfcoreexternal.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfexternal@startupbox=\box63
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorelayers.code.tex
+File: pgfcorelayers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcoretransparency.code.te
+x
+File: pgfcoretransparency.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorepatterns.code.tex
+File: pgfcorepatterns.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+) (C:\Program Files\MiKTeX\tex/generic/pgf/basiclayer\pgfcorerdf.code.tex
+File: pgfcorerdf.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Program Files\MiKTeX\tex/generic/pgf/modules\pgfmoduleshapes.code.tex
+File: pgfmoduleshapes.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfnodeparttextbox=\box64
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/modules\pgfmoduleplot.code.tex
+File: pgfmoduleplot.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-0-65.sty
+Package: pgfcomp-version-0-65 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@nodesepstart=\dimen291
+\pgf@nodesepend=\dimen292
+)
+(C:\Program Files\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-1-18.sty
+Package: pgfcomp-version-1-18 2025-08-29 v3.1.11a (3.1.11a)
+)) (C:\Program Files\MiKTeX\tex/latex/pgf/utilities\pgffor.sty
+(C:\Program Files\MiKTeX\tex/latex/pgf/utilities\pgfkeys.sty
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgfkeys.code.tex))
+(C:\Program Files\MiKTeX\tex/latex/pgf/math\pgfmath.sty
+(C:\Program Files\MiKTeX\tex/generic/pgf/math\pgfmath.code.tex))
+(C:\Program Files\MiKTeX\tex/generic/pgf/utilities\pgffor.code.tex
+Package: pgffor 2025-08-29 v3.1.11a (3.1.11a)
+\pgffor@iter=\dimen293
+\pgffor@skip=\dimen294
+\pgffor@stack=\toks46
+\pgffor@toks=\toks47
+))
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz\tikz.code.tex
+Package: tikz 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/libraries\pgflibraryplothandlers.code.
+tex
+File: pgflibraryplothandlers.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgf@plot@mark@count=\count333
+\pgfplotmarksize=\dimen295
+)
+\tikz@lastx=\dimen296
+\tikz@lasty=\dimen297
+\tikz@lastxsaved=\dimen298
+\tikz@lastysaved=\dimen299
+\tikz@lastmovetox=\dimen300
+\tikz@lastmovetoy=\dimen301
+\tikzleveldistance=\dimen302
+\tikzsiblingdistance=\dimen303
+\tikz@figbox=\box65
+\tikz@figbox@bg=\box66
+\tikz@tempbox=\box67
+\tikz@tempbox@bg=\box68
+\tikztreelevel=\count334
+\tikznumberofchildren=\count335
+\tikznumberofcurrentchild=\count336
+\tikz@fig@count=\count337
+ (C:\Program Files\MiKTeX\tex/generic/pgf/modules\pgfmodulematrix.code.tex
+File: pgfmodulematrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfmatrixcurrentrow=\count338
+\pgfmatrixcurrentcolumn=\count339
+\pgf@matrix@numberofcolumns=\count340
+)
+\tikz@expandcount=\count341
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+rytopaths.code.tex
+File: tikzlibrarytopaths.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)))
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+rysvg.path.code.tex
+File: tikzlibrarysvg.path.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/libraries\pgflibrarysvg.path.code.tex
+File: pgflibrarysvg.path.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/modules\pgfmoduleparser.code.tex
+File: pgfmoduleparser.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfparserdef@arg@count=\count342
+)
+\pgf@lib@svg@last@x=\dimen304
+\pgf@lib@svg@last@y=\dimen305
+\pgf@lib@svg@last@c@x=\dimen306
+\pgf@lib@svg@last@c@y=\dimen307
+\pgf@lib@svg@count=\count343
+\pgf@lib@svg@max@num=\count344
+))
+\@curXheight=\skip78
+)
+(C:\Program Files\MiKTeX\tex/latex/tools\tabularx.sty
+Package: tabularx 2023/12/11 v2.12a `tabularx' package (DPC)
+
+(C:\Program Files\MiKTeX\tex/latex/tools\array.sty
+Package: array 2025/09/25 v2.6n Tabular extension package (FMi)
+\col@sep=\dimen308
+\ar@mcellbox=\box69
+\extrarowheight=\dimen309
+\NC@list=\toks48
+\extratabsurround=\skip79
+\backup@length=\skip80
+\ar@cellbox=\box70
+)
+\TX@col@width=\dimen310
+\TX@old@table=\dimen311
+\TX@old@col=\dimen312
+\TX@target=\dimen313
+\TX@delta=\dimen314
+\TX@cols=\count345
+\TX@ftn=\toks49
+)
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcolorbox.sty
+Package: tcolorbox 2025/11/28 version 6.9.0 text color boxes
+
+(C:\Program Files\MiKTeX\tex/latex/tools\verbatim.sty
+Package: verbatim 2024-01-22 v1.5x LaTeX2e package for verbatim enhancements
+\every@verbatim=\toks50
+\verbatim@line=\toks51
+\verbatim@in@stream=\read3
+)
+(C:\Program Files\MiKTeX\tex/latex/environ\environ.sty
+Package: environ 2014/05/04 v0.3 A new way to define environments
+
+(C:\Program Files\MiKTeX\tex/latex/trimspaces\trimspaces.sty
+Package: trimspaces 2009/09/17 v1.1 Trim spaces around a token list
+))
+\tcb@titlebox=\box71
+\tcb@upperbox=\box72
+\tcb@lowerbox=\box73
+\tcb@phantombox=\box74
+\c@tcbbreakpart=\count346
+\c@tcblayer=\count347
+\c@tcolorbox@number=\count348
+\l__tcobox_tmpa_box=\box75
+\l__tcobox_tmpa_dim=\dimen315
+\tcb@temp=\box76
+\tcb@temp=\box77
+\tcb@temp=\box78
+\tcb@temp=\box79
+
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbraster.code.tex
+Library (tcolorbox): 'tcbraster.code.tex' version '6.9.0'
+\c@tcbrastercolumn=\count349
+\c@tcbrasterrow=\count350
+\c@tcbrasternum=\count351
+\c@tcbraster=\count352
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbskins.code.tex
+Library (tcolorbox): 'tcbskins.code.tex' version '6.9.0'
+(C:\Program Files\MiKTeX\tex/latex/tikzfill\tikzfill.image.sty
+Package: tikzfill.image 2026/04/23 v1.2.0 Image filling library for TikZ
+
+(C:\Program Files\MiKTeX\tex/latex/tikzfill\tikzlibraryfill.image.code.tex
+File: tikzlibraryfill.image.code.tex 2026/04/23 v1.2.0 Image filling library
+\l__tikzfill_tmpa_dim=\dimen316
+\l__tikzfill_tmpb_dim=\dimen317
+\l__tikzfill_img_box=\box80
+))
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbskinsjigsaw.code.tex
+Library (tcolorbox): 'tcbskinsjigsaw.code.tex' version '6.9.0'
+)) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbbreakable.code.tex
+Library (tcolorbox): 'tcbbreakable.code.tex' version '6.9.0'
+(C:\Program Files\MiKTeX\tex/latex/pdfcol\pdfcol.sty
+Package: pdfcol 2022-09-21 v1.7 Handle new color stacks for pdfTeX (HO)
+)
+Package pdfcol Info: New color stack `tcb@breakable' = 1 on input line 23.
+\tcb@testbox=\box81
+\tcb@totalupperbox=\box82
+\tcb@totallowerbox=\box83
+)
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbhooks.code.tex
+Library (tcolorbox): 'tcbhooks.code.tex' version '6.9.0'
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbtheorems.code.tex
+Library (tcolorbox): 'tcbtheorems.code.tex' version '6.9.0'
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbfitting.code.tex
+Library (tcolorbox): 'tcbfitting.code.tex' version '6.9.0'
+\tcbfitdim=\dimen318
+\tcb@lowerfitdim=\dimen319
+\tcb@upperfitdim=\dimen320
+\tcb@cur@hbadness=\count353
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcblistingsutf8.code.tex
+Library (tcolorbox): 'tcblistingsutf8.code.tex' version '6.9.0'
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcblistings.code.tex
+Library (tcolorbox): 'tcblistings.code.tex' version '6.9.0'
+(C:\Program Files\MiKTeX\tex/latex/listings\listings.sty
+\lst@mode=\count354
+\lst@gtempboxa=\box84
+\lst@token=\toks52
+\lst@length=\count355
+\lst@currlwidth=\dimen321
+\lst@column=\count356
+\lst@pos=\count357
+\lst@lostspace=\dimen322
+\lst@width=\dimen323
+\lst@newlines=\count358
+\lst@lineno=\count359
+\lst@maxwidth=\dimen324
+
+(C:\Program Files\MiKTeX\tex/latex/listings\lstpatch.sty
+File: lstpatch.sty 2025/11/14 1.11b (Carsten Heinz)
+)
+(C:\Program Files\MiKTeX\tex/latex/listings\lstmisc.sty
+File: lstmisc.sty 2025/11/14 1.11b (Carsten Heinz)
+\c@lstnumber=\count360
+\lst@skipnumbers=\count361
+\lst@framebox=\box85
+)
+(C:\Program Files\MiKTeX\tex/latex/listings\listings.cfg
+File: listings.cfg 2025/11/14 1.11b listings configuration
+))
+Package: listings 2025/11/14 1.11b (Carsten Heinz)
+
+==> First Aid for listings.sty no longer applied!
+    Expected:
+        2024/09/23 1.10c (Carsten Heinz)
+    but found:
+        2025/11/14 1.11b (Carsten Heinz)
+    so I'm assuming it got fixed.
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcblistingscore.code.tex
+Library (tcolorbox): 'tcblistingscore.code.tex' version '6.9.0'
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbprocessing.code.tex
+Library (tcolorbox): 'tcbprocessing.code.tex' version '6.9.0'
+)
+\c@tcblisting=\count362
+)) (C:\Program Files\MiKTeX\tex/latex/listingsutf8\listingsutf8.sty
+Package: listingsutf8 2019-12-10 v1.5 Allow UTF-8 in listings input (HO)
+))
+(C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbexternal.code.tex
+Library (tcolorbox): 'tcbexternal.code.tex' version '6.9.0'
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbmagazine.code.tex
+Library (tcolorbox): 'tcbmagazine.code.tex' version '6.9.0'
+) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbvignette.code.tex
+Library (tcolorbox): 'tcbvignette.code.tex' version '6.9.0'
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+ryfadings.code.tex
+File: tikzlibraryfadings.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+
+(C:\Program Files\MiKTeX\tex/generic/pgf/libraries\pgflibraryfadings.code.tex
+File: pgflibraryfadings.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+))) (C:\Program Files\MiKTeX\tex/latex/tcolorbox\tcbposter.code.tex
+Library (tcolorbox): 'tcbposter.code.tex' version '6.9.0'
+))
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+rypositioning.code.tex
+File: tikzlibrarypositioning.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/libraries\pgflibraryarrows.meta.code.t
+ex
+File: pgflibraryarrows.meta.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+\pgfarrowinset=\dimen325
+\pgfarrowlength=\dimen326
+\pgfarrowwidth=\dimen327
+\pgfarrowlinewidth=\dimen328
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+ryfit.code.tex
+File: tikzlibraryfit.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+rycalc.code.tex
+File: tikzlibrarycalc.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+(C:\Program Files\MiKTeX\tex/generic/pgf/frontendlayer/tikz/libraries\tikzlibra
+rymatrix.code.tex
+File: tikzlibrarymatrix.code.tex 2025-08-29 v3.1.11a (3.1.11a)
+)
+Package hyperref Info: Option `colorlinks' set `true' on input line 138.
+Package hyperref Info: Option `breaklinks' set `true' on input line 138.
 
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/newunicodechar\newunicodechar.
 sty
 Package: newunicodechar 2018/04/08 v1.2 Defining Unicode characters
 )
 
-Package newunicodechar Warning: Redefining Unicode character on input line 28.
+Package newunicodechar Warning: Redefining Unicode character on input line 144.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 29.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 145.
 
-Package newunicodechar Warning: Redefining Unicode character on input line 30.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 65.
+Package newunicodechar Warning: Redefining Unicode character on input line 146.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 66.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 181.
 
-Package newunicodechar Warning: Redefining Unicode character on input line 67.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 68.
+Package newunicodechar Warning: Redefining Unicode character on input line 182.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 69.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 183.
 
-Package newunicodechar Warning: Redefining Unicode character on input line 70.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 71.
+Package newunicodechar Warning: Redefining Unicode character on input line 184.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 72.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 185.
 
-Package newunicodechar Warning: Redefining Unicode character on input line 73.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 83.
+Package newunicodechar Warning: Redefining Unicode character on input line 186.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 84.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 187.
 
-Package newunicodechar Warning: Redefining Unicode character on input line 86.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 87.
+Package newunicodechar Warning: Redefining Unicode character on input line 188.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 103.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 189.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 108.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 199.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 109.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 200.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 110.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 202.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 111.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 203.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 112.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 219.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 113.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 224.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 114.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 225.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 115.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 226.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 116.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 227.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 117.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 228.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 122.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 229.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 123.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 230.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 124.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 231.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 126.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 232.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 127.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 233.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 129.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 238.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 130.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 239.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 131.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 240.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 132.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 242.
 
 
-Package newunicodechar Warning: Redefining Unicode character on input line 133.
 
+Package newunicodechar Warning: Redefining Unicode character on input line 243.
 
-\c@lemma=\count320
-\c@corollary=\count321
-\c@conjecture=\count322
-Package hyperref Info: Option `breaklinks' set `true' on input line 171.
+
+
+Package newunicodechar Warning: Redefining Unicode character on input line 245.
+
+
+
+Package newunicodechar Warning: Redefining Unicode character on input line 246.
+
+
+
+Package newunicodechar Warning: Redefining Unicode character on input line 247.
+
+
+
+Package newunicodechar Warning: Redefining Unicode character on input line 248.
+
+
+
+Package newunicodechar Warning: Redefining Unicode character on input line 249.
+
+
+\c@lemma=\count363
+\c@corollary=\count364
+\c@conjecture=\count365
 (C:\Program Files\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2026-02-18 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count323
+\l__color_backend_stack_int=\count366
 ) (paper.aux)
 \openout1 = `paper.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 181.
-LaTeX Font Info:    ... okay on input line 181.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 311.
+LaTeX Font Info:    ... okay on input line 311.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
 *geometry* verbose mode - [ preamble ] result:
 * driver: pdftex
-* paper: a4paper
+* paper: letterpaper
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: 
-* h-part:(L,W,R)=(72.26999pt, 452.9679pt, 72.26999pt)
-* v-part:(T,H,B)=(72.26999pt, 700.50687pt, 72.26999pt)
-* \paperwidth=597.50787pt
-* \paperheight=845.04684pt
-* \textwidth=452.9679pt
-* \textheight=700.50687pt
-* \oddsidemargin=0.0pt
-* \evensidemargin=0.0pt
-* \topmargin=-37.0pt
+* h-part:(L,W,R)=(92.14519pt, 430.00462pt, 92.14519pt)
+* v-part:(T,H,B)=(95.39737pt, 556.47656pt, 143.09605pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=430.00462pt
+* \textheight=556.47656pt
+* \oddsidemargin=19.8752pt
+* \evensidemargin=19.8752pt
+* \topmargin=-13.87262pt
 * \headheight=12.0pt
 * \headsep=25.0pt
-* \topskip=11.0pt
+* \topskip=10.0pt
 * \footskip=30.0pt
-* \marginparwidth=59.0pt
-* \marginparsep=10.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
 * \columnsep=10.0pt
-* \skip\footins=10.0pt plus 4.0pt minus 2.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+*geometry* verbose mode - [ newgeometry ] result:
+* driver: pdftex
+* paper: letterpaper
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: 
+* h-part:(L,W,R)=(72.27pt, 469.75499pt, 72.27pt)
+* v-part:(T,H,B)=(72.26999pt, 650.43pt, 72.27pt)
+* \paperwidth=614.295pt
+* \paperheight=794.96999pt
+* \textwidth=469.75499pt
+* \textheight=650.43pt
+* \oddsidemargin=0.00002pt
+* \evensidemargin=0.00002pt
+* \topmargin=-39.0pt
+* \headheight=14.0pt
+* \headsep=25.0pt
+* \topskip=10.0pt
+* \footskip=30.0pt
+* \marginparwidth=65.0pt
+* \marginparsep=11.0pt
+* \columnsep=10.0pt
+* \skip\footins=9.0pt plus 4.0pt minus 2.0pt
 * \hoffset=0.0pt
 * \voffset=0.0pt
 * \mag=1000
@@ -611,17 +1123,17 @@ LaTeX Font Info:    ... okay on input line 181.
 
 (C:\Program Files\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count324
-\scratchdimen=\dimen197
-\scratchbox=\box57
-\nofMPsegments=\count325
-\nofMParguments=\count326
-\everyMPshowfont=\toks33
-\MPscratchCnt=\count327
-\MPscratchDim=\dimen198
-\MPnumerator=\count328
-\makeMPintoPDFobject=\count329
-\everyMPtoPDFconversion=\toks34
+\scratchcounter=\count367
+\scratchdimen=\dimen329
+\scratchbox=\box86
+\nofMPsegments=\count368
+\nofMParguments=\count369
+\everyMPshowfont=\toks53
+\MPscratchCnt=\count370
+\MPscratchDim=\dimen330
+\MPnumerator=\count371
+\makeMPintoPDFobject=\count372
+\everyMPtoPDFconversion=\toks54
 ) (C:\Program Files\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
@@ -630,13 +1142,17 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 (C:\Program Files\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-LaTeX Info: Redefining \microtypecontext on input line 181.
-Package microtype Info: Applying patch `item' on input line 181.
-Package microtype Info: Applying patch `toc' on input line 181.
-Package microtype Info: Applying patch `eqnum' on input line 181.
-Package microtype Info: Applying patch `footnote' on input line 181.
-Package microtype Info: Applying patch `verbatim' on input line 181.
-LaTeX Info: Redefining \microtypesetup on input line 181.
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: hyperref package is loaded.
+Package caption Info: listings package is loaded.
+Package caption Info: End \AtBeginDocument code.
+LaTeX Info: Redefining \microtypecontext on input line 311.
+Package microtype Info: Applying patch `item' on input line 311.
+Package microtype Info: Applying patch `toc' on input line 311.
+Package microtype Info: Applying patch `eqnum' on input line 311.
+Package microtype Info: Applying patch `footnote' on input line 311.
+Package microtype Info: Applying patch `verbatim' on input line 311.
+LaTeX Info: Redefining \microtypesetup on input line 311.
 Package microtype Info: Generating PDF output.
 Package microtype Info: Character protrusion enabled (level 2).
 Package microtype Info: Using default protrusion set `alltext'.
@@ -648,57 +1164,26 @@ Package microtype Info: No adjustment of tracking.
 Package microtype Info: No adjustment of interword spacing.
 Package microtype Info: No adjustment of character kerning.
 
+(C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\mt-ptm.cfg
+File: mt-ptm.cfg 2006/04/20 v1.7 microtype config. file: Times (RS)
+)
+Package hyperref Info: Link coloring ON on input line 311.
+
+(paper.out) (paper.out)
+\@outlinefile=\write4
+\openout4 = `paper.out'.
+
+\c@lstlisting=\count373
+
+
+LaTeX Font Warning: Font shape `T1/ptm/m/scit' undefined
+(Font)              using `T1/ptm/m/it' instead on input line 313.
+
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\mt-cmr.cfg
 File: mt-cmr.cfg 2013/05/19 v2.2 microtype config. file: Computer Modern Roman 
 (RS)
 )
-(C:\Program Files\MiKTeX\tex/latex/graphics\color.sty
-Package: color 2025/01/14 v1.3e Standard LaTeX Color (DPC)
-
-(C:\Program Files\MiKTeX\tex/latex/graphics-cfg\color.cfg
-File: color.cfg 2016/01/02 v1.6 sample color configuration
-)
-Package color Info: Driver file: pdftex.def on input line 149.
-
-(C:\Program Files\MiKTeX\tex/latex/graphics\mathcolor.ltx))
-Package hyperref Info: Link coloring ON on input line 181.
- (paper.out)
-(paper.out)
-\@outlinefile=\write3
-\openout3 = `paper.out'.
-
-Package caption Info: Begin \AtBeginDocument code.
-Package caption Info: End \AtBeginDocument code.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 1
-83.
- (C:\Program Files\MiKTeX\tex/latex/lm\ot1lmr.fd
-File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 1
-83.
-
-(C:\Program Files\MiKTeX\tex/latex/lm\omllmm.fd
-File: omllmm.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 
-183.
-
-(C:\Program Files\MiKTeX\tex/latex/lm\omslmsy.fd
-File: omslmsy.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 
-183.
-
-(C:\Program Files\MiKTeX\tex/latex/lm\omxlmex.fd
-File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 183.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 183.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 183.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 183
+LaTeX Font Info:    Trying to load font information for U+msa on input line 313
 .
 
 (C:\Program Files\MiKTeX\tex/latex/amsfonts\umsa.fd
@@ -707,7 +1192,7 @@ File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\mt-msa.cfg
 File: mt-msa.cfg 2006/02/04 v1.1 microtype config. file: AMS symbols (a) (RS)
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 183
+LaTeX Font Info:    Trying to load font information for U+msb on input line 313
 .
 
 (C:\Program Files\MiKTeX\tex/latex/amsfonts\umsb.fd
@@ -716,1714 +1201,717 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 (C:\Users\Pawel\AppData\Roaming\MiKTeX\tex/latex/microtype\mt-msb.cfg
 File: mt-msb.cfg 2005/06/01 v1.0 microtype config. file: AMS symbols (b) (RS)
 )
-LaTeX Font Info:    Trying to load font information for T1+lmtt on input line 1
-83.
-
-(C:\Program Files\MiKTeX\tex/latex/lm\t1lmtt.fd
-File: t1lmtt.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-)
 Package microtype Info: Loading generic protrusion settings for font family
-(microtype)             `lmtt' (encoding: T1).
+(microtype)             `cmtt' (encoding: T1).
 (microtype)             For optimal results, create family-specific settings.
 (microtype)             See the microtype manual for details.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 220.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 220.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 220.
  [1
 
+
 {C:/Users/Pawel/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}{C:/Program Fi
-les/MiKTeX/fonts/enc/dvips/lm/lm-ec.enc}{C:/Program Files/MiKTeX/fonts/enc/dvip
-s/lm/lm-mathit.enc}{C:/Program Files/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Pr
-ogram Files/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}] [2]
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 322.
- [3]
-Overfull \hbox (651.86589pt too wide) in paragraph at lines 408--422
- [][] 
- []
-
-[4]
-LaTeX Font Info:    Trying to load font information for TS1+lmr on input line 5
-03.
- (C:\Program Files\MiKTeX\tex/latex/lm\ts1lmr.fd
-File: ts1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
-) [5{C:/Program Files/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}] [6{C:/Program File
-s/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}] [7] [8] [9]
-Underfull \hbox (badness 4872) in paragraph at lines 902--905
-[]\T1/lmr/m/n/10.95 (+20) We pre-registered none of these in the con-ven-tional
- sense; the write-ups in
- []
-
-[10]
-Overfull \hbox (108.50458pt too wide) in paragraph at lines 974--989
- [][] 
- []
-
-[11]
-Overfull \hbox (41.42319pt too wide) in paragraph at lines 1028--1028
-[]\T1/lmtt/m/n/10.95 "Continue the text. The fox was quick..."  ->  text-embedd
-ing-3-small  ->  v in R^1536[] 
- []
-
-
-Overfull \hbox (90.36586pt too wide) in paragraph at lines 1061--1075
- [][] 
- []
-
-[12]
-LaTeX Font Info:    Font shape `T1/lmtt/bx/n' in size <10.95> not available
-(Font)              Font shape `T1/lmtt/b/n' tried instead on input line 1093.
-
-Overfull \hbox (21.78258pt too wide) in paragraph at lines 1107--1117
- [][] 
- []
-
-
-Overfull \hbox (52.92065pt too wide) in paragraph at lines 1148--1148
-[]\T1/lmtt/m/n/10.95 m = pd.read_parquet("data/exp_pub_O1_continue/embeddings/c
-ontext_full/metadata.parquet")[] 
- []
-
-
-Overfull \hbox (29.92572pt too wide) in paragraph at lines 1148--1148
-[]\T1/lmtt/m/n/10.95 sub = m[(m.prompt_family=="philosophy") & (m.run_id=="run_
-000")].sort_values("step")[] 
- []
-
-[13] [14]
-Overfull \hbox (58.66939pt too wide) in paragraph at lines 1262--1262
-[]\T1/lmtt/m/n/10.95 recurrence(eps, tau) = #{(t, s) : ||z_t - z_s||_2 < eps  a
-nd  |t - s| > tau} / [T(T-1)/2][] 
- []
-
-[15]
-Overfull \hbox (1.18205pt too wide) in paragraph at lines 1312--1312
-[]\T1/lmtt/m/n/10.95 lambda_k = (1 / [2.(T - 1 - t_baseline)]) . log( mu_k(T-1)
- / mu_k(t_baseline) )[] 
- []
-
-
-Underfull \hbox (badness 2401) in paragraph at lines 1332--1338
-[]\T1/lmr/m/n/10.95 (+20) The early-vs-late com-par-i-son dis-tin-guishes regim
-es where the sys-tem is con-trac-
- []
-
-
-Underfull \hbox (badness 1584) in paragraph at lines 1332--1338
-\T1/lmr/m/n/10.95 (+20) tive at long times but tran-siently di-ver-gent (e.g., 
-O1) from regimes that are con-
- []
-
-
-Underfull \hbox (badness 1142) in paragraph at lines 1332--1338
-\T1/lmr/m/n/10.95 (+20) trac-tive through-out (e.g., O3 ab-sorb-ing). The func-
-tion \T1/lmtt/m/n/10.95 compute_lyapunov_spectrum
- []
-
-
-Underfull \hbox (badness 1502) in paragraph at lines 1332--1338
-\T1/lmr/m/n/10.95 (+20) in \T1/lmtt/m/n/10.95 src/experiments/dynamics/lyapunov
-.py \T1/lmr/m/n/10.95 (+20) re-turns both win-dows; the FTLE helper
- []
-
-[16]
-Underfull \hbox (badness 10000) in paragraph at lines 1387--1389
-[]\T1/lmr/m/n/10.95 (+20) The out-put statis-tics from \T1/lmtt/m/n/10.95 traje
-ctory_periodicity \T1/lmr/m/n/10.95 (+20) in
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1405--1407
-\T1/lmr/m/n/10.95 (+20) To dis-tin-guish con-trac-tive from ex-ploratory dy-nam
--ics we com-pute, in
- []
-
-[17]
-Underfull \hbox (badness 10000) in paragraph at lines 1443--1449
-[]\T1/lmr/m/n/10.95 (+20) The clas-si-fier is im-ple-mented in \T1/lmtt/m/n/10.
-95 src/experiments/operators/classifier.py
- []
-
-[18]
-Underfull \hbox (badness 2547) in paragraph at lines 1519--1525
-\T1/lmr/m/n/10.95 (+20) trajectory and re-com-pute the dy-nam-ics met-rics. If 
-the met-ric is un-changed, it
- []
-
-
-Underfull \hbox (badness 1845) in paragraph at lines 1519--1525
-\T1/lmr/m/n/10.95 (+20) de-pends only on the marginal point cloud and not on te
-m-po-ral struc-ture --- i.e.,
- []
-
-
-Underfull \hbox (badness 4341) in paragraph at lines 1558--1561
-\T1/lmr/m/n/10.95 (+20) switching rate un-der ad-ver-sar-ial vs con-trol), via 
-\T1/lmtt/m/n/10.95 permutation_test_mean_diff \T1/lmr/m/n/10.95 (+20) in
- []
-
-[19]
-Underfull \hbox (badness 7796) in paragraph at lines 1579--1585
-\T1/lmr/m/n/10.95 (+20) Beyond the per-tur-ba-tion toolkit (4.9), ev-ery ex-per
--i-ment gen-er-ates a stan-dard-
- []
-
-
-Underfull \hbox (badness 7704) in paragraph at lines 1579--1585
-\T1/lmr/m/n/10.95 (+20) ized set of static plots, de-fined in \T1/lmtt/m/n/10.9
-5 src/experiments/dynamics/regime_plots.py\T1/lmr/m/n/10.95 (+20) ,
- []
-
-
-Overfull \hbox (37.04195pt too wide) in paragraph at lines 1579--1585
-\T1/lmtt/m/n/10.95 src/experiments/dynamics/field_plots.py\T1/lmr/m/n/10.95 (-2
-0) , \T1/lmtt/m/n/10.95 src/experiments/dynamics/pub_tsne_plots_v2.py\T1/lmr/m/
-n/10.95 (-20) ,
- []
-
-
-Underfull \hbox (badness 5548) in paragraph at lines 1594--1597
-\T1/lmr/m/n/10.95 (+20) coordinates, so cross-family het-ero-gene-ity is vis-i-
-ble. (\T1/lmtt/m/n/10.95 plot_trajectory_grid \T1/lmr/m/n/10.95 (+20) in
- []
-
-
-Underfull \hbox (badness 5985) in paragraph at lines 1605--1608
-\T1/lmr/m/n/10.95 (+20) displacement field over-lay on the den-sity back-ground
-. (\T1/lmtt/m/n/10.95 plot_flow_field_* \T1/lmr/m/n/10.95 (+20) in
- []
-
-[20] [21]
-Underfull \hbox (badness 10000) in paragraph at lines 1681--1683
-[]\T1/lmr/m/n/10.95 (+20) The ker-nel is im-ple-mented as three pure func-tions
- in
- []
-
-
-Underfull \hbox (badness 1354) in paragraph at lines 1695--1700
-\T1/lmr/m/n/10.95 (+20) Where the dis-place-ment field uses bin-mean av-er-ag-i
-ng at mod-er-ate res-o-lu-tion ( 26--
- []
-
-
-Underfull \hbox (badness 6316) in paragraph at lines 1695--1700
-\T1/lmr/m/n/10.95 (+20) 48), the \T1/lmr/bx/n/10.95 (+20) den-sity \T1/lmr/m/n/
-10.95 (+20) field used for V land-scapes and back-ground heatmaps uses
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1695--1700
-\T1/lmr/m/n/10.95 (+20) a higher-resolution Gaussian-smoothed his-togram via \T
-1/lmtt/m/n/10.95 _smooth_density_grid \T1/lmr/m/n/10.95 (+20) in
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 1717--1722
-\T1/lmr/m/n/10.95 (+20) Streamlines are in-te-gral curves of the (U, V) field, 
-com-puted by
- []
-
-[22]
-Underfull \hbox (badness 1286) in paragraph at lines 1797--1803
-\T1/lmr/m/n/10.95 (+20) For 3D an-i-ma-tions we ex-tract iso-density shells at 
-five den-sity frac-tions (4%, 10%,
- []
-
-
-Underfull \hbox (badness 2689) in paragraph at lines 1797--1803
-\T1/lmr/m/n/10.95 (+20) 20%, 35%, 55% of max $\OML/lmm/m/it/10.95 ^^Z$\T1/lmr/m
-/n/10.95 (+20) ) us-ing \T1/lmtt/m/n/10.95 scipy.ndimage.gaussian_filter \T1/lm
-r/m/n/10.95 (+20) smooth-ing and
- []
-
-
-Underfull \hbox (badness 8132) in paragraph at lines 1806--1811
-\T1/lmr/m/n/10.95 (+20) Animations of 50 tra-jec-to-ries with 75 frames at DPI 
-180 are ren-dered via
- []
-
-[23]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 1 -- GENERATION                               
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ????????????  X_t (string)   ??????????????????????
-????                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? context  ? ????????????????? OpenAI Responses API
-   ?                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? X_t      ?                 ? gpt-4o-mini         
-   ?                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ?          ?  Y_t (string)   ? T=0.8, max_tok=120-1
-60 ?                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ?          ? ????????????????? store=False         
-   ?                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ????????????                 ??????????????????????
-????                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ?                                             
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ?  X_{t+1} = clip(X_t || Y_t, 12000 chars)    
-     APPEND mode      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ?  X_{t+1} = clip(Y_t,        12000 chars)    
-     REPLACE mode     ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ?  X_{t+1} = X_t || format_turn(role, Y_t)    
-     DIALOG mode      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ?                                             
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?        ??????? loop t = 0..T-1, persist each step ???
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-?                     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ???????????????
-????????????????     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ? raw/steps.jso
-nl             ?     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ?  rows: (regim
-e, family, ic, ?     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ?  run, step, X
-_before, Y,    ?     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ?  X_after, res
-ponse_id, ...) ?     ?[] 
- []
-
-
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       ???????????????
-????????????????     ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
- ? ????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 2 -- OBSERVABLE CONSTRUCTION                  
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (24.17699pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           per JSONL row -> 3 strings (operator pub) o
-r 8 strings (dialog pub)?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ???????????????????????????????????????????
-????????????          ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? output         = Y_t                     
-  (~120 tok)?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? rolling_k3     = Y_{t-2}||SEP||Y_{t-1}||S
-EP||Y_t     ?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? context_tail   = X_after[-4000:]         
-   (~1k tok)?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? context_full   = X_after[-8000:]         
-   (~2k tok)?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? last_user_turn / last_agent_turn  (dialog
- only)      ?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? rolling_user_k3 / rolling_agent_k3 (dialo
-g only)     ?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ? turn_pair                          (dialo
-g only)     ?         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?           ???????????????????????????????????????????
-????????????          ?[] 
- []
-
-[24]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?  K parallel string str
-eams                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?  (K = 3 operator pub, 
-8 dialog pub;         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?   +1 each with optiona
-l context_full)       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 3 -- EMBEDDING                                
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   for each observable independently:                 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ????????????????????  batch of 128 strings ?????
-???????????????       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ? all_texts        ? ??????????????????????? Ope
-nAI Embeddings?       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ? (N_trajxT strings?                       ? tex
-t-embedding-3 ?       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ?  per observable) ?  list[1536-d vector]  ? -sm
-all           ?       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ?                  ? ???????????????????????    
-              ?       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ????????????????????                       ?????
-???????????????       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?                       
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?                       
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                       L2-normalize each row          
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?                       
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                              ?                       
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ??????????????????????????????????????????????? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ? embeddings/<obs>/embeddings.npy   (N, 1536) ? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ? embeddings/<obs>/metadata.parquet (N rows)  ? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ?   regime, family, ic, run, step, role,      ? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ?   text_len                                  ? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?      ??????????????????????????????????????????????? 
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ????????????????????????????? ? ???????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 4 -- PROJECTION  (joint fit on all N points pe
-r observable)          ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?       embeddings.npy  (N, 1536) ????? PCA(n=2)   ??? 
-Z_PCA2  (N, 2)        ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ?                  
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ??? PCA(n=10)  ??? 
-Z_PCA10 (N, 10)       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ?                  
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ??? PCA(n=20)  ??? 
-Z_PCA20 (N, 20)       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ?                  
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                   ??? PCA(n=50) ??? T
-SNE(    ??? Z_TSNE    ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                       (preprocess) pe
-rp=30,     (N, 2)     ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                    me
-tric=cos,             ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                    in
-it=pca,               ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                    se
-ed=42)                ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?       all fits use random_state=42 -> fully determini
-stic                   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?       Z_PCA2  ->  density / V landscape / 2D plotting
-                       ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?       Z_PCA10 ->  K-means clustering, metrics, classi
-fier                   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?       Z_TSNE  ->  visualization only (never used in m
-etrics)                ?[] 
- []
-
-[25]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 5 -- STATISTICAL VALIDATION                   
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   1000-iter bootstrap CIs    Cohen's d vs baselines  
-  permutation tests   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   baselines:  time_shuffled ? no_feedback ? independe
-nt_regeneration       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (47.17192pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   significance gate:  metric >= baseline + 2sigma  AN
-D  Cohen's d >= 0.5         ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                  ?                   
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                  ?                   
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   three-axis classifier (H1a convergence, H1b recurre
-nce, H1c divergence)  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ?????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ? H1a strong + H1b weak  =>  contractive / multi-
-basin (O1, D1)     ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ? H1b strong (period-2) =>  oscillatory          
-        (O2)       ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ? H1a strong + sharpness v => absorbing          
-        (O3)       ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ? H1c strong            =>  divergent / unsupport
-ed                 ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?     ?????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 6 -- VISUALIZATION & REPORTS                  
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ???????????????????????      ???????????????????????
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? STATIC PLOTS (2D)   ?      ? FLOW FIELDS (2D)    ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                     ?      ?                     ?
-                      ?[] 
- []
-
-[26]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? A. joint t-SNE      ?      ? make_grid_edges     ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?    by regime/family/?      ? + bin_displacement  ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?    step             ?      ?   field             ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? B. per-family grid  ?      ? + bin_density       ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? C. single-IC trajs  ?      ?                     ?
-                      ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? E. quiver flow      ?      ? -> G: streamlines +  
-?                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? F. trajectory sample?      ?      density (magma)?
-                      ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? basin_entry hist    ?      ? -> H: speed-colored  
-?                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? basin_scores        ?      ?      streamlines    ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? cluster_occupancy   ?      ?      (dark theme)   ?
-                      ?[] 
- []
-
-
-Overfull \hbox (35.67445pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? dwell_dist          ?      ? -> I: divergence grad
-.v ?                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? step_parity         ?      ?      (RdBu_r)       ?
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ???????????????????????      ???????????????????????
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ????????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? EMPIRICAL POTENTIAL LANDSCAPE TOOLKIT (perturbatio
-n only)           ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                                                   
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (29.92572pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?   Z_PCA2 ??? smoothed density rho?(x)             
-                     ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (29.92572pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?           V(x) = -log rho?(x)                     
-                     ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ??? basin_centers = local minima of V
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ??? Dijkstra geodesics between basin 
-pairs             ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?   -> V*(i,j) barrier height = max V
- along path        ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ??? marching cubes @ 5 density iso-le
-vels              ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?   -> Poly3DCollection nested transp
-arent shells       ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ??? plot_streamlines + V contour + ge
-odesic overlay    ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                                                   
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?   K=48 KMeans + Ward linkage ??? rg_dendrogram    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ????????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ????????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? 3D ANIMATIONS (perturbation only)                 
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                                                   
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?   Z_PCA3 + iso-shells + 50-trajectory walk + red k
-ick beams         ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?   ProcessPoolExecutor (40 workers) -> frame PNGs  
-                   ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?              ?                                    
-                  ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?   imageio-ffmpeg libx264 -> animation3d_<cond>.mp4
- (~10MB, 12s loop) ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ????????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ???????????????????????                             
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? NARRATIVE REPORT    ?                             
-                      ?[] 
- []
-
-[27]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                     ?                             
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? reports/report.md   ? ??? per-observable metric ta
-bles                  ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?                     ?     bootstrap CIs           
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ? classification:     ?     baseline comparisons    
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?  not / weak /       ?     H1a/H1b/H1c verdict     
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ?  moderate / strong  ?     regime label            
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  ???????????????????????                             
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?  PHASE 7 -- CROSS-EXPERIMENT AGGREGATION             
-                       ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   read each experiment's per-experiment CSVs (via scr
-ipts/lib_load)        ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ???????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_perturbation_cross_regime  -> 4x5 switc
-hing grouped bar   ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_dose_response              -> log-x dos
-e curves           ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_basin_hardening            -> switch-vs
--inject_step       ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_basin_predictability       -> 4-regime 
-accuracy overlay   ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_t_sweep                    -> D1 T={0.3
-,0.6,0.8,1.2}      ?   ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ? aggregate_o1_d1_t_sensitivity        -> side-by-s
-ide T comparison   ?   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   ???????????????????????????????????????????????????
-???????????????????   ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?                                                      
-                      ?[] 
- []
-
-
-Overfull \hbox (18.42825pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ?   -> data/aggregated/<analysis>/{csv, png, summary.md
-}                      ?[] 
- []
-
-
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 2038--2038
-[]   \T1/lmtt/m/n/10.95 ???????????????????????????????????????????????????????
-???????????????????????[] 
- []
-
-[28]
-Overfull \hbox (6.93079pt too wide) in paragraph at lines 2079--2079
-[]   \T1/lmtt/m/n/10.95 ThreeAxisDecision: {h1a, h1b, h1c} in {not_supported, w
-eak, moderate, strong}[] 
- []
-
-
-Overfull \hbox (373.36484pt too wide) in paragraph at lines 2091--2102
- [][] 
- []
-
-
-Overfull \hbox (356.60109pt too wide) in paragraph at lines 2130--2141
- [][] 
- []
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[29]
-<figures/fig01.png, id=687, 562.15736pt x 396.45258pt>
+les/MiKTeX/fonts/enc/dvips/base/8r.enc}]
+LaTeX Font Info:    Trying to load font information for TS1+ptm on input line 3
+53.
+
+(C:\Program Files\MiKTeX\tex/latex/psnfss\ts1ptm.fd
+File: ts1ptm.fd 2001/06/04 font definitions for TS1/ptm.
+) [2] [3] [4] [5]
+<figures/fig01.png, id=467, 930.92793pt x 364.06012pt>
 File: figures/fig01.png Graphic file (type png)
 <use figures/fig01.png>
-Package pdftex.def Info: figures/fig01.png  used on input line 2161.
-(pdftex.def)             Requested size: 430.31812pt x 303.4909pt.
- [30 <./figures/fig01.png>]
-Overfull \hbox (255.72592pt too wide) in paragraph at lines 2194--2208
- [][] 
+Package pdftex.def Info: figures/fig01.png  used on input line 776.
+(pdftex.def)             Requested size: 446.2658pt x 174.52466pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[6] [7 <./figures/fig01.png>] [8] [9] [10] [11] [12] [13] [14] [15] [16]
+Underfull \hbox (badness 1552) in paragraph at lines 1151--1152
+[]\T1/ptm/m/n/10 (+20) be its vec-tor rep-re-sen-ta-tion. For the canon-i-cal e
+m-bed-ding used in the main bat-tery, $\OML/cmm/m/it/10 m \OT1/cmr/m/n/10 = 153
+6$ \T1/ptm/m/n/10 (+20) for
  []
 
-[31]
-Overfull \hbox (106.2014pt too wide) in paragraph at lines 2249--2259
- [][] 
+[17] [18] [19] [20] [21] [22] [23] [24] [25] [26]
+Underfull \vbox (badness 2452) has occurred while \output is active []
+
+ [27]
+Overfull \hbox (4.5473pt too wide) in paragraph at lines 1585--1585
+\T1/cmtt/m/n/9 context_tail\T1/ptm/m/n/9 (-20) ; 
  []
 
 
-Overfull \hbox (104.81679pt too wide) in paragraph at lines 2267--2273
-[]\T1/lmr/m/n/10.95 (-20) (Numbers mea-sured from \T1/lmtt/m/n/10.95 data/aggre
-gated/basin_predictability_cross/cross_basin_predictability.csv\T1/lmr/m/n/10.9
-5 (-20) ,
+Overfull \hbox (40.15257pt too wide) in paragraph at lines 1585--1585
+[][] \OMS/cmsy/m/n/9 ^^@ [][] \OML/cmm/m/it/9 < 
  []
 
-<figures/fig02.png, id=702, 873.0216pt x 407.24146pt>
+
+Overfull \hbox (124.83603pt too wide) in paragraph at lines 1585--1585
+\OML/cmm/m/it/9 S[]\OT1/cmr/m/n/9 (200)\OML/cmm/m/it/9 = []\OT1/cmr/m/n/9 (\OML
+/cmm/m/it/9 S[]\OT1/cmr/m/n/9 (200)\OML/cmm/m/it/9 ; S[]\OT1/cmr/m/n/9 (200)) \
+OMS/cmsy/m/n/9 ^^U 
+ []
+
+
+Overfull \hbox (15.06915pt too wide) in paragraph at lines 1585--1585
+\OMS/cmsy/m/n/9 f\OT1/cmr/m/n/9 20\OML/cmm/m/it/9 ; \OT1/cmr/m/n/9 80\OML/cmm/m
+/it/9 ; \OT1/cmr/m/n/9 200\OML/cmm/m/it/9 ; \OT1/cmr/m/n/9 400\OMS/cmsy/m/n/9 g
+$\T1/ptm/m/n/9 (-20) , 
+ []
+
+
+LaTeX Warning: Float too large for page by 372.1099pt on input line 1586.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[28] [29] [30
+
+]
+<figures/fig02.png, id=700, 570.933pt x 386.43195pt>
 File: figures/fig02.png Graphic file (type png)
 <use figures/fig02.png>
-Package pdftex.def Info: figures/fig02.png  used on input line 2300.
-(pdftex.def)             Requested size: 430.31812pt x 200.73071pt.
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[32]
-Underfull \hbox (badness 10000) in paragraph at lines 2370--2374
-[]\T1/lmr/m/n/10.95 (+20) (All mea-sured cells in this sec-tion are re-pro-duci
-ble from
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2370--2374
-\T1/lmtt/m/n/10.95 data/aggregated/t_sensitivity_cross_regime/cross_t_sensitivi
-ty.csv \T1/lmr/m/n/10.95 (+20) fil-tered to
- []
-
-<figures/fig03.png, id=708, 779.43195pt x 422.41815pt>
+Package pdftex.def Info: figures/fig02.png  used on input line 1665.
+(pdftex.def)             Requested size: 446.2658pt x 302.06432pt.
+ [31 <./figures/fig02.png>]
+<figures/fig03.png, id=709, 1283.194pt x 406.318pt>
 File: figures/fig03.png Graphic file (type png)
 <use figures/fig03.png>
-Package pdftex.def Info: figures/fig03.png  used on input line 2379.
-(pdftex.def)             Requested size: 430.31812pt x 233.22018pt.
-
-Underfull \hbox (badness 3449) in paragraph at lines 2380--2380
-[]\T1/lmr/bx/n/10 (+20) Figure 3: |The head-line re-sult. \T1/lmr/m/n/10 (+20) 
-Switch-ing rates by regime $\OMS/lmsy/m/n/10 ^^B$ \T1/lmr/m/n/10 (+20) con-di-t
-ion (n=50 /
- []
-
-
-Underfull \hbox (badness 1552) in paragraph at lines 2380--2380
-\T1/lmr/m/n/10 (+20) cell, n=25 for D2). Replace-mode regimes (O2, O3) ca-pit-u
--late to \T1/lmr/m/it/10 (+20) any \T1/lmr/m/n/10 (+20) per-tur-ba-tion type
- []
-
-
-Underfull \hbox (badness 1237) in paragraph at lines 2380--2380
-\OMS/lmsy/m/n/10 ^^U$ \T1/lmr/m/n/10 (+20) 80 to-kens (94--100% switch-ing). Ap
-pend-mode O1 re-sists out-of-distribution per-tur-ba-tion
- []
-
-[33 <./figures/fig02.png>] [34 <./figures/fig03.png>]
-<figures/fig04.png, id=724, 667.41345pt x 464.33475pt>
+Package pdftex.def Info: figures/fig03.png  used on input line 1679.
+(pdftex.def)             Requested size: 446.2658pt x 141.30824pt.
+<figures/fig04.png, id=710, 641.84793pt x 384.38606pt>
 File: figures/fig04.png Graphic file (type png)
 <use figures/fig04.png>
-Package pdftex.def Info: figures/fig04.png  used on input line 2484.
-(pdftex.def)             Requested size: 430.31812pt x 299.38379pt.
+Package pdftex.def Info: figures/fig04.png  used on input line 1708.
+(pdftex.def)             Requested size: 446.2658pt x 267.25604pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<figures/fig05.png, id=725, 611.4042pt x 436.5108pt>
+[32 <./figures/fig03.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [33 <./figures/fig04.png>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \vbox (badness 1527) has occurred while \output is active []
+
+ [34]
+<figures/fig05.png, id=730, 1074.11287pt x 355.47806pt>
 File: figures/fig05.png Graphic file (type png)
 <use figures/fig05.png>
-Package pdftex.def Info: figures/fig05.png  used on input line 2518.
-(pdftex.def)             Requested size: 430.31812pt x 307.23393pt.
+Package pdftex.def Info: figures/fig05.png  used on input line 1789.
+(pdftex.def)             Requested size: 446.2658pt x 147.68878pt.
+
+Underfull \hbox (badness 5189) in paragraph at lines 1790--1790
+\T1/ptm/m/it/9 (+20) Fig 5 com-pares O1 persistent-escape dose re-sponse un-der
+ bounded (max_context_chars=12000) and un-bounded
+ []
+
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[35] [36 <./figures/fig04.png>]
-Underfull \hbox (badness 2790) in paragraph at lines 2568--2571
-\T1/lmr/m/n/10.95 (+20) predictability curves of the four di-ag-nos-tic regimes
- onto a sin-gle axis. Out-put:
- []
-
-
-Overfull \hbox (15.42435pt too wide) in paragraph at lines 2577--2580
-\T1/lmr/m/n/10.95 (-20) basin-predictability-vs-T com-par-i-son. Out-put: \T1/l
-mtt/m/n/10.95 data/aggregated/t_sensitivity_cross_regime/\T1/lmr/m/n/10.95 (-20
-) . 
- []
-
-
-Underfull \hbox (badness 1087) in paragraph at lines 2582--2586
-\T1/lmr/m/n/10.95 (+20) relaxation curves across all 5 per-tur-ba-tion pi-lots 
-(D1, O1, O2, O3, D2). Out-put:
- []
-
-
-Underfull \hbox (badness 1005) in paragraph at lines 2582--2586
-\T1/lmtt/m/n/10.95 data/aggregated/perturbation_cross_regime/ \T1/lmr/m/n/10.95
- (+20) in-clud-ing the 4$\OMS/lmsy/m/n/10.95 ^^B$\T1/lmr/m/n/10.95 (+20) 5 con-
-di-tion $\OMS/lmsy/m/n/10.95 ^^B$ \T1/lmr/m/n/10.95 (+20) regime
- []
-
-
-Underfull \hbox (badness 1596) in paragraph at lines 2588--2591
-\T1/lmr/m/n/10.95 (+20) D1+O1 dose ex-per-i-ments, log-scale dose axis with 95%
- Wil-son CI bars. Out-put:
- []
-
-[37 <./figures/fig05.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 2593--2596
-\T1/lmr/m/n/10.95 (+20) curves for D1 + O1, with the basin-hardening in-ter-pre
--ta-tion. Out-put:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2598--2603
-\T1/lmr/m/n/10.95 (+20) per-pilot \T1/lmtt/m/n/10.95 geodesic_barriers_summary.
-csv \T1/lmr/m/n/10.95 (+20) (V*) and \T1/lmtt/m/n/10.95 rg_dendrogram_summary.c
-sv
- []
-
-
-Underfull \hbox (badness 3098) in paragraph at lines 2598--2603
-\T1/lmr/m/n/10.95 (+20) (Ward merge dis-tance) into the wide regime $\OMS/lmsy/
-m/n/10.95 ^^B$ \T1/lmr/m/n/10.95 (+20) con-di-tion ta-bles shown in Ÿ5.10.
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2598--2603
-\T1/lmr/m/n/10.95 (+20) Out-put: \T1/lmtt/m/n/10.95 data/aggregated/perturbatio
-n_geometric_barriers/ \T1/lmr/m/n/10.95 (+20) (\T1/lmtt/m/n/10.95 v_star_table.
-csv\T1/lmr/m/n/10.95 (+20) ,
- []
-
-<figures/fig06.png, id=748, 901.7325pt x 845.8875pt>
+[35] [36 <./figures/fig05.png>]
+LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 1857.
+ [37] [38]
+<figures/fig06.png, id=757, 786.38794pt x 353.21962pt>
 File: figures/fig06.png Graphic file (type png)
 <use figures/fig06.png>
-Package pdftex.def Info: figures/fig06.png  used on input line 2613.
-(pdftex.def)             Requested size: 430.31812pt x 403.67229pt.
-
-Underfull \hbox (badness 1077) in paragraph at lines 2614--2614
-\T1/lmr/m/n/10 (+20) tion pi-lot, four con-di-tions. Wells = at-trac-tor basins
-; cliff edges = bar-ri-ers. The con-trol
- []
+Package pdftex.def Info: figures/fig06.png  used on input line 1967.
+(pdftex.def)             Requested size: 446.2658pt x 200.44797pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-<figures/fig07.png, id=749, 955.278pt x 880.7085pt>
+[39]
+Overfull \hbox (2.31699pt too wide) in paragraph at lines 2038--2038
+[]|\T1/ptm/m/n/9 (-20) acc(k=5)|  
+ []
+
+
+Overfull \hbox (7.80699pt too wide) in paragraph at lines 2038--2038
+[]|\T1/ptm/m/n/9 (-20) acc(k=10), 
+ []
+
+
+Overfull \hbox (7.80699pt too wide) in paragraph at lines 2038--2038
+[]|\T1/ptm/m/n/9 (-20) acc(k=10), 
+ []
+
+
+Overfull \hbox (6.72699pt too wide) in paragraph at lines 2038--2038
+[]|\T1/ptm/m/n/9 (-20) acc(k=20)|  
+ []
+
+
+Overfull \hbox (4.20435pt too wide) in paragraph at lines 2038--2038
+[]|\T1/ptm/m/n/9 (-20) acc(final)|  
+ []
+
+
+Overfull \hbox (2.71931pt too wide) in paragraph at lines 2038--2038
+\T1/ptm/m/n/9 (-20) dialogue- 
+ []
+
+
+Underfull \vbox (badness 1043) has occurred while \output is active []
+
+ [40 <./figures/fig06.png>]
+<figures/fig07.png, id=772, 777.80588pt x 352.76794pt>
 File: figures/fig07.png Graphic file (type png)
 <use figures/fig07.png>
-Package pdftex.def Info: figures/fig07.png  used on input line 2619.
-(pdftex.def)             Requested size: 430.31812pt x 396.73175pt.
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2649
-[]\T1/lmr/m/n/10.95 (+20) (Per-geodesic raw V* val-ues are writ-ten along-side 
-the fig-ure to
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2645--2649
-\T1/lmtt/m/n/10.95 data/exp_perturb_*_pilot/reports/perturbation/geodesic_barri
-ers_pca.csv\T1/lmr/m/n/10.95 (+20) ; the
- []
-
-[38]
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[39 <./figures/fig06.png>] [40 <./figures/fig07.png>]
-Overfull \hbox (492.79353pt too wide) in paragraph at lines 2749--2758
- [][] 
- []
-
-[41] [42]
-Underfull \hbox (badness 10000) in paragraph at lines 2896--2902
-[]\T1/lmr/m/n/10.95 (+20) (Cluster anal-y-sis: \T1/lmtt/m/n/10.95 scripts/regim
-e_cluster_analysis.py\T1/lmr/m/n/10.95 (+20) . Plots:
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2896--2902
-\T1/lmtt/m/n/10.95 data/aggregated/regime_cluster_analysis/cluster_scatter.png
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2896--2902
-\T1/lmr/m/n/10.95 (+20) (PCA-2 of fea-ture space, col-ored by regime la-bel) an
-d
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 2896--2902
-\T1/lmtt/m/n/10.95 data/aggregated/regime_cluster_analysis/cluster_dendrogram.p
-ng \T1/lmr/m/n/10.95 (+20) (Ward link-age).
- []
-
-<figures/fig08.png, id=784, 1011.78pt x 433.62pt>
+Package pdftex.def Info: figures/fig07.png  used on input line 2044.
+(pdftex.def)             Requested size: 446.2658pt x 202.40398pt.
+ [41 <./figures/fig07.png>]
+<figures/fig08.png, id=780, 562.15736pt x 396.45258pt>
 File: figures/fig08.png Graphic file (type png)
 <use figures/fig08.png>
-Package pdftex.def Info: figures/fig08.png  used on input line 2905.
-(pdftex.def)             Requested size: 430.31812pt x 184.42169pt.
-
-Underfull \hbox (badness 1231) in paragraph at lines 2911--2917
-\T1/lmr/m/n/10.95 (+20) A nat-u-ral re-viewer chal-lenge: the regime tax-on-omy
- is de-fined on em-bed-dings from
- []
+Package pdftex.def Info: figures/fig08.png  used on input line 2056.
+(pdftex.def)             Requested size: 446.2658pt x 314.73668pt.
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[43 <./figures/fig08.png>] [44]
-Underfull \hbox (badness 10000) in paragraph at lines 3016--3018
-[]\T1/lmr/m/n/10.95 (+20) (Full ab-la-tion: \T1/lmtt/m/n/10.95 scripts/embeddin
-g_ablation.py\T1/lmr/m/n/10.95 (+20) , out-put at
- []
-
-<figures/fig09.png, id=798, 1084.05pt x 361.35pt>
+<figures/fig09.png, id=781, 779.43195pt x 422.41815pt>
 File: figures/fig09.png Graphic file (type png)
 <use figures/fig09.png>
-Package pdftex.def Info: figures/fig09.png  used on input line 3021.
-(pdftex.def)             Requested size: 430.31812pt x 143.4402pt.
-[45 <./figures/fig09.png>] [46]
-Overfull \hbox (578.56978pt too wide) in paragraph at lines 3200--3211
+Package pdftex.def Info: figures/fig09.png  used on input line 2084.
+(pdftex.def)             Requested size: 446.2658pt x 241.8637pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[42 <./figures/fig08.png>] [43 <./figures/fig09.png>]
+<figures/fig10.png, id=796, 611.4042pt x 436.5108pt>
+File: figures/fig10.png Graphic file (type png)
+<use figures/fig10.png>
+Package pdftex.def Info: figures/fig10.png  used on input line 2122.
+(pdftex.def)             Requested size: 446.2658pt x 318.62358pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig11.png, id=797, 1147.73793pt x 374.90062pt>
+File: figures/fig11.png Graphic file (type png)
+<use figures/fig11.png>
+Package pdftex.def Info: figures/fig11.png  used on input line 2181.
+(pdftex.def)             Requested size: 446.2658pt x 145.77017pt.
+[44]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[45 <./figures/fig10.png>]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig12.png, id=811, 641.84793pt x 383.031pt>
+File: figures/fig12.png Graphic file (type png)
+<use figures/fig12.png>
+Package pdftex.def Info: figures/fig12.png  used on input line 2232.
+(pdftex.def)             Requested size: 446.2658pt x 266.31389pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [46 <./figures/fig11.png>]
+<figures/fig13.png, id=819, 1084.05pt x 361.35pt>
+File: figures/fig13.png Graphic file (type png)
+<use figures/fig13.png>
+Package pdftex.def Info: figures/fig13.png  used on input line 2267.
+(pdftex.def)             Requested size: 446.2658pt x 148.75545pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[47]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[48 <./figures/fig12.png>] [49 <./figures/fig13.png>]
+<figures/fig14.png, id=843, 641.84793pt x 385.28944pt>
+File: figures/fig14.png Graphic file (type png)
+<use figures/fig14.png>
+Package pdftex.def Info: figures/fig14.png  used on input line 2334.
+(pdftex.def)             Requested size: 446.2658pt x 267.88414pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig15.png, id=844, 1011.78pt x 433.62pt>
+File: figures/fig15.png Graphic file (type png)
+<use figures/fig15.png>
+Package pdftex.def Info: figures/fig15.png  used on input line 2350.
+(pdftex.def)             Requested size: 446.2658pt x 191.25655pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig16.png, id=845, 867.24pt x 433.62pt>
+File: figures/fig16.png Graphic file (type png)
+<use figures/fig16.png>
+Package pdftex.def Info: figures/fig16.png  used on input line 2359.
+(pdftex.def)             Requested size: 446.2658pt x 223.13484pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig17.png, id=846, 835.4412pt x 440.1243pt>
+File: figures/fig17.png Graphic file (type png)
+<use figures/fig17.png>
+Package pdftex.def Info: figures/fig17.png  used on input line 2372.
+(pdftex.def)             Requested size: 446.2658pt x 235.09816pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[50] [51 <./figures/fig14.png>] [52 <./figures/fig15.png>] [53 <./figures/fig16
+.png>] [54 <./figures/fig17.png>] [55
+
+]
+Underfull \vbox (badness 1259) has occurred while \output is active []
+
+ [56]
+[57] [58] [59] [60]
+Underfull \vbox (badness 3029) has occurred while \output is active []
+
+ [61]
+Overfull \hbox (2.64365pt too wide) in paragraph at lines 2587--2597
  [][] 
  []
 
-[47] [48] [49] [50]
-Overfull \hbox (185.14153pt too wide) in paragraph at lines 3432--3432
-[]\T1/lmtt/m/n/10.95 mask = (np.abs(np.arange(T)[:, None] - np.arange(T)[None, 
-:]) > tau) & np.triu(np.ones((T, T)), 1).astype(bool)[] 
+[62]
+Overfull \hbox (99.24808pt too wide) in paragraph at lines 2610--2611
+[]\T1/ptm/m/n/10 (-20) F3 has been run in the present pa-per at mod-est scale (
+250 tra-jec-to-ries, one con-fig: \T1/cmtt/m/n/10 configs/perturbation/O1_overw
+rite_vs_insert.yaml\T1/ptm/m/n/10 (-20) )
  []
 
-[51]
-Underfull \hbox (badness 5771) in paragraph at lines 3542--3547
-\T1/lmr/m/n/10.95 (+20) claim in Ÿ5 against the canon-i-cal ag-gre-gated CSVs, 
-re-gen-er-ated by \T1/lmtt/m/n/10.95 python -m
- []
+[63]
+Underfull \vbox (badness 10000) has occurred while \output is active []
 
-[52]
-Underfull \hbox (badness 10000) in paragraph at lines 3561--3564
-[]\T1/lmr/bx/n/10.95 (+20) Embedding re-gen-er-a-tion\T1/lmr/m/n/10.95 (+20) : 
- $\OT1/lmr/m/n/10.95 (+20) 30\OML/lmm/m/it/10.95 inOpenAI\OT1/lmr/m/n/10.95 (+2
-0) `\OML/lmm/m/it/10.95 text \OMS/lmsy/m/n/10.95 ^^@ \OML/lmm/m/it/10.95 embedd
-ing \OMS/lmsy/m/n/10.95 ^^@ \OT1/lmr/m/n/10.95 (+20) 3 \OMS/lmsy/m/n/10.95 ^^@
- []
+ [64]
+
+LaTeX Warning: Float too large for page by 932.1099pt on input line 2735.
 
 
-Overfull \hbox (52.92065pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m src.experiments.perturbation.flow_skeleton --exp
-eriment <exp_id> [--is-dialog][] 
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[65]
+Overfull \hbox (27.7066pt too wide) in paragraph at lines 2795--2795
+\T1/ptm/m/n/9 (-20) acc(k=5$\OMS/cmsy/m/n/9 !$\T1/ptm/m/n/9 (-20) final)|  
  []
 
 
-Overfull \hbox (75.91559pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m src.experiments.perturbation.geodesic_skeleton -
--experiment <exp_id> [--is-dialog][] 
+Overfull \hbox (8.5696pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) recurrence|  
  []
 
 
-Overfull \hbox (150.64912pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m src.experiments.perturbation.bulk_plots --experi
-ment <exp_id> --override-step <k> [--is-dialog][] 
+Overfull \hbox (5.65013pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) sharpness 
  []
 
 
-Overfull \hbox (52.92065pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m src.experiments.perturbation.rg_dendrogram --exp
-eriment <exp_id> [--is-dialog][] 
- []
-
-[53]
-Overfull \hbox (12.67952pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m scripts.build_coverage          # rebuild COVERA
-GE.csv (37 x 60 matrix)[] 
+Overfull \hbox (9.91626pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) adversarial 
  []
 
 
-Overfull \hbox (81.66432pt too wide) in paragraph at lines 3603--3603
-[]\T1/lmtt/m/n/10.95 python -m scripts.publication_summary     # rebuild RESULT
-S.md (verify S5 cells against data)[] 
+Overfull \hbox (1.73422pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) continue|  
  []
 
-[54]
-Overfull \hbox (416.42183pt too wide) in paragraph at lines 3714--3732
- [][] 
+
+Overfull \hbox (5.8844pt too wide) in paragraph at lines 2795--2795
+[]|$[][]$ 
+ []
+
+
+Overfull \hbox (57.88853pt too wide) in paragraph at lines 2795--2795
+\T1/ptm/m/n/9 (-20) (4PL/GLMM/bootstrap), 
+ []
+
+
+Overfull \hbox (2.56947pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) degrades 
+ []
+
+
+Overfull \hbox (4.19493pt too wide) in paragraph at lines 2795--2795
+\T1/ptm/m/n/9 (-20) smoothly|  
+ []
+
+
+Overfull \hbox (9.55743pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) paraphrase|  
+ []
+
+
+Overfull \hbox (37.87442pt too wide) in paragraph at lines 2795--2795
+[]|\T1/ptm/m/n/9 (-20) summarize+negate|  
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[66]
+Overfull \hbox (74.28249pt too wide) in paragraph at lines 2877--2877
+[]\T1/cmtt/m/n/9 mask = (np.abs(np.arange(T)[:, None] - np.arange(T)[None, :]) 
+> tau) & np.triu(np.ones((T, T)), 1).astype(bool)[] 
+ []
+
+<figures/fig18.png, id=937, 672.62721pt x 519.31157pt>
+File: figures/fig18.png Graphic file (type png)
+<use figures/fig18.png>
+Package pdftex.def Info: figures/fig18.png  used on input line 2941.
+(pdftex.def)             Requested size: 446.2658pt x 344.54544pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig19.png, id=938, 1024.68536pt x 742.83235pt>
+File: figures/fig19.png Graphic file (type png)
+<use figures/fig19.png>
+Package pdftex.def Info: figures/fig19.png  used on input line 2949.
+(pdftex.def)             Requested size: 446.2658pt x 323.51485pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2950--2950
+[]\T1/ptm/b/n/9 (+20) Figure 19: |Per-family tra-jec-tory grid. \T1/ptm/m/n/9 (
++20) Shared-coordinate tra-jec-tory grid by prompt fam-ily. The fig-
+ []
+
+
+Underfull \hbox (badness 5787) in paragraph at lines 2950--2950
+\T1/ptm/m/n/9 (+20) ure sup-ports vi-sual in-spec-tion of family-level het-ero-
+gene-ity with-out serv-ing as a pri-mary end-point. Source:
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig20.png, id=939, 989.58278pt x 406.77686pt>
+File: figures/fig20.png Graphic file (type png)
+<use figures/fig20.png>
+Package pdftex.def Info: figures/fig20.png  used on input line 2957.
+(pdftex.def)             Requested size: 446.2658pt x 183.43892pt.
+
+Underfull \hbox (badness 10000) in paragraph at lines 2958--2958
+[]\T1/ptm/b/n/9 (+20) Figure 20: |Ensemble-spread time-line. \T1/ptm/m/n/9 (+20
+) En-sem-ble spread over re-cur-sive steps, grouped by regime.
+ []
+
+
+Underfull \hbox (badness 10000) in paragraph at lines 2958--2958
+\T1/ptm/m/n/9 (+20) The plot sup-ple-ments the finite-time ensemble-spread di-a
+g-nos-tics used in the at-trac-tor au-dit. Source:
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Overfull \hbox (401.41946pt too wide) in paragraph at lines 3742--3754
- [][] 
+Underfull \vbox (badness 2409) has occurred while \output is active []
+
+ [67]
+Underfull \hbox (badness 1259) in paragraph at lines 2997--3000
+\T1/ptm/m/n/10 (+20) The full prompt-family seed li-brary (15 fam-i-lies $\OMS/
+cmsy/m/n/10 ^^B$ \T1/ptm/m/n/10 (+20) 30 ICs each = 450 unique seed sen-tences)
+ lives in
+ []
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [68 <./figures/fig18.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [69 <./figures/fig19.png>]
+Underfull \hbox (badness 4995) in paragraph at lines 3039--3040
+[]\T1/ptm/m/it/10 (+20) role B (ex-pert)\T1/ptm/m/n/10 (+20) : \T1/cmtt/m/n/10 
+You are an expert. Answer briefly and concretely, then anchor the
+ []
+
+[70 <./figures/fig20.png>]
+Overfull \hbox (29.82986pt too wide) in paragraph at lines 3082--3082
+\T1/cmtt/m/n/9 sentence-transformers/all-mpnet-base-v2|  
  []
 
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-[55] [56] [57] (paper.bbl [58]) [59] (paper.aux)
+[71]
+Overfull \hbox (10.68704pt too wide) in paragraph at lines 3155--3160
+\T1/ptm/m/n/10 (-20) Animations of 50 tra-jec-to-ries with 75 frames at DPI 180
+ are ren-dered via \T1/cmtt/m/n/10 concurrent.futures.ProcessPoolExecutor
+ []
+
+<figures/fig21.png, id=973, 1058.23929pt x 781.54843pt>
+File: figures/fig21.png Graphic file (type png)
+<use figures/fig21.png>
+Package pdftex.def Info: figures/fig21.png  used on input line 3164.
+(pdftex.def)             Requested size: 446.2658pt x 329.58376pt.
+
+Underfull \hbox (badness 7203) in paragraph at lines 3165--3165
+[]\T1/ptm/b/n/9 (+20) Figure 21: |Com-bined PCA flow fields. \T1/ptm/m/n/9 (+20
+) Com-bined em-pir-i-cal PCA-2 flow-field sum-mary across regimes.
+ []
+
+
+Underfull \hbox (badness 5607) in paragraph at lines 3165--3165
+\T1/ptm/m/n/9 (+20) Flow fields are use-ful qual-i-ta-tive checks on lo-cal mo-
+tion but are not pri-mary de-ci-sion end-points. Source:
+ []
+
+<figures/fig22.png, id=974, 1056.17442pt x 781.54843pt>
+File: figures/fig22.png Graphic file (type png)
+<use figures/fig22.png>
+Package pdftex.def Info: figures/fig22.png  used on input line 3172.
+(pdftex.def)             Requested size: 446.2658pt x 330.22772pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Overfull \hbox (45.9394pt too wide) in paragraph at lines 3195--3195
+[]\T1/cmtt/m/n/9 python -m src.experiments.perturbation.bulk_plots --experiment
+ <exp_id> --override-step <k> [--is-dialog][] 
+ []
+
+[72 <./figures/fig21.png>]
+Underfull \vbox (badness 1092) has occurred while \output is active []
+
+ [73 <./figures/fig22.png>] [74]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig23.png, id=997, 873.0216pt x 407.24146pt>
+File: figures/fig23.png Graphic file (type png)
+<use figures/fig23.png>
+Package pdftex.def Info: figures/fig23.png  used on input line 3337.
+(pdftex.def)             Requested size: 446.2658pt x 208.17508pt.
+
+Underfull \hbox (badness 2285) in paragraph at lines 3338--3338
+[]\T1/ptm/b/n/9 (+20) Figure 23: |Orig-i-nal strat-i-fied basin-predictability 
+curves. \T1/ptm/m/n/9 (+20) Stratified-CV basin-predictability curves are re-ta
+ined
+ []
+
+
+Underfull \hbox (badness 2150) in paragraph at lines 3338--3338
+\T1/ptm/m/n/9 (+20) for au-dit but should be in-ter-preted along-side the leaka
+ge-aware Group-K-Fold re-sults in main-text Fig 7. Source:
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig24.png, id=998, 1059.4782pt x 407.24146pt>
+File: figures/fig24.png Graphic file (type png)
+<use figures/fig24.png>
+Package pdftex.def Info: figures/fig24.png  used on input line 3345.
+(pdftex.def)             Requested size: 446.2658pt x 171.53114pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig25.png, id=999, 1059.83955pt x 753.0534pt>
+File: figures/fig25.png Graphic file (type png)
+<use figures/fig25.png>
+Package pdftex.def Info: figures/fig25.png  used on input line 3353.
+(pdftex.def)             Requested size: 446.2658pt x 317.08461pt.
+
+Underfull \hbox (badness 1742) in paragraph at lines 3354--3354
+[]\T1/ptm/b/n/9 (+20) Figure 25: |Temperature-sweep basin pre-dictabil-ity. \T1
+/ptm/m/n/9 (+20) Basin pre-dictabil-ity as a func-tion of sam-pling tem-per-a-t
+ure.
+ []
+
+
+Underfull \hbox (badness 1838) in paragraph at lines 3354--3354
+\T1/ptm/m/n/9 (+20) These reduced-scope cells are ex-ploratory and are not used
+ as pri-mary ev-i-dence for tem-per-a-ture ef-fects. Source:
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig26.png, id=1000, 534.43665pt x 408.68684pt>
+File: figures/fig26.png Graphic file (type png)
+<use figures/fig26.png>
+Package pdftex.def Info: figures/fig26.png  used on input line 3361.
+(pdftex.def)             Requested size: 446.2658pt x 341.28035pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \hbox (badness 1184) in paragraph at lines 3410--3413
+\T1/ptm/m/n/10 (+20) Threshold for PASS: recurrence-bin agree-ment ($\OML/cmm/m
+/it/10 b[]\OT1/cmr/m/n/10 (\OML/cmm/m/it/10 r\OT1/cmr/m/n/10 )$\T1/ptm/m/n/10 (
++20) ) across canon-i-cal + $\OMS/cmsy/m/n/10 ^^U$\T1/ptm/m/n/10 (+20) 1 of 2 a
+l-ter-na-tive em-bed-ders
+ []
+
+
+Underfull \vbox (badness 3439) has occurred while \output is active []
+
+ [75]
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[76 <./figures/fig23.png>]
+Underfull \hbox (badness 6173) in paragraph at lines 3495--3498
+\T1/ptm/m/n/10 (+20) Per-condition mean bar-rier height $\OML/cmm/m/it/10 V[]$ 
+\T1/ptm/m/n/10 (+20) across the 6 inter-basin geodesics (\T1/cmtt/m/n/10 V_star
+_mean \T1/ptm/m/n/10 (+20) col-umn in
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig27.png, id=1016, 901.7325pt x 845.8875pt>
+File: figures/fig27.png Graphic file (type png)
+<use figures/fig27.png>
+Package pdftex.def Info: figures/fig27.png  used on input line 3521.
+(pdftex.def)             Requested size: 446.2658pt x 418.63171pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig28.png, id=1017, 955.278pt x 880.7085pt>
+File: figures/fig28.png Graphic file (type png)
+<use figures/fig28.png>
+Package pdftex.def Info: figures/fig28.png  used on input line 3529.
+(pdftex.def)             Requested size: 446.2658pt x 411.43349pt.
+
+Underfull \hbox (badness 7925) in paragraph at lines 3530--3530
+[]\T1/ptm/b/n/9 (+20) Figure 28: |Rep-re-sen-ta-tive O1 geodesic skele-ton. \T1
+/ptm/m/n/9 (+20) Geodesic minimum-cost paths be-tween de-tected basin
+ []
+
+
+Underfull \hbox (badness 5578) in paragraph at lines 3530--3530
+\T1/ptm/m/n/9 (+20) cen-ters for the O1 per-tur-ba-tion pi-lot. The fig-ure il-
+lus-trates how $\OML/cmm/m/it/9 V[]$ \T1/ptm/m/n/9 (+20) sum-maries are con-str
+ucted. Source:
+ []
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig29.png, id=1018, 959.22pt x 880.7085pt>
+File: figures/fig29.png Graphic file (type png)
+<use figures/fig29.png>
+Package pdftex.def Info: figures/fig29.png  used on input line 3537.
+(pdftex.def)             Requested size: 446.2658pt x 409.74023pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+<figures/fig30.png, id=1019, 1055.142pt x 1004.9545pt>
+File: figures/fig30.png Graphic file (type png)
+<use figures/fig30.png>
+Package pdftex.def Info: figures/fig30.png  used on input line 3545.
+(pdftex.def)             Requested size: 446.2658pt x 425.03755pt.
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[77 <./figures/fig24.png>]
+<figures/fig31.png, id=1028, 1051.5285pt x 941.481pt>
+File: figures/fig31.png Graphic file (type png)
+<use figures/fig31.png>
+Package pdftex.def Info: figures/fig31.png  used on input line 3602.
+(pdftex.def)             Requested size: 446.2658pt x 399.57104pt.
+
+
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [78 <./figures/fig25.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [79 <./figures/fig26.png>]
+Overfull \vbox (21.55171pt too high) has occurred while \output is active []
+
+
+[80 <./figures/fig27.png>]
+Underfull \vbox (badness 6625) has occurred while \output is active []
+
+ [81 <./figures/fig28.png>]
+Underfull \vbox (badness 10000) has occurred while \output is active []
+
+ [82 <./figures/fig29.png>]
+Underfull \vbox (badness 1132) has occurred while \output is active []
+
+ [83 <./figures/fig30.png>]
+Underfull \vbox (badness 6526) has occurred while \output is active []
+
+ [84 <./figures/fig31.png>]
+Overfull \hbox (17.59633pt too wide) in paragraph at lines 3651--3651
+[]\T1/cmtt/m/n/9 Destination-coherent persistence at dose tau (kicked & in same
+ post-injection cluster): rate +/- CI[] 
+ []
+
+[85] (paper.bbl [86] [87] [88] [89]) [90
+
+] (paper.aux)
  ***********
 LaTeX2e <2025-11-01>
 L3 programming layer <2026-03-20>
  ***********
 Package rerunfilecheck Info: File `paper.out' has not changed.
-(rerunfilecheck)             Checksum: 1272C93BBCDE8B9320CE6481888D738B;30051.
+(rerunfilecheck)             Checksum: 9E8AB00F3FCBAE2F51839FDED44C3CF0;25761.
  ) 
 Here is how much of TeX's memory you used:
- 15345 strings out of 467690
- 243072 string characters out of 5425033
- 722331 words of memory out of 5000000
- 43649 multiletter control sequences out of 15000+600000
- 719023 words of font info for 250 fonts, out of 8000000 for 9000
+ 34697 strings out of 467690
+ 681024 string characters out of 5425033
+ 1245256 words of memory out of 5000000
+ 62144 multiletter control sequences out of 15000+600000
+ 733242 words of font info for 545 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 75i,10n,79p,1004b,713s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<C:/Program Files/MiKTeX/fonts/type1/public/lm/lmbx10.pfb><C:/Program Files/M
-iKTeX/fonts/type1/public/lm/lmbx12.pfb><C:/Program Files/MiKTeX/fonts/type1/pub
-lic/lm/lmbxi10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C
-:/Program Files/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Program Files/MiKTe
-X/fonts/type1/public/lm/lmmi12.pfb><C:/Program Files/MiKTeX/fonts/type1/public/
-lm/lmmi8.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmr10.pfb><C:/Progr
-am Files/MiKTeX/fonts/type1/public/lm/lmr12.pfb><C:/Program Files/MiKTeX/fonts/
-type1/public/lm/lmr17.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmr6.p
-fb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmr7.pfb><C:/Program Files/Mi
-KTeX/fonts/type1/public/lm/lmr8.pfb><C:/Program Files/MiKTeX/fonts/type1/public
-/lm/lmri10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Pr
-ogram Files/MiKTeX/fonts/type1/public/lm/lmsy8.pfb><C:/Program Files/MiKTeX/fon
-ts/type1/public/lm/lmtk10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lm
-tt10.pfb><C:/Program Files/MiKTeX/fonts/type1/public/lm/lmtt12.pfb><C:/Program 
-Files/MiKTeX/fonts/type1/public/lm/lmtti10.pfb><C:/Program Files/MiKTeX/fonts/t
-ype1/public/amsfonts/symbols/msam10.pfb><C:/Program Files/MiKTeX/fonts/type1/pu
-blic/amsfonts/symbols/msbm10.pfb>
-Output written on paper.pdf (59 pages, 5143782 bytes).
+ 99i,15n,118p,3252b,1041s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ <C:\Users\Pawel\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\ectt
+0900.pk> <C:\Users\Pawel\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi60
+0\ectt1000.pk><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmbx10.pf
+b><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmex10.pfb><C:/Progra
+m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Program Files/MiKT
+eX/fonts/type1/public/amsfonts/cm/cmmi5.pfb><C:/Program Files/MiKTeX/fonts/type
+1/public/amsfonts/cm/cmmi6.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsf
+onts/cm/cmmi7.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi9
+.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Prog
+ram Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmr5.pfb><C:/Program Files/MiKT
+eX/fonts/type1/public/amsfonts/cm/cmr6.pfb><C:/Program Files/MiKTeX/fonts/type1
+/public/amsfonts/cm/cmr7.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfon
+ts/cm/cmr9.pfb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.p
+fb><C:/Program Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy5.pfb><C:/Progra
+m Files/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Program Files/MiKTe
+X/fonts/type1/public/amsfonts/cm/cmsy9.pfb><C:/Program Files/MiKTeX/fonts/type1
+/public/amsfonts/symbols/msam10.pfb><C:/Program Files/MiKTeX/fonts/type1/public
+/amsfonts/symbols/msbm10.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/times/utm
+b8a.pfb><C:/Program Files/MiKTeX/fonts/type1/urw/times/utmbi8a.pfb><C:/Program 
+Files/MiKTeX/fonts/type1/urw/times/utmr8a.pfb><C:/Program Files/MiKTeX/fonts/ty
+pe1/urw/times/utmri8a.pfb>
+Output written on paper.pdf (90 pages, 13826339 bytes).
 PDF statistics:
- 1028 PDF objects out of 1200 (max. 8388607)
- 243 named destinations out of 1000 (max. 500000)
- 50230 words of extra memory for PDF output out of 51595 (max. 10000000)
+ 1480 PDF objects out of 1728 (max. 8388607)
+ 374 named destinations out of 1000 (max. 500000)
+ 81968 words of extra memory for PDF output out of 89155 (max. 10000000)
 

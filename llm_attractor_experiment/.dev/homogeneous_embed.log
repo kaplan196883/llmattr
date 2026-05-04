@@ -1,0 +1,8 @@
+2026-05-04 12:34:00 [INFO] src.main: loaded 6000 step records
+2026-05-04 12:34:01 [INFO] src.main: embedding 6000 texts for observable 'output'
+2026-05-04 12:35:03 [INFO] src.main: wrote embeddings ((6000, 1536)) to data\exp_perturb_O1_homogeneous_control\embeddings\output
+2026-05-04 12:35:03 [INFO] src.main: embedding 6000 texts for observable 'rolling_k3'
+2026-05-04 12:37:13 [INFO] src.main: wrote embeddings ((6000, 1536)) to data\exp_perturb_O1_homogeneous_control\embeddings\rolling_k3
+2026-05-04 12:37:13 [INFO] src.main: embedding 6000 texts for observable 'context_tail'
+2026-05-04 12:39:13 [INFO] src.main: wrote embeddings ((6000, 1536)) to data\exp_perturb_O1_homogeneous_control\embeddings\context_tail
+2026-05-04 12:39:13 [INFO] src.main: embedding phase done

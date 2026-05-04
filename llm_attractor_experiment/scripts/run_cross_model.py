@@ -45,12 +45,20 @@ STATUS_CSV = REPO / "data" / "aggregated" / "cross_model_status.csv"
 
 
 def _entry_class(cfg_path: Path) -> str:
+    """Pick the entry-point class for a config.
+
+    Order matters: a perturbation config that runs a dialog
+    architecture (`exp_perturb_D1_*`) declares BOTH `dialog:` and
+    `perturbation:` keys. We must check `perturbation` first, otherwise
+    the dialog runner produces a single `regime=recursive` partition
+    instead of the four `control / neutral / lorem / adversarial`
+    conditions the perturbation analysis expects."""
     with cfg_path.open(encoding="utf-8") as f:
         cfg = yaml.safe_load(f) or {}
-    if "dialog" in cfg:
-        return "dialog"
     if "perturbation" in cfg:
         return "perturbation"
+    if "dialog" in cfg:
+        return "dialog"
     return "operator"
 
 

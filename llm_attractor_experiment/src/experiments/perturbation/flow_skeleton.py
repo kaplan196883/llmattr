@@ -59,28 +59,28 @@ def _draw_panel(
     color = COND_COLORS.get(cond, "#5fa85f")
 
     # 1. V contour background
-    ax.contourf(X, Y, V, levels=20, cmap="magma_r", alpha=0.85)
-    ax.contour(X, Y, V, levels=10, colors="white", linewidths=0.3, alpha=0.35)
+    ax.contourf(X, Y, V, levels=20, cmap="magma", alpha=0.55)
+    ax.contour(X, Y, V, levels=10, colors="#555", linewidths=0.3, alpha=0.4)
 
-    # 2. Flow streamlines on top (white, semi-transparent)
+    # 2. Flow streamlines on top (dark grey, semi-transparent)
     if flow_field is not None:
         Xf, Yf, U, V_flow, density, _ = flow_field
         U2, V2 = _clean_uv_for_streamplot(Xf, Yf, U, V_flow, density)
         if (np.sqrt(U2**2 + V2**2) > 0).sum() > 10:
             ax.streamplot(
                 Xf, Yf, U2, V2,
-                color="white", linewidth=0.9, density=1.6, arrowsize=1.0,
+                color="#1f1f1f", linewidth=0.9, density=1.6, arrowsize=1.0,
                 arrowstyle="-|>",
             )
 
-    # Background scatter (light grey, very transparent)
-    ax.scatter(pts[:, 0], pts[:, 1], s=0.4, alpha=0.08, color="#222", linewidths=0)
+    # Background scatter (dark dots, very transparent)
+    ax.scatter(pts[:, 0], pts[:, 1], s=0.4, alpha=0.10, color="#222", linewidths=0)
 
     # 3. Basin centers
     centers = _find_basin_centers(V, n_max=n_basins)
     for (r, c) in centers:
         ax.scatter(X[r, c], Y[r, c], s=140, marker="*",
-                   color=color, edgecolors="white", linewidths=1.0, zorder=12)
+                   color=color, edgecolors="black", linewidths=1.0, zorder=12)
 
     # 4. Geodesics between basin pairs
     barriers = []
@@ -170,7 +170,7 @@ def render_flow_skeleton_for_pilot(
 
     fig.suptitle(
         "Flow + skeleton: V landscape, dynamic flow streamlines, basin geodesics  (PCA-2)\n"
-        "background = V = −log ρ  |  white streamlines = actual trajectory flow  "
+        "background = V = −log ρ  |  dark streamlines = actual trajectory flow  "
         "|  ★ = basin density-peak  |  curves = static minimum-action geodesics",
         fontsize=13, y=1.00,
     )

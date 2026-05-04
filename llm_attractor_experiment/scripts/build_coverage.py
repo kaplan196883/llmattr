@@ -25,29 +25,46 @@ import yaml
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = REPO_ROOT / "data"
 
+# Cross-model suffixes (strip before set-membership / regex matching so
+# `exp_pub_O1_continue_gpt4nano` resolves the same eligibility as
+# `exp_pub_O1_continue` for animation / perturbation-pilot checks).
+MODEL_SUFFIXES = ("_gpt4nano", "_minimax", "_m2_7", "_text01", "_haiku", "_claude")
+
+
+def _base_id(exp_id: str) -> str:
+    """Strip a known cross-model suffix to get the base experiment id."""
+    for suf in MODEL_SUFFIXES:
+        if exp_id.endswith(suf):
+            return exp_id[: -len(suf)]
+    return exp_id
+
 
 def _phase_of(exp_id: str) -> str:
-    if exp_id in ("exp_default", "exp_long", "exp_noclip"):
+    base = _base_id(exp_id)
+    if base in ("exp_default", "exp_long", "exp_noclip"):
         return "0_pilot"
-    if exp_id.startswith("exp_op_") or exp_id.startswith("exp_dialog_"):
+    if base.startswith("exp_op_") or base.startswith("exp_dialog_"):
         return "1_taxonomy"
-    if exp_id.startswith("exp_pub_"):
+    if base.startswith("exp_pub_"):
         return "2_publication"
-    if exp_id.startswith("exp_perturb_") or exp_id == "exp_D2_exploratory_drilldown":
+    if base.startswith("exp_perturb_") or base == "exp_D2_exploratory_drilldown":
         return "3_perturbation"
     return "?"
 
 
 def _regime_of(exp_id: str) -> str:
     """Extract regime tag from the experiment id."""
-    m = re.search(r"_(O1|O2|O3b|O3|O4|D1|D2|D3)_", exp_id)
+    base = _base_id(exp_id)
+    m = re.search(r"_(O1|O2|O3b|O3|O4|D1|D2|D3)_", base)
     if m:
         return m.group(1)
-    if exp_id in ("exp_default", "exp_long", "exp_noclip"):
+    # Match `_(O1|...)` at the very end of the base id (no trailing _).
+    m = re.search(r"_(O1|O2|O3b|O3|O4|D1|D2|D3)$", base)
+    if m:
+        return m.group(1)
+    if base in ("exp_default", "exp_long", "exp_noclip"):
         return "O1"
-    if exp_id.endswith("_O1_pilot") or "_O1_" in exp_id:
-        return "O1"
-    if exp_id == "exp_D2_exploratory_drilldown":
+    if base == "exp_D2_exploratory_drilldown":
         return "D2"
     return "?"
 
@@ -88,13 +105,13 @@ def _count_subdirs(d: Path) -> int:
 
 
 def _is_perturbation(eid: str) -> bool:
-    return eid.startswith("exp_perturb_")
+    return _base_id(eid).startswith("exp_perturb_")
 
 
 def _is_full_perturb_pilot(eid: str) -> bool:
     """The 5 pilots that get the full geometric visualization suite (bulk +
     geodesic + RG + G/H/I + animations): O1/O2/O3/D1 main pilots + D2."""
-    return eid in {
+    return _base_id(eid) in {
         "exp_perturb_O1_pilot",
         "exp_perturb_O2_pilot",
         "exp_perturb_O3_pilot",
@@ -105,7 +122,7 @@ def _is_full_perturb_pilot(eid: str) -> bool:
 
 def _is_main_4_pilot(eid: str) -> bool:
     """The 4 main pilots that get rg_stack_png (D2 doesn't run that script)."""
-    return eid in {
+    return _base_id(eid) in {
         "exp_perturb_O1_pilot",
         "exp_perturb_O2_pilot",
         "exp_perturb_O3_pilot",
@@ -116,7 +133,7 @@ def _is_main_4_pilot(eid: str) -> bool:
 def _gets_animation(eid: str) -> bool:
     """Animations are rendered for the 5 perturb pilots (4 conds each) and
     the 4 pub experiments (1 'recursive' anim each)."""
-    return _is_full_perturb_pilot(eid) or eid in {
+    return _is_full_perturb_pilot(eid) or _base_id(eid) in {
         "exp_pub_O1_continue",
         "exp_pub_O2_paraphrase_replace",
         "exp_pub_O3_summarize_negate_replace",
@@ -270,10 +287,26 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="build_coverage")
     parser.add_argument("--data-dir", default=str(DATA_DIR))
     parser.add_argument("--out", default=str(REPO_ROOT / "COVERAGE.csv"))
+    parser.add_argument(
+        "--filter", default=None,
+        help="glob pattern restricting which exp_* dirs are scanned "
+             "(e.g. 'exp_*_gpt4nano' for the nano cross-model sweep, "
+             "or 'exp_*[!_gpt4nano]*' to exclude it)",
+    )
+    parser.add_argument(
+        "--exclude-suffixes", default=None,
+        help="comma-separated suffixes to exclude (e.g. '_gpt4nano,_minimax')",
+    )
     args = parser.parse_args(argv)
 
     data_dir = Path(args.data_dir)
-    exp_dirs = sorted(p for p in data_dir.iterdir() if p.is_dir() and p.name.startswith("exp_"))
+    if args.filter:
+        exp_dirs = sorted(p for p in data_dir.glob(args.filter) if p.is_dir() and p.name.startswith("exp_"))
+    else:
+        exp_dirs = sorted(p for p in data_dir.iterdir() if p.is_dir() and p.name.startswith("exp_"))
+    if args.exclude_suffixes:
+        bad = tuple(s.strip() for s in args.exclude_suffixes.split(",") if s.strip())
+        exp_dirs = [p for p in exp_dirs if not p.name.endswith(bad)]
     print(f"scanning {len(exp_dirs)} experiment dirs under {data_dir}")
 
     rows = [_row_for(p) for p in exp_dirs]

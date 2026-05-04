@@ -44,9 +44,14 @@ TARGETS = {
             "base_url": "https://api.minimax.io/v1",
             "api_key_env": "MINIMAX_API_KEY",
             "api": "chat_completions",
-            # PAYG default rate limits are generous (≥ 100 RPM); no
-            # explicit throttle needed. Pipeline parallel_trajectories
-            # will dominate wall-clock anyway.
+            # Empirical: Text-01 on PAYG is rate-limited well below
+            # the documented M2.7 ceiling (500 RPM). With 12 parallel
+            # workers attempting ~150 RPM the API returned cascading
+            # HTTP 429 (rate_limit_error 1002). 60 RPM was still
+            # over the limit; 40 RPM holds steady under live load
+            # (gives ~24h wall-clock for full-37 instead of ~12h
+            # but prevents cascading retry storms).
+            "requests_per_minute": 40,
         },
     ),
 }

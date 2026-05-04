@@ -110,6 +110,13 @@ def _resolve_perturbation_text(
     if condition == "control":
         return None
     base, dose = _parse_dose_condition(condition)
+    # Detect homogeneous mode marker in the condition name. Parser strips
+    # the optional `_homogeneous` token from base so the rest of dispatch
+    # is unchanged.
+    homogeneous = False
+    if base.endswith("_homogeneous"):
+        base = base[: -len("_homogeneous")]
+        homogeneous = True
     if base == "neutral":
         return neutral_wiki(seed=run_seed, approx_tokens=dose)
     if base == "lorem":
@@ -125,15 +132,21 @@ def _resolve_perturbation_text(
         # For dialog: restrict to responder role (agent / expert / role_b).
         # For operators: any role/none.
         role = agent_role if is_dialog else None
+        # Pass through target_chars so the sampler can concatenate multiple
+        # late-step outputs when the requested dose exceeds a single output's
+        # typical length (~1000 chars). Used by the extreme-dose pilot.
+        target_chars = dose * 4 if dose is not None else None
         text = sample_adversarial_text(
             source_experiment_dir=source_exp_dir,
             exclude_family=family_name,
             min_step=20,
             role=role,
             seed=run_seed,
+            target_chars=target_chars,
+            homogeneous=homogeneous,
         )
         if dose is not None:
-            target_chars = dose * 4
+            assert target_chars is not None
             if len(text) > target_chars:
                 cut = text[:target_chars]
                 last_space = cut.rfind(" ")
