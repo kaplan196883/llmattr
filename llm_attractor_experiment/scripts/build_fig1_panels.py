@@ -98,8 +98,60 @@ def _decompose_persistence(exp_name: str) -> pd.DataFrame:
     return summary.dropna(subset=["dose"]).sort_values("dose")
 
 
+def _compute_panel_a_from_embeddings(exp_id: str) -> pd.DataFrame:
+    """Recompute the raw switching summary directly from this experiment's
+    context_tail embeddings + metadata. Replaces a now-missing
+    switching_summary.csv that lived under data/exp_*/reports/.
+
+    Switch rate per condition = fraction of (family, ic, run) trajectories
+    whose terminal-step cluster differs from the matched control trajectory's
+    terminal-step cluster. Joint PCA-10 + K-means k=12 is fit per experiment
+    (matches the canonical pipeline).
+    """
+    exp_dir = DATA / exp_id
+    emb_path = exp_dir / "embeddings" / "context_tail" / "embeddings.npy"
+    meta_path = exp_dir / "embeddings" / "context_tail" / "metadata.parquet"
+    if not emb_path.exists() or not meta_path.exists():
+        return pd.DataFrame()
+    X = np.load(emb_path)
+    meta = pd.read_parquet(meta_path).copy()
+    pca = PCA(n_components=10, random_state=42)
+    Xp = pca.fit_transform(X)
+    km = KMeans(n_clusters=12, random_state=42, n_init=10)
+    meta["cluster"] = km.fit_predict(Xp)
+
+    final_step = int(meta["step"].max())
+    terminal = meta[meta["step"] == final_step][[
+        "regime", "prompt_family", "initial_condition_id", "run_id", "cluster"
+    ]].copy()
+    if "control" not in set(terminal["regime"]):
+        return pd.DataFrame()
+    control = terminal[terminal["regime"] == "control"][
+        ["prompt_family", "initial_condition_id", "run_id", "cluster"]
+    ].rename(columns={"cluster": "control_cluster"})
+    perturbed = terminal[terminal["regime"] != "control"]
+    merged = perturbed.merge(
+        control, on=["prompt_family", "initial_condition_id", "run_id"], how="inner"
+    )
+    merged["switched"] = (merged["cluster"] != merged["control_cluster"]).astype(int)
+    rows = []
+    for cond, grp in merged.groupby("regime"):
+        rows.append({
+            "condition": cond,
+            "n_total": len(grp),
+            "n_switched": int(grp["switched"].sum()),
+            "switch_rate": float(grp["switched"].mean()),
+        })
+    return pd.DataFrame(rows)
+
+
 def _load_panel_a():
-    """Reproduce the existing Fig 1 panel: D1/neutral, O1/neutral, O1/adversarial."""
+    """Reproduce the existing Fig 1 panel: D1/neutral, O1/neutral, O1/adversarial.
+
+    Computes from embeddings (the upstream switching_summary.csv files
+    were stripped from the working tree). Returns one combined DataFrame
+    spanning all three series.
+    """
     rows = []
     for exp_id, regime_label, ptype in [
         ("exp_perturb_D1_dose",             "D1 dialog",   "neutral"),
@@ -107,24 +159,32 @@ def _load_panel_a():
         ("exp_perturb_O1_dose",             "O1 continue", "neutral"),
         ("exp_perturb_O1_dose_adversarial", "O1 continue", "adversarial"),
     ]:
-        csv_path = DATA / exp_id / "reports" / "perturbation" / "switching_summary.csv"
-        if not csv_path.exists():
+        df = _compute_panel_a_from_embeddings(exp_id)
+        if df.empty:
             continue
-        df = pd.read_csv(csv_path)
         df["regime_label"] = regime_label
         df["perturbation_type"] = ptype
         df["dose"] = df["condition"].apply(
             lambda c: int(c.split("_dose")[-1]) if "_dose" in c else None
         )
         rows.append(df)
+    if not rows:
+        return pd.DataFrame()
     return pd.concat(rows, ignore_index=True)
 
 
 def _load_panel_b():
-    """Pull persistence under context_tail from clipped + full-history data."""
-    df = pd.read_csv(DATA / "aggregated" / "multi_observable_persistence_full_noclip" / "long.csv")
-    df = df[df["observable"] == "context_tail"].copy()
-    return df
+    """Pull persistence under context_tail from clipped + full-history data.
+
+    The aggregate `long.csv` was wiped along with the rest of data/aggregated
+    by the data-strip; this function previously read it. We retain the same
+    interface but the canonical Panel B path now goes through
+    `_decompose_persistence` per-experiment (called inline in main()), which
+    needs only the embeddings + metadata that survive in the working tree.
+    Returns an empty DataFrame so that downstream consumers fall through to
+    the per-experiment path.
+    """
+    return pd.DataFrame()
 
 
 def main() -> None:
@@ -211,6 +271,33 @@ def main() -> None:
     ax_b.errorbar(x, y, yerr=[y - lo, hi - y], fmt="^-",
                   color="#9467bd", lw=1.6, markersize=6, capsize=3,
                   label="full-history, retained source-basin escape")
+
+    # Step-79 overlay: same destination-coherent metric, but scored 50 steps
+    # later (T=79 instead of T=29). Three points at doses 1500/2000/3000 from
+    # the long-horizon continuation, frozen canonical PCA + K-means basis.
+    # Visualizes the §5.1.3 finding that the canonical-T=29 dip closes by T=79.
+    step79_path = DATA / "aggregated" / "dip_mechanism_B" / "persistence_by_terminal_step_v2.csv"
+    if step79_path.exists():
+        step79 = pd.read_csv(step79_path)
+        sub = step79[(step79["basis"] == "frozen") &
+                     (step79["terminal_step"] == 79)].sort_values("dose")
+        if not sub.empty:
+            x79 = sub["dose"].to_numpy()
+            y79 = sub["S_dst"].to_numpy()
+            lo79 = np.array([
+                _wilson(p, int(n))[0] for p, n in zip(y79, sub["n_kicked"])
+            ])
+            hi79 = np.array([
+                _wilson(p, int(n))[1] for p, n in zip(y79, sub["n_kicked"])
+            ])
+            ax_b.errorbar(x79, y79, yerr=[y79 - lo79, hi79 - y79], fmt="D-",
+                          color="#d62728", markerfacecolor="white",
+                          markeredgewidth=1.8, markersize=8, lw=1.0,
+                          capsize=3, alpha=0.95,
+                          label=("full-history, destination-coherent at T=79\n"
+                                 "(frozen canonical basis; the canonical T=29\n"
+                                 "dip largely closes — see Fig 6)"))
+
     ax_b.axhline(0.5, color="grey", linestyle=":", lw=0.9, zorder=0,
                  label="50% half-effect threshold")
     ax_b.axvline(1500, color="black", linestyle="--", lw=0.7, alpha=0.5, zorder=0)

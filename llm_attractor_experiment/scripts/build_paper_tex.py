@@ -1050,9 +1050,17 @@ def _convert_figures(text: str, fig_target_dir: Path) -> str:
         cap_clean = re.sub(
             r"^(?:Figure|Fig|ED\s+Fig)\s+\d+\.\s*", "", caption
         ).strip()
+        target_name = f"fig{counter:02d}.png"
+        target_path = fig_target_dir / target_name
         if src_path.exists():
-            target_name = f"fig{counter:02d}.png"
-            shutil.copyfile(src_path, fig_target_dir / target_name)
+            shutil.copyfile(src_path, target_path)
+            includegraphics_path = f"figures/{target_name}"
+        elif target_path.exists():
+            # Source under data/ is gone (e.g., stripped from working tree),
+            # but a previously-built figures/figNN.png is still on disk.
+            # Use the cached copy. Counter increments in markdown order, so
+            # the cached figNN.png lines up as long as figures haven't been
+            # added/removed since the last successful copy.
             includegraphics_path = f"figures/{target_name}"
         else:
             includegraphics_path = m.group(2)  # leave dangling for user fix
