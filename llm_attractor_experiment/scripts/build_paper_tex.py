@@ -65,15 +65,28 @@ OUT_README = OUT_DIR / "README.md"
 
 PREAMBLE = r"""\documentclass{article}
 
-% --- Kourgeorge arxiv.sty preprint look --------------------------------------
-% Provides: Times+Helvetica fonts, letter geometry (6.5x9in), fancy header
-% with "A Preprint" + title + page number, horizontal-rule title box,
-% small-caps centered Abstract environment, tighter section spacing.
-\usepackage{arxiv}
+% --- Inline preprint look (formerly Kourgeorge arxiv.sty) --------------------
+% We inline geometry + fancyhdr + Times font directly so the source ships
+% with no \usepackage{arxiv} dependency. This is a hard requirement for
+% LaTeXML / arXiv HTML conversion: arxiv.sty's @-redefinitions and
+% \AtBeginDocument{\newgeometry{...}} sequence don't reliably translate.
 
-% Encoding (explicit per Kourgeorge template)
+% Encoding
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+
+% Letter-paper, 6.5x9in text area (matches the prior arxiv.sty default)
+\usepackage[letterpaper, textheight=9in, textwidth=6.5in,
+            top=1in, headheight=14pt, headsep=25pt, footskip=30pt]{geometry}
+
+% Times-family fonts (matches prior arxiv.sty default)
+\renewcommand{\rmdefault}{ptm}
+\renewcommand{\sfdefault}{phv}
+
+% Tighter widow/orphan handling
+\widowpenalty=10000
+\clubpenalty=10000
+\flushbottom
 
 % Math
 \usepackage{amsmath, amssymb, amsthm}
@@ -86,6 +99,30 @@ PREAMBLE = r"""\documentclass{article}
 \usepackage{footnote}    % savenotes env: lets \footnote work inside captions
 \makesavenoteenv{figure}
 \captionsetup{font=small,labelfont=bf}
+
+% Fancy header with "A Preprint" rhead, short-title chead, page cfoot
+\usepackage{fancyhdr}
+\makeatletter
+\newcommand{\headeright}{A Preprint}
+\newcommand{\shorttitle}{\@title}
+\makeatother
+\fancyhf{}
+\pagestyle{fancy}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancyheadoffset{0pt}
+\rhead{\scshape \footnotesize \headeright}
+\chead{\shorttitle}
+\cfoot{\thepage}
+
+% \keywords{...}: rendered just below the abstract, with \and as separator.
+% Formerly provided by arxiv.sty. Inlined here so the source has no
+% external .sty dependency.
+\providecommand{\keywords}[1]{%
+  \par\addvspace\medskipamount
+  {\rightskip=0pt plus1cm%
+   \def\and{\ifhmode\unskip\nobreak\fi\ \ensuremath{\cdot}\ }%
+   \noindent\textbf{\textit{Keywords}}\enspace\ignorespaces#1\par}%
+}
 
 % Microtype protrusion / expansion (works with Times via T1)
 \usepackage{microtype}
@@ -121,77 +158,47 @@ PREAMBLE = r"""\documentclass{article}
 
 \usepackage{etoolbox}    % for \ifstrempty
 
-% Pipeline / flow-diagram boxes (tcolorbox + TikZ).
-% Used for §4.11 end-to-end pipeline and similar phase-structured
-% diagrams. Phase boxes are titled, breakable across pages, and
-% connected by short downward TikZ arrows via \flowarrow.
-\usepackage[most]{tcolorbox}
-\usepackage{tikz}
-\usetikzlibrary{positioning, arrows.meta, fit, calc, matrix}
-
-% Code / ASCII-art verbatim wrappers — defined AFTER tcolorbox is
-% loaded. codeblock and asciiblock both render at \footnotesize with
-% a thin left rule and a subtle gray background. The visual styling
-% uses tcolorbox in `breakable` mode so blocks can split across pages.
-% Both support an optional [caption] argument rendered as italic
-% small-caps above the block.
+% Code / ASCII-art wrappers (LaTeXML-friendly mdframed-based replacements;
+% formerly tcolorbox+TikZ, dropped for arXiv HTML compatibility). Both
+% render at \footnotesize with a thin left rule and a subtle gray
+% background. Both support an optional [caption] argument rendered as
+% italic small-caps above the block.
+\usepackage{mdframed}
 \definecolor{codebg}{gray}{0.965}
 \definecolor{coderule}{gray}{0.55}
-\tcbset{codeblockstyle/.style={
-  enhanced,
-  breakable,
-  colback=codebg,
-  colframe=coderule,
-  boxrule=0pt,
-  leftrule=2pt,
-  arc=0pt,
-  outer arc=0pt,
-  left=8pt,
-  right=4pt,
-  top=4pt,
-  bottom=4pt,
-  before skip=4pt,
-  after skip=4pt,
-  fontupper=\footnotesize
-}}
+\mdfdefinestyle{codestyle}{%
+  backgroundcolor=codebg,
+  linecolor=coderule,
+  linewidth=0pt,
+  leftline=true,
+  innerleftmargin=8pt,
+  innerrightmargin=4pt,
+  innertopmargin=4pt,
+  innerbottommargin=4pt,
+  skipabove=4pt,
+  skipbelow=4pt
+}
 \newenvironment{codeblock}[1][]{%
   \par\addvspace{2pt}%
   \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
-  \begin{tcolorbox}[codeblockstyle]%
+  \begingroup\footnotesize\begin{mdframed}[style=codestyle]%
 }{%
-  \end{tcolorbox}\par%
+  \end{mdframed}\endgroup\par%
 }
 \newenvironment{asciiblock}[1][]{%
   \par\addvspace{2pt}%
   \ifstrempty{#1}{}{\noindent\textit{\small #1}\par\nobreak\addvspace{2pt}}%
-  \begin{tcolorbox}[codeblockstyle]%
+  \begingroup\footnotesize\begin{mdframed}[style=codestyle]%
 }{%
-  \end{tcolorbox}\par%
+  \end{mdframed}\endgroup\par%
 }
 
-\tcbset{
-  pipelinephase/.style={
-    enhanced, breakable, colback=gray!4, colframe=black!55,
-    fonttitle=\bfseries\sffamily\small, fontupper=\small,
-    boxrule=0.5pt, arc=2pt,
-    left=6pt, right=6pt, top=4pt, bottom=4pt,
-    before skip=2pt, after skip=2pt,
-    title={#1}
-  },
-  pipelinesub/.style={
-    enhanced, colback=white, colframe=black!35,
-    fonttitle=\bfseries\sffamily\footnotesize, fontupper=\footnotesize,
-    boxrule=0.4pt, arc=1.5pt,
-    left=4pt, right=4pt, top=3pt, bottom=3pt,
-    before skip=2pt, after skip=2pt,
-    title={#1}
-  }
-}
+% Centered downward arrow used for vertical flow diagrams (formerly
+% \tikz...Stealth, replaced with text $\downarrow$ for LaTeXML).
 \newcommand{\flowarrow}{%
-  \par\addvspace{1pt}%
-  {\centering\tikz\draw[-{Stealth[length=2.8mm]}, line width=0.6pt]
-       (0,0) -- (0,-0.42);\par}%
-  \addvspace{1pt}%
+  \par\addvspace{2pt}%
+  {\centering\large$\downarrow$\par}%
+  \addvspace{2pt}%
 }
 
 \hypersetup{

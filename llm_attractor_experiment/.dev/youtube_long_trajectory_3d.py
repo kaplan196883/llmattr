@@ -73,8 +73,9 @@ DPI = 100
 FPS = 30
 N_SUBSTEPS = 6        # spline samples per integer data step → 6 frames per step
 FRAMES_PER_SUBSTEP = 1
-INJECT_HOLD_FRAMES = 60   # 2 s pause at the perturbation
-EXT_HOLD_FRAMES = 0       # no hold at the extended-horizon boundary
+STAGGER_FRAMES = 18   # delay between successive trajectory starts (0.6 s @ 30 fps)
+FADE_IN_FRAMES = 10   # gradual alpha ramp when a new trajectory enters
+END_HOLD_FRAMES = 30  # 1 s settle at the final state
 
 N_WORKERS = max(1, (os.cpu_count() or 4))
 
@@ -159,40 +160,23 @@ def _spline_paths(proj: np.ndarray, n_substeps: int) -> tuple[np.ndarray, np.nda
     return out, sample_t
 
 
-def _frame_schedule(n_samples: int) -> list[dict]:
-    """Build frame plan over the spline domain.
+def _frame_schedule(n_samples: int, n_traj: int) -> tuple[list[dict], list[int]]:
+    """Build frame plan with STAGGERED trajectory entries.
 
-    Phases:
-      1. motion 0 → step 15           (60 sub-step samples advancing 1/frame)
-      2. inject hold (~1s) at step 15 (callout fades in/out)
-      3. motion 15 → step 30          (60 samples)
-      4. extended-horizon hold        (callout fades in/out)
-      5. motion 30 → step 79          (~196 samples)
+    Each trajectory i starts entering the scene at frame i * STAGGER_FRAMES
+    and runs its full spline (n_samples points) at one sub-step per frame
+    from there. The last trajectory finishes at frame:
+        (n_traj - 1) * STAGGER_FRAMES + (n_samples - 1)
+    plus an END_HOLD_FRAMES tail so the final state lingers.
+
+    Returns:
+      frames: list of dicts with keys {"animation_frame": int}
+      start_offsets: per-trajectory start frame (length n_traj)
     """
-    inject_idx = INJECT_STEP * N_SUBSTEPS
-    ext_idx = EXT_START * N_SUBSTEPS
-    last_idx = n_samples - 1
-    frames: list[dict] = []
-    # Phase 1: 0 .. inject_idx (inclusive)
-    for ti in range(0, inject_idx + 1):
-        frames.append({"sample_idx": ti, "callout": None, "alpha": 0.0})
-    # Phase 2: hold at inject with callout
-    for k in range(INJECT_HOLD_FRAMES):
-        frac = k / max(INJECT_HOLD_FRAMES - 1, 1)
-        a = float(np.clip(2.0 - 2.0 * abs(frac - 0.5), 0.0, 1.0))
-        frames.append({"sample_idx": inject_idx, "callout": "inject", "alpha": a})
-    # Phase 3: inject_idx .. ext_idx
-    for ti in range(inject_idx + 1, ext_idx + 1):
-        frames.append({"sample_idx": ti, "callout": None, "alpha": 0.0})
-    # Phase 4: hold at ext with callout
-    for k in range(EXT_HOLD_FRAMES):
-        frac = k / max(EXT_HOLD_FRAMES - 1, 1)
-        a = float(np.clip(2.0 - 2.0 * abs(frac - 0.5), 0.0, 1.0))
-        frames.append({"sample_idx": ext_idx, "callout": "ext", "alpha": a})
-    # Phase 5: ext_idx .. last
-    for ti in range(ext_idx + 1, last_idx + 1):
-        frames.append({"sample_idx": ti, "callout": None, "alpha": 0.0})
-    return frames
+    start_offsets = [i * STAGGER_FRAMES for i in range(n_traj)]
+    last_traj_end = start_offsets[-1] + (n_samples - 1)
+    total = last_traj_end + 1 + END_HOLD_FRAMES
+    return ([{"animation_frame": f} for f in range(total)], start_offsets)
 
 
 def _compute_iso_meshes(
@@ -291,6 +275,7 @@ _SAMPLE_T: np.ndarray | None = None       # (n_samples,) float step indices
 _PROJ_FLAT: np.ndarray | None = None      # (n_traj * n_steps, 3) for background scatter
 _BOUNDS: tuple[np.ndarray, np.ndarray] | None = None
 _FRAME_SPEC: list[dict] | None = None
+_START_OFFSETS: list[int] | None = None   # per-trajectory frame offsets
 _MESHES: list[dict] | None = None
 _TMP_DIR: Path | None = None
 _W: int = 1920
@@ -301,31 +286,35 @@ _DPI: int = 100
 def _worker_init(spline: np.ndarray, sample_t: np.ndarray,
                  proj_flat: np.ndarray,
                  bounds: tuple, schedule: list[dict],
+                 start_offsets: list[int],
                  meshes: list[dict],
                  tmp_dir: str, w: int, h: int, dpi: int) -> None:
-    global _SPLINE, _SAMPLE_T, _PROJ_FLAT, _BOUNDS, _FRAME_SPEC, _MESHES
-    global _TMP_DIR, _W, _H, _DPI
+    global _SPLINE, _SAMPLE_T, _PROJ_FLAT, _BOUNDS, _FRAME_SPEC, _START_OFFSETS
+    global _MESHES, _TMP_DIR, _W, _H, _DPI
     _SPLINE = spline
     _SAMPLE_T = sample_t
     _PROJ_FLAT = proj_flat
     _BOUNDS = bounds
     _FRAME_SPEC = schedule
+    _START_OFFSETS = list(start_offsets)
     _MESHES = meshes
     _TMP_DIR = Path(tmp_dir)
     _W, _H, _DPI = w, h, dpi
 
 
 def _render_frame(frame_idx: int) -> str:
-    """Render one frame to a PNG file. Returns the file path."""
-    spec = _FRAME_SPEC[frame_idx]
-    sample_idx = spec["sample_idx"]
-    callout = spec.get("callout")
-    callout_alpha = float(spec.get("alpha", 0.0))
+    """Render one frame to a PNG file. Returns the file path.
+
+    Each trajectory i starts entering the scene at _START_OFFSETS[i] frames.
+    Before that frame, the trajectory is invisible. After it, the
+    trajectory's effective spline sample_idx is (frame_idx - offset_i),
+    clamped to [0, n_samples - 1]. A short FADE_IN_FRAMES alpha ramp
+    keeps newly-appearing trajectories from popping in.
+    """
     n_traj = _SPLINE.shape[0]
     n_samples = _SPLINE.shape[1]
     n_frames = len(_FRAME_SPEC)
-    t_now = float(_SAMPLE_T[sample_idx])
-    s_now = int(np.floor(t_now + 1e-9))
+    animation_frame = frame_idx
 
     plt.style.use("dark_background")
     fig = plt.figure(figsize=(_W / _DPI, _H / _DPI), dpi=_DPI, facecolor="#0a0e1a")
@@ -373,79 +362,67 @@ def _render_frame(frame_idx: int) -> str:
     ax.scatter(_PROJ_FLAT[:, 0], _PROJ_FLAT[:, 1], _PROJ_FLAT[:, 2],
                c="#1f3a5e", s=3, alpha=0.10, zorder=2)
 
-    # Spline-interpolated trails up through current sub-step. Smooth glide.
-    # White-on-dark for the particle-system look, with the segment crossing
-    # the perturbation step (14→15) recolored yellow to mark the nudge.
+    # Spline-interpolated trails up through each trajectory's current
+    # sub-step. White-on-dark with yellow perturbation arc per trajectory.
     trail_color = (1.0, 1.0, 1.0)
     yellow = np.array([1.0, 0.85, 0.20])
-    pre_inject = (INJECT_STEP - 1) * N_SUBSTEPS  # 14 * N_SUBSTEPS
-    inject_idx_seg = INJECT_STEP * N_SUBSTEPS    # 15 * N_SUBSTEPS
-    end_idx = sample_idx + 1
+    pre_inject = (INJECT_STEP - 1) * N_SUBSTEPS
+    inject_idx_seg = INJECT_STEP * N_SUBSTEPS
     for i in range(n_traj):
-        xyz = _SPLINE[i, :end_idx]
-        if end_idx >= 2:
+        offset_i = _START_OFFSETS[i]
+        if animation_frame < offset_i:
+            # this trajectory hasn't entered the scene yet
+            continue
+        local = animation_frame - offset_i
+        sample_i = min(local, n_samples - 1)
+        # fade-in alpha ramp
+        fade = float(np.clip(local / max(FADE_IN_FRAMES - 1, 1), 0.0, 1.0))
+
+        xyz = _SPLINE[i, : sample_i + 1]
+        if sample_i >= 1:
             segs, colors = _fading_trail_data(
                 xyz,
                 base_color=trail_color,
                 tail_alpha=0.10,
                 head_alpha=0.98,
             )
-            # Recolor the segments bridging step 14 -> step 15 to yellow.
-            # Segment k connects spline samples k and k+1; the perturbation
-            # arc is segment indices [pre_inject .. inject_idx_seg - 1].
             n_segs = len(colors)
+            # Yellow perturbation segments: only color them if this
+            # trajectory has reached at least the first inject segment.
             for seg_k in range(max(pre_inject, 0), min(inject_idx_seg, n_segs)):
                 colors[seg_k, :3] = yellow
+            # Apply fade-in to all alpha values
+            colors[:, 3] *= fade
             lc = Line3DCollection(segs, colors=colors, linewidths=1.9, zorder=4)
             ax.add_collection3d(lc)
-        # Layered particle head (outer faint halo → mid bright glow → saturated core)
-        head_xyz = _SPLINE[i, sample_idx]
-        # Depth-scale: closer heads grow, farther heads shrink. Reference
-        # depth = box_diag (the average particle distance from the camera).
+
+        # Layered particle head with depth-scaled size + fade-in alpha
+        head_xyz = _SPLINE[i, sample_i]
         depth = float(np.linalg.norm(cam_pos - head_xyz))
         scale = float(np.clip((box_diag * 1.6) / max(depth, 1e-6), 0.40, 2.5))
-        # Faint outer halo for the "luminous particle" feel
         ax.plot([head_xyz[0]], [head_xyz[1]], [head_xyz[2]],
                 "o", color="#ffffff",
                 markersize=18 * scale, markeredgecolor="none",
-                alpha=0.18, zorder=5)
-        # Mid bright glow
+                alpha=0.18 * fade, zorder=5)
         ax.plot([head_xyz[0]], [head_xyz[1]], [head_xyz[2]],
                 "o", color="#ffffff",
                 markersize=11 * scale, markeredgecolor="none",
-                alpha=0.55, zorder=6)
-        # Saturated core (pure white at full alpha)
+                alpha=0.55 * fade, zorder=6)
         ax.plot([head_xyz[0]], [head_xyz[1]], [head_xyz[2]],
                 "o", color="#ffffff",
                 markersize=5 * scale, markeredgecolor="none",
-                alpha=1.0, zorder=7)
+                alpha=1.0 * fade, zorder=7)
 
-    # Headline
+    # Headline only (no global step counter / horizon labels because each
+    # trajectory has its own time origin under staggered entry)
     fig.suptitle(
-        "Long-horizon recursive LLM trajectory under adversarial perturbation\n"
+        "Recursive LLM trajectories with staggered adversarial nudge\n"
         f"O1 append-mode loop, dose {TARGET_DOSE} tokens, n={n_traj} trajectories",
         color="#dde3ee", fontsize=15, y=0.96,
     )
-    fig.text(0.04, 0.92, f"step  t = {t_now:5.2f} / {TOTAL_STEPS - 1}",
-             color="#dde3ee", fontsize=14, family="monospace", weight="bold")
-    if t_now < INJECT_STEP:
-        horizon = "pre-injection horizon (steps 0-14)"
-    elif t_now < EXT_START:
-        horizon = "canonical 30-step horizon (paper §5.1.3)"
-    else:
-        horizon = "extended horizon (steps 30-79; the dip closes here)"
-    fig.text(0.04, 0.05, horizon,
-             color="#9ba3b4", fontsize=12, family="monospace")
-
-    # Callouts
-    if callout == "inject":
-        fig.text(0.5, 0.10, "PERTURBATION INJECTED  (the nudge)",
-                 color="#ff5a3d", fontsize=20, ha="center",
-                 weight="bold", alpha=callout_alpha)
-    elif callout == "ext":
-        fig.text(0.5, 0.10, "ENTERING EXTENDED HORIZON  (T > 29)",
-                 color="#3da5ff", fontsize=20, ha="center",
-                 weight="bold", alpha=callout_alpha)
+    fig.text(0.04, 0.05,
+             "yellow arcs = the perturbation (kicks step 14 → 15 of each trajectory)",
+             color="#9ba3b4", fontsize=11, family="monospace")
 
     out_path = _TMP_DIR / f"f{frame_idx:06d}.png"
     fig.savefig(out_path, dpi=_DPI, facecolor="#0a0e1a")
@@ -472,13 +449,16 @@ def main() -> None:
     print(f"fitting cubic splines per trajectory at {N_SUBSTEPS} sub-steps/step ...")
     spline_xyz, sample_t = _spline_paths(proj, N_SUBSTEPS)
     n_samples = spline_xyz.shape[1]
+    n_traj_local = spline_xyz.shape[0]
     print(f"  spline samples per trajectory: {n_samples} "
           f"(dense from t=0 to t={sample_t[-1]:.1f})")
 
-    schedule = _frame_schedule(n_samples)
+    schedule, start_offsets = _frame_schedule(n_samples, n_traj_local)
     n_frames = len(schedule)
+    print(f"staggered entries: trajectory i starts at frame {STAGGER_FRAMES}*i  "
+          f"(offsets {start_offsets[0]} .. {start_offsets[-1]})")
     print(f"frame plan: {n_frames} frames @ {FPS}fps = {n_frames / FPS:.1f}s "
-          f"(motion + 2 callout holds)")
+          f"(staggered procession + end hold)")
 
     print("computing iso-surface clouds (once, joint cloud) ...")
     meshes = _compute_iso_meshes(proj_flat, bounds)
@@ -491,7 +471,7 @@ def main() -> None:
             max_workers=N_WORKERS,
             initializer=_worker_init,
             initargs=(spline_xyz, sample_t, proj_flat, bounds,
-                      schedule, meshes, str(tmp_dir), W, H, DPI),
+                      schedule, start_offsets, meshes, str(tmp_dir), W, H, DPI),
         ) as ex:
             futs = [ex.submit(_render_frame, i) for i in range(n_frames)]
             done = 0
