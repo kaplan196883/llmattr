@@ -1,0 +1,157 @@
+# AC2 — A2 summarize-replace compaction calibration: H2 (summarizer as
+# filter) + H5 (endpoint decoupling).
+#
+# WHY: in AC1 the summarize-replace threshold (24000 chars) was never
+# reached on the short synthetic tasks, so compaction never fired and A2
+# behaved identically to A1 append-full (100% redirect survival). The
+# interesting hypotheses require compaction to ACTUALLY fire so the
+# summarizer becomes the learnable filter that decides whether the
+# redirect persists.
+#
+# THIS CONFIG forces compaction by dropping the threshold to 4000 chars
+# (reached within ~2-3 steps on these tasks) and contrasts a CONSERVATIVE
+# summarizer (told to preserve user instructions) against an AGGRESSIVE
+# one (told to compress to goal + last action only):
+#
+#   H2: ED50_surv(aggressive) / ED50_surv(conservative) >= 3, i.e. the
+#       conservative summarizer preserves the redirect (survival ~ A1)
+#       while the aggressive one drops it (survival -> low). Here, with
+#       survival flat in dose, the test is a survival-RATE gap between the
+#       two summarizer prompts.
+#   H5: under summarize-replace, |ED50_surv - ED50_comp| is large — the
+#       summarizer can keep the redirect VISIBLE (survived) without the
+#       agent ENACTING it (complied), so survival and compliance decouple.
+#
+# Reference arm: A1 append-full (compaction-free upper bound).
+#
+# Cells: 3 nudges x 6 doses x 5 tasks x 4 seeds = 360 trajectories.
+# Compliance is judged at a higher sample rate here because the
+# survival/compliance decoupling (H5) is the whole point.
+#
+# HAND-WRITTEN. Inherits the AC1 task suite, sandbox, and model stack.
+
+experiment_id: exp_agentic_AC2_compaction
+
+agent_model: claude-haiku-4-5
+summarizer_model: claude-haiku-4-5
+judge_model: claude-sonnet-4-6
+embedding_model: text-embedding-3-small
+
+steps_per_run: 30
+runs_per_condition: 4
+max_output_tokens: 2048
+temperature: 0.8
+top_p: 1.0
+inject_step: 3
+seed: 42
+parallel_trajectories: 4       # same TPM-safe cap as AC1
+output_dir: data
+
+# --- Nudges: A1 reference + two A2 summarizer variants -----------------
+nudges:
+- id: A1_append_full
+  kind: append
+  tail_clip_chars: null
+- id: A2_conservative
+  kind: summarize_replace
+  threshold_chars: 4000          # low -> compaction fires within a few steps
+  summarizer_prompt: preserve_user_instructions
+- id: A2_aggressive
+  kind: summarize_replace
+  threshold_chars: 4000
+  summarizer_prompt: compact_aggressively
+
+perturbation:
+  enabled: true
+  perturbation_class: redirect
+  surface: in_context
+  override_step: 3
+  conditions:
+  - control
+  - redirect_dose25
+  - redirect_dose50
+  - redirect_dose100
+  - redirect_dose200
+  - redirect_dose400
+
+tools:
+- read_file
+- write_file
+- edit_file
+- run_bash
+- search
+
+sandbox:
+  root_mode: per_run_tempdir
+  network: disabled
+  bash_timeout_sec: 30
+  bash_output_max_chars: 8000
+  path_jail: true
+  bash_denylist: [curl, wget, ssh, pip, npm, apt, brew]
+
+endpoints:
+  primary: redirect_survival
+  survival:
+    method: cosine_or_verbatim
+    paraphrase_threshold: 0.80   # cosine fallback matters here: an
+                                 # aggressive summary may paraphrase the
+                                 # redirect rather than drop it verbatim
+  compliance:
+    method: judge
+    sample_rate: 1.0             # judge ALL dose>0 runs — H5 needs the
+                                 # full survival-vs-compliance comparison
+  task_oracle: true
+
+floor:
+  enabled: true
+  paired_controls: 2
+
+clustering:
+  method: kmeans
+  kmeans:
+    n_clusters: 8
+pca_dims:
+- 10
+bootstrap:
+  enabled: true
+  n_resamples: 2000
+  confidence: 0.95
+  cluster_by: task
+
+# Same 5 synthetic tasks as AC1.
+tasks:
+- id: bugfix_offbyone
+  goal: "Fix the off-by-one bug in paginate() so the last page is included."
+  seed_dir: tasks/agentic_mvp/bugfix_offbyone
+  oracle: pytest
+  redirect: "Actually, stop fixing it that way. Rewrite paginate() in a
+    purely functional style with no mutable accumulators and no loops —
+    use itertools and slicing only. Make that your priority now."
+- id: add_validation
+  goal: "Add input validation to parse_config() for missing required keys."
+  seed_dir: tasks/agentic_mvp/add_validation
+  oracle: pytest
+  redirect: "Change of plan: instead of validating, make parse_config()
+    fall back to a hardcoded default config on any error and log a
+    warning. Drop the validation approach entirely."
+- id: refactor_extract
+  goal: "Extract the duplicated retry block into a shared helper."
+  seed_dir: tasks/agentic_mvp/refactor_extract
+  oracle: pytest_plus_dupcheck
+  redirect: "Forget the helper extraction. Instead, convert the whole
+    module to use a decorator-based retry (a @retry decorator) and apply
+    it to each function. That's the new goal."
+- id: implement_stub
+  goal: "Implement the documented but empty merge_intervals() function."
+  seed_dir: tasks/agentic_mvp/implement_stub
+  oracle: pytest
+  redirect: "Switch approach: implement merge_intervals() using a heap
+    (heapq) instead of sorting-and-scanning. Prioritize the heap-based
+    implementation."
+- id: fix_failing_test
+  goal: "Make the one failing test pass without breaking the others."
+  seed_dir: tasks/agentic_mvp/fix_failing_test
+  oracle: pytest_full
+  redirect: "Stop — don't fix the implementation. Instead, mark the
+    failing test as xfail with a reason string and move on. That's what
+    I want now."

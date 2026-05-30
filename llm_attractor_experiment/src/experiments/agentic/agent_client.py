@@ -55,17 +55,40 @@ class AgentTurn:
         return self.stop_reason != "tool_use" and not self.tool_calls
 
 
-_RETRYABLE = ("rate limit", "overloaded", "timeout", "503", "502", "500",
-              "connection", "529")
-_TERMINAL = ("authentication", "permission", "invalid_api_key",
-             "credit balance", "billing")
+# Retry by EXCEPTION TYPE (robust) rather than substring matching the
+# message. The 429 rate-limit, transient 5xx, connection, and timeout
+# errors are retryable; auth/permission/4xx-other are not.
+_RETRYABLE_TYPES = (
+    anthropic.RateLimitError,
+    anthropic.APIConnectionError,
+    anthropic.APITimeoutError,
+    anthropic.InternalServerError,
+)
 
 
 def _is_retryable(exc: Exception) -> bool:
-    m = str(exc).lower()
-    if any(h in m for h in _TERMINAL):
-        return False
-    return any(h in m for h in _RETRYABLE)
+    if isinstance(exc, _RETRYABLE_TYPES):
+        return True
+    # APIStatusError covers other status codes; retry on 429/5xx/529.
+    if isinstance(exc, anthropic.APIStatusError):
+        code = getattr(exc, "status_code", None)
+        return code in (429, 500, 502, 503, 529)
+    return False
+
+
+def _retry_after_seconds(exc: Exception, default: float) -> float:
+    """Honor the server's retry-after header on a 429 when present."""
+    resp = getattr(exc, "response", None)
+    if resp is not None:
+        headers = getattr(resp, "headers", {}) or {}
+        for key in ("retry-after", "Retry-After"):
+            val = headers.get(key)
+            if val:
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    pass
+    return default
 
 
 def _load_env() -> None:
@@ -75,12 +98,15 @@ def _load_env() -> None:
             break
 
 
-def make_anthropic_client() -> anthropic.Anthropic:
+def make_anthropic_client(max_retries: int = 8) -> anthropic.Anthropic:
     _load_env()
     key = os.environ.get("ANTHROPIC_API_KEY")
     if not key:
         raise RuntimeError("ANTHROPIC_API_KEY not set (add to .env)")
-    return anthropic.Anthropic(api_key=key)
+    # max_retries lets the SDK transparently retry 429/5xx/overloaded
+    # while honoring the server's retry-after header — the primary
+    # rate-limit defense. Our wrapper below is a secondary net.
+    return anthropic.Anthropic(api_key=key, max_retries=max_retries)
 
 
 def run_turn(
@@ -153,9 +179,10 @@ def run_turn(
             if attempt >= max_retries or not _is_retryable(exc):
                 log.error("messages.create failed (attempt %d): %s", attempt, exc)
                 raise
-            delay = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+            backoff = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+            delay = _retry_after_seconds(exc, default=backoff)
             log.warning("messages.create retryable (attempt %d, sleep %.1fs): %s",
-                        attempt, delay, exc)
+                        attempt, delay, type(exc).__name__)
             time.sleep(delay)
     raise RuntimeError(f"run_turn exhausted retries: {last_exc}")
 
@@ -201,5 +228,6 @@ def simple_completion(
             last_exc = exc
             if attempt >= max_retries or not _is_retryable(exc):
                 raise
-            time.sleep(base_delay * (2 ** attempt) + random.uniform(0, 0.5))
+            backoff = base_delay * (2 ** attempt) + random.uniform(0, 0.5)
+            time.sleep(_retry_after_seconds(exc, default=backoff))
     raise RuntimeError(f"simple_completion exhausted retries: {last_exc}")

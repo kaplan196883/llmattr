@@ -307,20 +307,29 @@ def _tail_clip(messages: list[dict], max_chars: int) -> list[dict]:
 
 def build_nudge(spec: dict, *, client=None, summarizer_model: str | None = None
                 ) -> Nudge:
-    """Instantiate a Nudge from a config entry (see AC1_mvp.yaml `nudges`)."""
+    """Instantiate a Nudge from a config entry (see AC1_mvp.yaml `nudges`).
+
+    The config's ``id`` overrides the Nudge's default id, so multiple
+    variants of the same kind (e.g. a conservative and an aggressive
+    A2 summarize-replace) get distinct run ids and aggregate separately.
+    """
     kind = spec["kind"]
     if kind == "append":
-        return AppendFull(tail_clip_chars=spec.get("tail_clip_chars"))
-    if kind == "summarize_replace":
-        return SummarizeReplace(
+        nudge: Nudge = AppendFull(tail_clip_chars=spec.get("tail_clip_chars"))
+    elif kind == "summarize_replace":
+        nudge = SummarizeReplace(
             client=client,
             summarizer_model=summarizer_model or spec.get("summarizer_model"),
             threshold_chars=spec.get("threshold_chars", 24000),
             summarizer_prompt=spec.get("summarizer_prompt",
                                        "preserve_user_instructions"),
         )
-    if kind == "todo_replace":
-        return TodoReplace()
-    if kind == "state_replace":
-        return StateReplace()
-    raise ValueError(f"unknown nudge kind: {kind!r}")
+    elif kind == "todo_replace":
+        nudge = TodoReplace()
+    elif kind == "state_replace":
+        nudge = StateReplace()
+    else:
+        raise ValueError(f"unknown nudge kind: {kind!r}")
+    if spec.get("id"):
+        nudge.id = spec["id"]
+    return nudge

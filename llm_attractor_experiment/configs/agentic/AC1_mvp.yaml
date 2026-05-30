@@ -36,7 +36,11 @@ inject_step: 3                # redirect injected after the agent has oriented
                               # synthetic tasks solve in ~4-8 steps at baseline,
                               # so keep this low enough that the redirect fires.
 seed: 42
-parallel_trajectories: 8      # tool execution is the bottleneck, not API
+parallel_trajectories: 4      # capped low: append-full (A1) calls grow to
+                              # 20-45K input tokens, and the org rate limit is
+                              # 450K input tokens/min. retry-after backoff
+                              # (agent_client) clamps actual throughput to the
+                              # limit; low concurrency minimizes 429 thrash.
 output_dir: data
 
 # --- Nudge operators (the IV); see ARTICLE_CODING.md §3.2 ---

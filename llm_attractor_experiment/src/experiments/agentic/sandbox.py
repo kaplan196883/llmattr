@@ -18,6 +18,7 @@ from __future__ import annotations
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -164,21 +165,51 @@ class Sandbox:
         env["TEMP"] = str(self.root)
         env["TMP"] = str(self.root)
         env["PWD"] = str(self.root)
+        # Use Popen in its own process group so a timeout can kill the
+        # WHOLE tree. Plain subprocess.run(timeout=) only kills the shell,
+        # not grandchildren (e.g. the `pytest` a `python -m pytest` spawns)
+        # — on Windows the orphaned grandchild keeps the stdout pipe open
+        # and communicate() blocks forever despite the timeout. That bug
+        # hung 2/480 trajectories in the AC1 run.
+        popen_kwargs: dict = dict(
+            shell=True, cwd=str(self.root), env=env,
+            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True,
+        )
+        if sys.platform == "win32":
+            popen_kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+        else:
+            popen_kwargs["start_new_session"] = True
+
+        proc = subprocess.Popen(command, **popen_kwargs)
         try:
-            proc = subprocess.run(
-                command,
-                shell=True,
-                cwd=str(self.root),
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=self.config.bash_timeout_sec,
-            )
+            out, _ = proc.communicate(timeout=self.config.bash_timeout_sec)
         except subprocess.TimeoutExpired:
+            self._kill_tree(proc)
+            try:
+                out, _ = proc.communicate(timeout=5)
+            except Exception:
+                out = ""
             return (f"[sandbox] command timed out after "
                     f"{self.config.bash_timeout_sec}s")
-        out = (proc.stdout or "") + (proc.stderr or "")
         if len(out) > self.config.bash_output_max_chars:
             n = self.config.bash_output_max_chars
             out = out[:n] + f"\n[sandbox] output truncated at {n} chars"
         return out if out.strip() else f"[sandbox] (exit {proc.returncode}, no output)"
+
+    @staticmethod
+    def _kill_tree(proc: subprocess.Popen) -> None:
+        """Kill a process and all its descendants."""
+        try:
+            if sys.platform == "win32":
+                subprocess.run(
+                    ["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                    capture_output=True, timeout=10,
+                )
+            else:
+                import signal
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
