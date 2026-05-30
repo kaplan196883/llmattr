@@ -1,6 +1,6 @@
 # Memory policy and persistent redirection in agentic coding loops
 
-*Continuation of "Perturbation dose responses in recursive large-language-model loops" (Kaplanski, 2026; hereafter **the parent paper**). Theoretical part only; experimental sections will be added in subsequent rounds.*
+*Continuation of "Perturbation dose responses in recursive large-language-model loops" (Kaplanski, 2026; hereafter **the parent paper**). Framework (§1-§3) plus the first experimental round (§4-§5, configuration AC1); later rounds (AC2 onward) are in progress.*
 
 ---
 
@@ -10,7 +10,7 @@ The parent paper studied recursive language-model loops on free-form text, separ
 
 The lift is not trivial. The agent's per-turn output $Y_t = (r_t, A_t, O_t)$ now carries reasoning text $r_t$, a list of tool calls $A_t$, and tool results $O_t$ produced by an external transition $E_{t+1} = T(E_t, A_t)$ on a hybrid state $E_t = (W_t, G_t, b_t)$ that the model does not see directly. The Nudge Operator $\mathcal{N}_\eta(X_t, Y_t, E_{t+1}) \to X_{t+1}$ now decides not only how to update text but also *what to surface from the external state*. Six Nudge variants — append, summarize-replace, todo-replace, state-replace, dialog, reflection-replace — produce six qualitatively different memory architectures, each implementable in a few hundred lines of code and each corresponding to a real system in the wild.
 
-The central theoretical claim is that **each Nudge defines a different selectivity profile for which kinds of perturbations durably redirect the agent**. Append-mode is selective for any perturbation that fits in the visible window. Summarize-replace is selective for perturbations the summarizer chooses to keep — the summarizer is a *learnable filter*, simultaneously a defensive abstraction and an attack surface. Todo-replace is selective for perturbations the planner commits to a task list. State-replace is selective only for perturbations that produce observable side effects on the working tree. The same dose-response and persistent-escape machinery developed in the parent paper applies under each Nudge, but with three distinct ED50 endpoints — redirect-survival, success-degradation, and redirect-compliance — that need not coincide. Predictions and falsification criteria are pre-specified in §4. The experimental battery (a minimal Python harness driving the Anthropic API + Claude Agent SDK, evaluated on SWE-bench-Lite-style coding tasks) is described in subsequent sections, to be added.
+The central theoretical claim is that **each Nudge defines a different selectivity profile for which kinds of perturbations durably redirect the agent**. Append-mode is selective for any perturbation that fits in the visible window. Summarize-replace is selective for perturbations the summarizer chooses to keep — the summarizer is a *learnable filter*, simultaneously a defensive abstraction and an attack surface. Todo-replace is selective for perturbations the planner commits to a task list. State-replace is selective only for perturbations that produce observable side effects on the working tree. The same dose-response and persistent-escape machinery developed in the parent paper applies under each Nudge, but with three distinct ED50 endpoints — redirect-survival, success-degradation, and redirect-compliance — that need not coincide. Predictions and falsification criteria are pre-specified in §3.7. The first experimental round (§5, configuration AC1: a minimal pluggable-Nudge harness on the Anthropic API, redirect-class perturbations on five synthetic coding tasks, $n=478$ trajectories) confirms the two strongest predictions — redirect survival is memory-policy-determined (append/summarize 100%, todo/state-replace 0%, H1) and state-replace is text-immune (H4) — and, in doing so, surfaces the calibration needed to reach the genuinely novel claims: the summarizer-as-filter hypotheses (H2, H5) require compaction to actually fire, which the next round forces.
 
 ---
 
@@ -277,16 +277,101 @@ Each endpoint is paired with one or more of the seven hypotheses and has a falsi
 
 ---
 
-## 4. (placeholder for §4-§9: Methods, Results, Discussion, Limitations, Future Work, Reproducibility)
+## 4. Methods
 
-Subsequent sections will be added as the experimental battery completes:
+### 4.1 Harness
 
-- **§4 Methods.** The minimal Python harness driving the Anthropic API + Claude Agent SDK; tool dispatch and sandboxing; the SWE-bench-Lite-derived task suite (curated subset of ~30 tasks for the methodology paper, with the full 300-task run as a supplement); per-task baseline calibration; stochastic-floor estimation; perturbation injection via mid-task user messages, tool-error injection, stale-state mutation, misleading-test injection, and poison-doc injection; cluster definitions on tool-trace sequences and patch-distance basins; family-cluster bootstrap for ED50 confidence intervals.
-- **§5 Results.** Per-Nudge dose-response curves under the redirect class (§5.1-§5.5); per-Nudge selectivity profile across perturbation classes (§5.6); cross-model invariance check (§5.7); patch-distance basin analysis under each Nudge (§5.8); tool-trace clusters and strategy-basin enumeration (§5.9); a long-horizon analog of the parent paper's frozen-canonical-basis time-evolution analysis if budget permits (§5.10).
-- **§6 Discussion.** Implications for agent architecture (memory policy as safety design); implications for indirect prompt injection (durable-redirect endpoint as a complement to immediate-compliance benchmarks); summarization as a learnable filter and attack surface.
-- **§7 Limitations.** External validity: one model family; one task suite; bounded perturbation classes; hosted-model reproducibility; per-task heterogeneity in stochastic floors; the post-hoc design status of all hypotheses (predictions are pre-specified ahead of data collection but were designed after observing the parent paper's results, so confirmatory inference is bounded).
-- **§8 Future work.** Cross-vendor MVP (OpenAI, Google, Mistral, open-weight); broader perturbation taxonomy (structured exploits, multi-turn redirects, dialog-injected perturbations); tighter coupling to indirect prompt injection benchmarks; live-Claude-Code instrumentation as ground truth.
-- **§9 Reproducibility.** Code, configurations, sandbox specs, model versions, and per-replicate traces released with the paper.
+The experiments run on a minimal Python harness (`src/experiments/agentic/`) that owns the recursive loop directly, so that the Nudge is a *pluggable component* rather than an opaque property of an off-the-shelf agent. This is the same architectural move the parent paper made for text loops: separate the generator from the context-update rule. Off-the-shelf coding agents (Claude Code, Aider, Cursor, OpenHands) each hard-code one Nudge and manage their own context internally; none expose it as a controlled variable, so none can serve as the system-under-test for a Nudge comparison.
+
+The loop (`loop.py`) drives one trajectory: at each turn it sends the current visible state $X_t$ (an Anthropic Messages list) to the agent model, executes any tool calls $A_t$ against a sandboxed working tree, optionally injects a perturbation, and hands the running state to the Nudge to assemble $X_{t+1}$. The agent model is `claude-haiku-4-5`, called one turn at a time (`agent_client.py`) so the Nudge can rewrite the message list between turns.
+
+**Tools.** Five sandboxed tools — `read_file`, `write_file`, `edit_file`, `run_bash`, `search` — plus a `todo_write` tool added only under the A3 todo-replace Nudge. Tool calls are abstracted to typed labels (file role, command class) for tool-trace analysis.
+
+**Sandbox (`sandbox.py`).** Each trajectory runs in a fresh temp-directory working tree seeded from the task. A filesystem jail resolves every tool path against the sandbox root and rejects escapes (`..`, absolute paths, symlink traversal); a command jail runs `run_bash` in its own process group with a wall-clock timeout, output truncation, and a denylist of network/install commands. Network is not provisioned (denylist-level in this round; OS-level isolation is deferred). The sandbox design carries directly into the broader-impact treatment of the later destructive perturbation classes.
+
+**Tasks (`tasks.py`).** This round uses five self-contained synthetic Python tasks with deterministic graders: `bugfix_offbyone`, `add_validation`, `refactor_extract`, `implement_stub`, `fix_failing_test`. Each ships a seed directory (visible to the agent) and a hidden oracle test held out of the visible tree and applied fresh at the terminal step, so the agent cannot satisfy the grader by editing the visible tests. We use synthetic tasks rather than the SWE-bench-Lite subset for this first round to obtain clean baselines and deterministic oracles; SWE-bench-Lite is the external-validity follow-up.
+
+**Perturbation (`inject.py`).** This round exercises the `redirect` class on the `in-context` surface only: a plausible but different coding instruction (e.g. "rewrite this in a purely functional style"; "use a heap instead of sorting") injected at turn $t^*=3$ as a user interjection, scaled to a dose of $\{25, 50, 100, 200, 400\}$ tokens (with $0$ = control). The redirect rides as a text block on the tool-result message — the API-valid place a user interrupting mid-tool-loop lands — so it persists in append-mode history but is rebuilt away by the history-dropping Nudges.
+
+**Endpoints (`endpoints.py`).** Redirect-survival (Endpoint 1) is computed by normalized verbatim match against the terminal visible state $X_T$, with an embedding-cosine fallback (`text-embedding-3-small`, paraphrase threshold $0.80$) to catch summarizer paraphrase. Redirect-compliance (Endpoint 3) is judged by `claude-sonnet-4-6` from the agent's final working tree plus its post-injection tool trace, on a sampled subset. Task success is the hidden oracle. Trajectories whose agent terminated before $t^*$ (so the redirect never fired) are excluded from survival/compliance denominators.
+
+**Statistics.** Proportions are reported with Wilson 95% intervals; the across-Nudge survival difference carries a family-cluster bootstrap interval with the cluster set to the task (`analyze.py`).
+
+### 4.2 Pre-registration status
+
+The seven hypotheses of §3.7 and the five primary endpoints of §3.8 were specified before data collection. They were, however, designed after observing the parent paper's results, so confirmatory inference is bounded in the same way the parent paper bounds its own (Limitations, §7).
+
+---
+
+## 5. Results
+
+### 5.1 Round 1: the AC1 minimal viable experiment
+
+The first round (configuration `AC1`) tests the headline hypotheses H1 (memory policy conditions durable survival) and H4 (state-replace text-immunity) over the four memory Nudges $\{\mathcal{N}_\text{append}^\infty, \mathcal{N}_\text{summary}^{\sigma,\tau}, \mathcal{N}_\text{todo}, \mathcal{N}_\text{state}\}$, the redirect class, the in-context surface, the six-dose grid, the five synthetic tasks, and four seeds per cell — a $4\times6\times5\times4 = 480$-trajectory grid. Of the 480, 478 completed; two (both state-replace) were lost to a harness bug, since fixed (§5.5). No trajectory failed for rate-limit or API reasons. Of the dose-positive trajectories, all fired the redirect (none terminated before $t^*$), giving $n \in [99, 100]$ per Nudge for the survival endpoint.
+
+### 5.2 Redirect-survival is memory-policy-determined
+
+The redirect-survival rates split the four Nudges into two perfectly separated groups (Wilson 95% intervals):
+
+| Nudge | redirect-survival | 95% CI | $n$ |
+|---|---|---|---|
+| A1 append-full | 100.0% | [96.3%, 100%] | 99/99 |
+| A2 summarize-replace | 100.0% | [96.3%, 100%] | 99/99 |
+| A3 todo-replace | 0.0% | [0%, 3.7%] | 0/100 |
+| A4 state-replace | 0.0% | [0%, 3.7%] | 0/100 |
+
+The memory-preserving vs memory-dropping survival difference is $+100$ percentage points, with a family-cluster (task) bootstrap 95% interval of $[+100\%, +100\%]$ — the separation is complete, so the bootstrap shows no spread. **H1 is supported** (the difference interval lies far above the $+30$pp gate of §3.8). **H4 is supported**: the state-replace survival upper confidence bound, $3.7\%$, is below the $10\%$ immunity ceiling.
+
+Critically, survival is *flat in dose within each Nudge*: append-full and summarize-replace survive at 100% at every dose from 25 to 400 tokens, and the two history-dropping Nudges evict the redirect at every dose. Redirect survival is therefore **memory-policy-determined, not dose-determined** — for this endpoint the ED50 is degenerate (undefined for A1/A2 and A4 in the sense of §3.7 H4), and the cleaner description is a step function of the Nudge. This is the expected behavior taken to its limit: append-mode literally retains the injected text and state-replace literally discards it, so this round principally *validates the measurement framework and confirms the mechanism* rather than discovering a graded dose-response. The graded structure lives in the endpoints that can decouple from survival, below.
+
+### 5.3 Compliance tracks survival; success degrades on a step, not a ramp
+
+Redirect-compliance (judged) tracks survival exactly: append-full and summarize-replace complied with the redirect in 100% of judged dose-positive runs (24/24 and 33/33), while todo-replace and state-replace complied in 0% (0/32 and 0/25). In this round the redirect that persists is also the redirect that is enacted; survival and compliance do **not** decouple — because, as §5.4 explains, the summarizer never actually fired, so there was no filter to keep text visible while suppressing its enactment.
+
+Task success exposes the cost of a *persisting* redirect. For the memory-preserving Nudges, task-pass falls from 100% in control to roughly 55–60% the moment any non-zero dose is injected, then stays flat across the dose grid:
+
+| Nudge | $d{=}0$ | 25 | 50 | 100 | 200 | 400 |
+|---|---|---|---|---|---|---|
+| A1 append-full | 100% | 60% | 50% | 55% | 60% | 58% |
+| A2 summarize-replace | 100% | 60% | 60% | 58% | 60% | 60% |
+| A3 todo-replace | 0% | 5% | 0% | 0% | 0% | 0% |
+| A4 state-replace | 0% | 0% | 0% | 0% | 0% | 0% |
+
+A small persisting redirect derails the original task in roughly 40% of runs, and additional redirect tokens do not derail it much further — the success-degradation is a step at the onset of a persisting redirect, not a dose ramp. The history-dropping Nudges sit near 0% task-pass throughout, *including control* (§5.4).
+
+### 5.4 Two calibration findings that shape Round 2
+
+Two features of Round 1 are not yet the interesting science, and both point directly at the next experiment.
+
+**The summarizer never fired.** The summarize-replace threshold ($\tau = 24{,}000$ characters) was never reached on the short synthetic tasks, so A2 never compacted and behaved identically to append-full (hence its 100% survival and 100% compliance). The summarizer-as-filter hypotheses (H2, H5) require compaction to *occur* so that $\sigma$ can decide whether the redirect persists. Round 2 (`AC2`) forces this by dropping $\tau$ to 4{,}000 characters (reached within two to three steps) and contrasting a conservative summarizer ("preserve user instructions") against an aggressive one ("compress to goal + last action"), judging compliance on every dose-positive run to test the survival/compliance decoupling H5 predicts.
+
+**The Markov regimes cannot solve the baseline.** Todo-replace and state-replace score near 0% task-pass even in control, because dropping the conversation history each turn removes the agent's memory of what it has already tried; the agent loops to the step cap. This is clean for the *survival* endpoint — eviction of the redirect is unambiguous regardless of task competence — but it means the success-degradation and compliance endpoints are uninformative for these two Nudges in this round (a floor effect, not a redirect effect). Restoring a competence floor for the history-dropping regimes (a richer rendered state, or a more capable agent model for those arms) is a Round-2 calibration item.
+
+### 5.5 Harness notes
+
+Two trajectories hung at the step where a timed-out `run_bash` left an orphaned `pytest` grandchild holding the output pipe, so the call blocked past its nominal timeout — a Windows-specific consequence of killing only the shell and not its descendants. `run_bash` now runs each command in its own process group and kills the entire tree on timeout. Separately, the first launch (twelve concurrent workers) saturated the model's input-token-per-minute limit; the retry path now keys on exception type and honors the server `retry-after` header, and concurrency is capped so that throughput self-limits to the rate ceiling. The reported AC1 numbers are from the corrected run, in which no trajectory failed for rate-limit reasons.
+
+### 5.6 What Round 1 establishes
+
+Round 1 establishes that the parent paper's recursive-loop machinery transfers intact to agentic coding loops: the state-generator-nudge factorization, the redirect/survival/compliance endpoint decomposition, per-task stochastic-floor controls, Wilson intervals, and family-cluster bootstrap all operate on tool-using trajectories with a real working tree. It confirms the strongest, most mechanical predictions (H1, H4) and, in doing so, validates the harness end-to-end. The hypotheses that carry the paper's novel claim — that the *summarizer* is a learnable filter with its own selectivity profile (H2, H5), and that the qualitative Nudge ordering is model-scale-invariant (H7) — are the subject of the subsequent rounds described next.
+
+---
+
+## 6. Discussion (to be expanded with Rounds 2+)
+
+The Round 1 result already sharpens one architectural claim: in an append-mode agent, an in-context redirect is retained and enacted essentially deterministically, and even a short redirect derails the original task about 40% of the time once it persists. The safety-relevant question is therefore not whether a durable redirect *can* capture an append-mode loop — it does — but whether a memory policy that compacts or drops history *filters* such redirects, and at what cost to task competence. That is precisely the summarizer-as-filter question Round 2 isolates: a summarizer that preserves user instructions is a defensive abstraction that also faithfully carries an injected redirect forward, while an aggressive summarizer may wash the redirect out at the cost of forgetting legitimate context. The implication for indirect-prompt-injection evaluation is that the durable-redirect endpoint is conditioned on the harness's memory policy, so an IPI benchmark that fixes one scaffold measures one point on a curve the defender actually controls.
+
+## 7. Limitations
+
+Beyond the pre-registration caveat (§4.2): Round 1 uses one model family, one (synthetic) task suite, one perturbation class on one surface, and a hosted model whose exact behavior is not frozen. The perfect survival separation is in part a property of the endpoint definition (verbatim/paraphrase presence in $X_T$) interacting with Nudges that retain or drop text by construction; the more discriminating endpoints (compliance under an active summarizer, success-degradation with a competence floor) are exactly the ones Round 1 could not yet exercise. Per-task stochastic floors are estimated from a small number of paired controls. The history-dropping Nudges' baseline incompetence bounds what can be concluded about their success-degradation.
+
+## 8. Future work
+
+Rounds beyond AC2: cross-model invariance (H7) across Haiku, Sonnet, and Opus; the remaining perturbation classes (tool-error, stale-state, misleading-test, poison-doc) and surfaces (external, mediated) to fill in the selectivity profile of §3.4; a competence floor for the history-dropping regimes; graduation from synthetic tasks to a SWE-bench-Lite subset; and tighter coupling to existing indirect-prompt-injection benchmarks as an external endpoint.
+
+## 9. Reproducibility
+
+The harness, the four Nudge implementations, the synthetic task suite with hidden oracles, the AC1 and AC2 configurations, the sandbox specification, the model identifiers, and the per-trajectory traces and aggregation are released with the paper. Each reported number is regenerated by the aggregation entry point from the released per-trajectory endpoint records.
 
 ---
 
