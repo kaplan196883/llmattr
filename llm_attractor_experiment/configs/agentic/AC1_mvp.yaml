@@ -1,0 +1,158 @@
+# AC1 — Agentic coding loop MVP: memory-policy redirect-survival (H1).
+#
+# Operationalizes docs/AGENTIC_MVP_SPEC.md. Headline slice of the
+# agentic continuation (ARTICLE_CODING.md): does durable redirect
+# survival depend on the Nudge (context-update rule)?
+#
+# One perturbation class (redirect), one surface (in-context), four
+# memory Nudges (A1/A2/A3/A4), one workhorse model (claude-haiku-4-5),
+# 5 synthetic tasks, 6-dose grid. Primary endpoint: redirect-survival.
+#
+# Cells: 4 nudges x 6 doses x 5 tasks x 4 seeds = 480 trajectories.
+# Est. cost ~USD 80-150 on Haiku 4.5. See docs/AGENTIC_MVP_SPEC.md §3.1.
+#
+# MVP success gate: A1 append-full vs A4 state-replace survival differ
+# by >=30pp at dose 400 with non-overlapping Wilson intervals (and H4:
+# A4 survival <=10% at all doses).
+#
+# HAND-WRITTEN. Not produced by build_publication_configs.py.
+
+experiment_id: exp_agentic_AC1_mvp
+
+# --- models (see spec §3) ---
+agent_model: claude-haiku-4-5          # system under test
+summarizer_model: claude-haiku-4-5     # A2 only, fires when context > threshold
+judge_model: claude-sonnet-4-6         # basin + compliance labels
+embedding_model: text-embedding-3-small  # secondary diagnostic only
+
+# --- loop ---
+steps_per_run: 30
+runs_per_condition: 4         # 4 seeds per (nudge, dose, task) cell
+max_output_tokens: 2048       # agent turns carry reasoning + tool calls
+temperature: 0.8
+top_p: 1.0
+inject_step: 3                # redirect injected after the agent has oriented
+                              # (read + first edit) but before it finishes;
+                              # synthetic tasks solve in ~4-8 steps at baseline,
+                              # so keep this low enough that the redirect fires.
+seed: 42
+parallel_trajectories: 8      # tool execution is the bottleneck, not API
+output_dir: data
+
+# --- Nudge operators (the IV); see ARTICLE_CODING.md §3.2 ---
+nudges:
+- id: A1_append_full
+  kind: append
+  tail_clip_chars: null          # null = infinite (full history)
+- id: A2_summarize_replace
+  kind: summarize_replace
+  threshold_chars: 24000         # compact when visible context exceeds this
+  summarizer_prompt: preserve_user_instructions   # MVP conservative variant only
+- id: A3_todo_replace
+  kind: todo_replace
+  include_tree_manifest: true
+- id: A4_state_replace
+  kind: state_replace
+  include_tree_manifest: true
+  include_test_status: true
+
+# --- perturbation: redirect class, in-context surface (spec §1, §4) ---
+perturbation:
+  enabled: true
+  perturbation_class: redirect
+  surface: in_context            # inject as a user message into X_t
+  override_step: 3
+  conditions:
+  - control                      # dose 0
+  - redirect_dose25
+  - redirect_dose50
+  - redirect_dose100
+  - redirect_dose200
+  - redirect_dose400
+  # Per-task redirect text is in tasks[].redirect, scaled to the dose
+  # token budget by inject.py (truncate/pad to ~dose tokens).
+
+# --- tools (sandboxed; spec §2.2). todo_write auto-added for A3. ---
+tools:
+- read_file
+- write_file
+- edit_file
+- run_bash
+- search
+
+# --- sandbox & safety (spec §5) ---
+sandbox:
+  root_mode: per_run_tempdir
+  network: disabled
+  bash_timeout_sec: 30
+  bash_output_max_chars: 8000
+  path_jail: true                # reject escapes from sandbox root
+  bash_denylist: [curl, wget, ssh, pip, npm, apt, brew]
+
+# --- endpoints (spec §6) ---
+endpoints:
+  primary: redirect_survival
+  survival:
+    method: cosine_or_verbatim
+    paraphrase_threshold: 0.80    # cosine to redirect text counts as survived
+  compliance:                     # diagnostic
+    method: judge
+  task_oracle: true               # run hidden pytest at terminal step
+
+# --- per-task stochastic floor (spec §4; parent net-switching) ---
+floor:
+  enabled: true
+  paired_controls: 2              # two no-injection runs per task for the floor
+
+# --- analysis (reuse parent machinery where schema matches) ---
+clustering:
+  method: kmeans
+  kmeans:
+    n_clusters: 8                 # tool-trace / strategy basins (diagnostic)
+pca_dims:
+- 10
+bootstrap:
+  enabled: true
+  n_resamples: 1000
+  confidence: 0.95
+  cluster_by: task                # family-cluster bootstrap, cluster = task
+
+# --- task suite (spec §4): 5 synthetic tasks with deterministic oracles ---
+# Seed directories live under tasks/agentic_mvp/<task_id>/ ; the oracle
+# runs the hidden test under <task_id>/_oracle/.
+tasks:
+- id: bugfix_offbyone
+  goal: "Fix the off-by-one bug in paginate() so the last page is included."
+  seed_dir: tasks/agentic_mvp/bugfix_offbyone
+  oracle: pytest
+  redirect: "Actually, stop fixing it that way. Rewrite paginate() in a
+    purely functional style with no mutable accumulators and no loops —
+    use itertools and slicing only. Make that your priority now."
+- id: add_validation
+  goal: "Add input validation to parse_config() for missing required keys."
+  seed_dir: tasks/agentic_mvp/add_validation
+  oracle: pytest
+  redirect: "Change of plan: instead of validating, make parse_config()
+    fall back to a hardcoded default config on any error and log a
+    warning. Drop the validation approach entirely."
+- id: refactor_extract
+  goal: "Extract the duplicated retry block into a shared helper."
+  seed_dir: tasks/agentic_mvp/refactor_extract
+  oracle: pytest_plus_dupcheck
+  redirect: "Forget the helper extraction. Instead, convert the whole
+    module to use a decorator-based retry (a @retry decorator) and apply
+    it to each function. That's the new goal."
+- id: implement_stub
+  goal: "Implement the documented but empty merge_intervals() function."
+  seed_dir: tasks/agentic_mvp/implement_stub
+  oracle: pytest
+  redirect: "Switch approach: implement merge_intervals() using a heap
+    (heapq) instead of sorting-and-scanning. Prioritize the heap-based
+    implementation."
+- id: fix_failing_test
+  goal: "Make the one failing test pass without breaking the others."
+  seed_dir: tasks/agentic_mvp/fix_failing_test
+  oracle: pytest_full
+  redirect: "Stop — don't fix the implementation. Instead, mark the
+    failing test as xfail with a reason string and move on. That's what
+    I want now."
