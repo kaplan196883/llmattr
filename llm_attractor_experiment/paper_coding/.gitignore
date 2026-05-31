@@ -1,0 +1,13 @@
+# Build artifacts — regenerate with `python -m scripts.build_coding_tex`
+# then pdflatex + bibtex. Sources (paper.tex, refs.bib) are tracked.
+*.aux
+*.log
+*.out
+*.bbl
+*.blg
+*.synctex.gz
+*.pdf
+*.fls
+*.fdb_latexmk
+arxiv_submission.zip
+figures/
