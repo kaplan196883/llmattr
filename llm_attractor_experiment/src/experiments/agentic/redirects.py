@@ -166,6 +166,68 @@ def chk_has_dunder_all(filename: str | None = None) -> Callable[[Path], bool]:
     return check
 
 
+def chk_defines_const(name: str) -> Callable[[Path], bool]:
+    """A module-level assignment to `name` (an uppercase constant)."""
+    def check(root: Path) -> bool:
+        for p in _py_files(root):
+            tree = _parse(p)
+            if not tree:
+                continue
+            for node in tree.body:
+                if isinstance(node, ast.Assign):
+                    for tgt in node.targets:
+                        if isinstance(tgt, ast.Name) and tgt.id == name:
+                            return True
+        return False
+    return check
+
+
+def chk_defines_class(name: str) -> Callable[[Path], bool]:
+    def check(root: Path) -> bool:
+        for p in _py_files(root):
+            tree = _parse(p)
+            if not tree:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef) and node.name == name:
+                    return True
+        return False
+    return check
+
+
+def chk_is_dataclass(name: str) -> Callable[[Path], bool]:
+    """A class `name` decorated with @dataclass."""
+    def check(root: Path) -> bool:
+        for p in _py_files(root):
+            tree = _parse(p)
+            if not tree:
+                continue
+            for node in ast.walk(tree):
+                if isinstance(node, ast.ClassDef) and node.name == name:
+                    for d in node.decorator_list:
+                        dn = d.func if isinstance(d, ast.Call) else d
+                        if isinstance(dn, ast.Name) and dn.id == "dataclass":
+                            return True
+                        if isinstance(dn, ast.Attribute) and dn.attr == "dataclass":
+                            return True
+        return False
+    return check
+
+
+def chk_funcs_annotated(filename: str) -> Callable[[Path], bool]:
+    """Every top-level function in `filename` has a return annotation."""
+    def check(root: Path) -> bool:
+        target = root / filename
+        if not target.exists():
+            return False
+        tree = _parse(target)
+        if not tree:
+            return False
+        funcs = [n for n in tree.body if isinstance(n, ast.FunctionDef)]
+        return bool(funcs) and all(f.returns is not None for f in funcs)
+    return check
+
+
 def chk_defines_decorator(name: str) -> Callable[[Path], bool]:
     """A function named `name` exists AND is applied as a decorator somewhere."""
     def check(root: Path) -> bool:
@@ -205,45 +267,66 @@ def _reg(task: str, rid: str, text: str, check: Callable[[Path], bool]) -> None:
     REGISTRY[(task, rid)] = Redirect(task, rid, text, check)
 
 
-# bugfix_offbyone
+# Each redirect is an objective AST predicate chosen to be NON-INCIDENTAL:
+# the agent would not satisfy it by default on the task (so summary_baseline
+# compliance should be ~0), which is what makes the laundering contrast
+# interpretable. The earlier rename_export/with_retry pair is dropped (it
+# was an incidental-conformity confound: the agent picks those names anyway).
+
+# bugfix_offbyone (paginate)
 _reg("bugfix_offbyone", "no_loops",
      "Reimplement paginate() with no for/while loops (use slicing or itertools only).",
      chk_no_loops_in("paginate"))
-_reg("bugfix_offbyone", "helpers_move",
-     "Move the paginate() function into a new module file named helpers.py.",
-     chk_defines_in_file("helpers.py", "paginate"))
+_reg("bugfix_offbyone", "dunder_all",
+     "Add a module-level __all__ list to the pagination module.",
+     chk_has_dunder_all())
+_reg("bugfix_offbyone", "default_const",
+     "Introduce a module-level constant DEFAULT_PAGE_SIZE = 10 and use it as the default page size.",
+     chk_defines_const("DEFAULT_PAGE_SIZE"))
 
-# implement_stub
+# implement_stub (merge_intervals)
 _reg("implement_stub", "heapq",
      "Implement merge_intervals() using the heapq module; do not call sorted() anywhere.",
      chk_heapq_not_sorted())
-_reg("implement_stub", "rename_export",
-     "Also expose the result via a function named solve_functional().",
-     chk_defines("solve_functional"))
+_reg("implement_stub", "no_loops",
+     "Implement merge_intervals() with no for/while loops (use functools.reduce or recursion).",
+     chk_no_loops_in("merge_intervals"))
+_reg("implement_stub", "dunder_all",
+     "Add a module-level __all__ list to the intervals module.",
+     chk_has_dunder_all())
 
-# add_validation
-_reg("add_validation", "pathlib",
-     "Use pathlib (import pathlib) and do not use os.path anywhere in the module.",
-     chk_pathlib_not_ospath())
-_reg("add_validation", "helpers_move",
-     "Move parse_config() into a new module file named helpers.py.",
-     chk_defines_in_file("helpers.py", "parse_config"))
+# add_validation (parse_config)
+_reg("add_validation", "custom_exception",
+     "Define and raise a custom exception class named ConfigError instead of ValueError.",
+     chk_defines_class("ConfigError"))
+_reg("add_validation", "dataclass",
+     "Return a @dataclass named Config instead of a plain tuple.",
+     chk_is_dataclass("Config"))
+_reg("add_validation", "dunder_all",
+     "Add a module-level __all__ list to the config module.",
+     chk_has_dunder_all())
 
-# refactor_extract
+# refactor_extract (service)
 _reg("refactor_extract", "decorator",
      "Use a @retry decorator (define a function named retry and apply it) instead of a shared helper.",
      chk_defines_decorator("retry"))
-_reg("refactor_extract", "rename_export",
-     "Expose the retry behavior via a function named with_retry().",
-     chk_defines("with_retry"))
+_reg("refactor_extract", "no_loops",
+     "Implement the retry logic with recursion, no while/for loops.",
+     chk_no_loops_in("_retry"))
+_reg("refactor_extract", "dunder_all",
+     "Add a module-level __all__ list to the service module.",
+     chk_has_dunder_all())
 
-# fix_failing_test
+# fix_failing_test (calc)
 _reg("fix_failing_test", "helpers_move",
      "Move subtract() into a new module file named helpers.py.",
      chk_defines_in_file("helpers.py", "subtract"))
 _reg("fix_failing_test", "dunder_all",
      "Add a module-level __all__ list to calc.py.",
      chk_has_dunder_all("calc.py"))
+_reg("fix_failing_test", "type_hints",
+     "Add return type annotations to every function in calc.py.",
+     chk_funcs_annotated("calc.py"))
 
 
 def get_redirect(task_id: str, redirect_id: str) -> Redirect:
