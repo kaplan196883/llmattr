@@ -135,6 +135,11 @@ def main() -> int:
            + r"\end{abstract}" + "\n\n"
            + article_text + "\n"
            + POSTAMBLE)
+    # Defensive: strip stray control characters (e.g. a U+0007 BEL that can
+    # creep in from shell/editor escapes). arXiv's pdflatex errors on them
+    # even when a local TeX Live tolerates them.
+    tex = "".join(c for c in tex if c in "\n\t" or ord(c) >= 32)
+
     OUT_TEX.write_text(tex, encoding="utf-8")
     print(f"wrote {OUT_TEX} ({len(tex):,} chars)")
 
