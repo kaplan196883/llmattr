@@ -41,8 +41,8 @@ _PREAMBLE_HEAD = bpt.PREAMBLE.split("% --- title block")[0]
 
 _TITLE_BLOCK = r"""% --- title block ----------------------------------------------------------
 \title{Perturbation Dose Responses in Recursive LLM Loops\\[2pt]
-       \large\itshape Raw switching, stochastic floors, and persistent escape under\\
-       \large\itshape append, replace, and dialog updates; with an agentic-coding-loop extension}
+       \large\itshape Memory-policy-conditioned redirection in text and\\
+       \large\itshape agentic coding loops}
 
 \renewcommand{\shorttitle}{Perturbation dose responses in recursive LLM loops}
 
@@ -50,7 +50,7 @@ _TITLE_BLOCK = r"""% --- title block -------------------------------------------
 \date{\today}
 
 \hypersetup{
-  pdftitle={Perturbation Dose Responses in Recursive LLM Loops},
+  pdftitle={Perturbation Dose Responses in Recursive LLM Loops: Memory-Policy-Conditioned Redirection in Text and Agentic Coding Loops},
   pdfsubject={cs.AI, cs.LG, cs.CL, cs.CR},
   pdfauthor={Pawel Kaplanski},
   pdfkeywords={recursive LLM loops, perturbation dose response, agentic
@@ -66,6 +66,46 @@ _TITLE_BLOCK = r"""% --- title block -------------------------------------------
   \and indirect prompt injection \and context compaction}
 
 """
+
+# Unified abstract for the merged paper (replaces the parent's text-loop-only
+# abstract). Plain prose, no em/en dashes.
+MERGED_ABSTRACT = (
+    "How much injected text durably redirects a recursive language-model "
+    "loop, and whether that move lasts, depends not only on the model but on "
+    "the rule that updates the loop's context between turns. We study this "
+    "across two substrates with one framework that separates the model from "
+    "the context-update rule (the nudge). Part I studies free-form text loops "
+    "over 30 steps. Persistent redirection in append-mode loops is "
+    "memory-policy-conditioned: under a bounded-memory loop, "
+    "destination-coherent persistence plateaus near 16\\% and retained "
+    "source-basin escape reaches about 36\\% by dose 400, neither crossing "
+    "50\\%; under full history, source-basin escape crosses 50\\% near 400 "
+    "tokens and saturates near 75-80\\% by 1500 tokens. Raw terminal switching "
+    "(ED50 about 40 tokens, plateau near 67\\%) overstates durable change, "
+    "because paired stochastic floors already diverge near 35\\%; a four-step "
+    "falsification battery recasts an apparent high-dose persistence dip as a "
+    "finite-horizon, endpoint-definition-sensitive artifact that closes under "
+    "longer continuation. Part II lifts the framework to agentic coding loops, "
+    "where a model emits tool calls whose results feed the next prompt and "
+    "state extends to a working tree. Treating the context-management policy "
+    "as the controlled variable (append, summarize-and-replace, drop-to-todo, "
+    "or Markov-on-state), redirect survival is memory-policy-determined; under "
+    "summarization, what the injected text says and whether the agent obeys it "
+    "decouple sharply (a surface-form context detector finds the text only "
+    "0-1\\% of the time while the agent still obeys it 70-86\\% of the time). "
+    "In a controlled experiment on two models with forced pre-action "
+    "compaction and an off-disk untrusted-file injection, the compaction "
+    "summary itself carries the instruction forward: scrubbing it from the "
+    "summary collapses compliance to the no-injection baseline (auto 30\\% vs "
+    "scrubbed 3\\% vs baseline 0\\%; +27pp, 95\\% CI [+14,+40], McNemar "
+    "$p\\approx 10^{-7}$). A provenance audit and mediation analysis support "
+    "authority laundering: the summarizer restates the untrusted instruction "
+    "as a bare requirement, stripping its source in 58\\% of cases. Across "
+    "both substrates, context-update rules are first-class safety-relevant "
+    "design choices: recursive-loop evaluations should distinguish transient "
+    "movement from durable escape, subtract stochastic floors, and check "
+    "behavior rather than post-compaction context text."
+)
 
 PREAMBLE = _PREAMBLE_HEAD + _TITLE_BLOCK
 
@@ -88,11 +128,10 @@ PART2_HEADER = r"""
 \setcounter{section}{0}
 \renewcommand{\thesection}{\arabic{section}}
 
-\noindent\emph{Part II extends the framework of Part I from free-form
-text loops to agentic coding loops. It was prepared as a separate
-manuscript and is incorporated here at the request of arXiv moderation;
-section numbers below are local to Part II. Citations of ``the parent
-paper'' refer to Part I.}
+\noindent\emph{Part II extends the framework from free-form text loops to
+agentic coding loops, in which the model emits tool calls whose results
+feed the next prompt and the loop's state extends to a working tree and
+test status. Section numbers below are local to Part II.}
 
 """
 
@@ -159,12 +198,41 @@ def _convert_body(text: str, refs: dict, abstract_pull: bool):
     return text, abstract_body
 
 
+def _deparent(md: str) -> str:
+    """Re-frame the agentic markdown as Part II of one paper: drop the
+    standalone continuation note and the now-redundant Part II abstract
+    (the merged abstract up front covers it), and rewrite references to a
+    separate "parent paper" into references to Part I."""
+    # 1. Drop the italic continuation note (the line right after the H1).
+    md = re.sub(r"(?m)^\*Continuation of .*?\*\s*\n", "", md, count=1)
+    # 2. Drop the agentic "## Abstract" section (keep from Plain-language on).
+    md = re.sub(r"(?ms)^##\s*Abstract\s*\n.*?(?=^##\s)", "", md, count=1)
+    # 3. Rewrite "parent paper" phrasings to "Part I". Order matters: do the
+    #    longer, capitalized, and parenthetical forms before the bare one.
+    subs = [
+        (r"\(\s*the parent paper\s*\)", "(Part I)"),
+        (r"\(\s*hereafter \*\*the parent paper\*\*\s*\)", ""),
+        (r"\bThe parent paper\b", "Part I"),
+        (r"\bthe parent paper\b", "Part I"),
+        (r"\bthe parent's\b", "Part I's"),
+        (r"\bparent paper\b", "Part I"),
+        (r"\bthe parent\b", "Part I"),
+    ]
+    for pat, repl in subs:
+        md = re.sub(pat, repl, md)
+    return md
+
+
 def main() -> int:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     OUT_FIGS.mkdir(parents=True, exist_ok=True)
 
     parent_md = PARENT_SRC.read_text(encoding="utf-8")
     agentic_md = AGENTIC_SRC.read_text(encoding="utf-8")
+
+    # Re-frame the agentic markdown as Part II of one paper rather than a
+    # standalone continuation of a separate "parent paper".
+    agentic_md = _deparent(agentic_md)
 
     # Parse references from BOTH and merge (dedupe by bibkey).
     parent_md2, parent_refs = bpt._parse_references_section(parent_md)
@@ -215,7 +283,7 @@ def main() -> int:
 
     tex = (
         PREAMBLE
-        + r"\begin{abstract}" + "\n" + (parent_abstract or "") + "\n"
+        + r"\begin{abstract}" + "\n" + MERGED_ABSTRACT + "\n"
         + r"\end{abstract}" + "\n\n"
         + PART1_HEADER
         + parent_body + "\n"

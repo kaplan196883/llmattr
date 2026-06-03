@@ -292,8 +292,8 @@
 
 % --- title block ----------------------------------------------------------
 \title{Perturbation Dose Responses in Recursive LLM Loops\\[2pt]
-       \large\itshape Raw switching, stochastic floors, and persistent escape under\\
-       \large\itshape append, replace, and dialog updates; with an agentic-coding-loop extension}
+       \large\itshape Memory-policy-conditioned redirection in text and\\
+       \large\itshape agentic coding loops}
 
 \renewcommand{\shorttitle}{Perturbation dose responses in recursive LLM loops}
 
@@ -301,7 +301,7 @@
 \date{\today}
 
 \hypersetup{
-  pdftitle={Perturbation Dose Responses in Recursive LLM Loops},
+  pdftitle={Perturbation Dose Responses in Recursive LLM Loops: Memory-Policy-Conditioned Redirection in Text and Agentic Coding Loops},
   pdfsubject={cs.AI, cs.LG, cs.CL, cs.CR},
   pdfauthor={Pawel Kaplanski},
   pdfkeywords={recursive LLM loops, perturbation dose response, agentic
@@ -317,22 +317,7 @@
   \and indirect prompt injection \and context compaction}
 
 \begin{abstract}
-Recursive language-model loops often settle into recognizable attractor-like patterns, but the practical question is how much injected text is needed to move a settled loop somewhere else, and whether that move lasts. We study this in 30-step recursive loops by separating the model from the context-update rule: append, replace, and dialog updates expose different histories to the same generator. The main result is that persistent redirection in append-mode recursive loops is memory-policy-conditioned. Under the canonical bounded-memory loop with a 12,000-character tail clip, destination-coherent persistence (kicked and still in the same post-injection cluster at the terminal step) plateaus at about 16\% across doses 5-400, and retained source-basin escape (kicked and outside the original cluster at the terminal step) reaches about 36\% at dose 400; neither crosses 50\%. Under a full-history protocol with no artificial truncation within the 30-step horizon, retained source-basin escape crosses 50\% near 400 tokens and saturates near 75-80\% by 1,500 tokens, while destination-coherent persistence first reaches a 50\% point estimate near 1,500 tokens, with Wilson 95\% CI for the proportion [0.41, 0.61], so the half-effect region is only localized to roughly 1,000-2,000 tokens.
-
-The persistent-escape family therefore splits into two endpoints that answer different questions. Retained source-basin escape asks whether the loop was durably pushed out of its starting basin. Destination-coherent persistence asks the stricter question of whether it stayed in the specific post-injection basin. At high full-history doses, destination-coherent persistence becomes non-monotonic at the canonical 30-step horizon even though the kicked rate stays near 0.96. A four-step falsification battery (heterogeneity control, cluster-granularity sweep with hierarchical macro-merge, transition-entropy diagnostic, and long-horizon trajectory continuation) recasts the dip as a finite-horizon, endpoint-definition-sensitive feature rather than a stable structural attractor asymmetry. A homogeneous-perturbation control reproduced the high-dose dip almost exactly (0.44, 0.32, 0.40 at doses 1500, 2000, 3000 versus 0.51, 0.32, 0.41 under heterogeneous perturbations), refuting perturbation heterogeneity as the cause. Roughly half the canonical magnitude is attributable to endpoint timing (the destination cluster sampled at the injection step is dominated by raw-injection text, not yet by model-generated continuation), and the residual is substantially reduced when the loop is run another 50 steps: under the frozen canonical basis (PCA + K-means fit on the original 30-step experiment, applied to extended trajectories), the dip drops by 73\% from -0.143 (95\% family-cluster bootstrap CI $[-0.269,-0.034]$) at step 29 to -0.039 (CI $[-0.158,+0.068]$) at step 79, with the step-79 interval now straddling zero. The same control showed lower retained source-basin escape under homogeneous repetition (0.54-0.58) than under heterogeneous concatenation (0.74-0.79), suggesting that repeated content gives the model a clearer signal from which to recover.
-
-For the simpler raw endpoint, append-mode continuation has a bounded in-distribution dose response. Adversarial continuations yield $\mathrm{ED50}_{\mathrm{raw}}\approx 40$ tokens, with convergent estimates from pooled logistic fitting, mixed-effects modeling, and family-cluster bootstrap. Raw switching plateaus near 67\%, paired controls already diverge at about 35\%, and net switching never reaches +50 percentage points within the tested 5-400 token range; the largest observed net effect is about +32 percentage points at dose 400. Thus raw terminal disagreement is not the same as durable redirection.
-
-Replace-mode loops show near-saturated raw switching under the default perturbation, but this mostly reflects state-reset overwrite: the injected text becomes \(X_{t+1}\), so switching is tautological at the state-write step. Insert-mode probes, which expose the model to the perturbation without writing it as the next state, reduce replace-mode switching to 12-32\%. The F3 cross-loop check shows a smaller append-mode overwrite-insert gap (14-34 percentage points) than the replace-mode gap (60-80 percentage points), with insert rates ordered $O1 \ge O2 \ge O3$.
-
-Practically, this means recursive-loop evaluations should
-distinguish transient movement from durable escape, always subtract
-stochastic floors, and treat context-update rules as first-class
-safety-relevant design choices rather than implementation details.
-We report 37 experiments on \texttt{gpt-4o-mini}, with within-vendor
-replication on \texttt{gpt-4.1-nano} and public code, configurations,
-trajectories, and reports
-(<https://github.com/kaplan196883/llmattr>).
+How much injected text durably redirects a recursive language-model loop, and whether that move lasts, depends not only on the model but on the rule that updates the loop's context between turns. We study this across two substrates with one framework that separates the model from the context-update rule (the nudge). Part I studies free-form text loops over 30 steps. Persistent redirection in append-mode loops is memory-policy-conditioned: under a bounded-memory loop, destination-coherent persistence plateaus near 16\% and retained source-basin escape reaches about 36\% by dose 400, neither crossing 50\%; under full history, source-basin escape crosses 50\% near 400 tokens and saturates near 75-80\% by 1500 tokens. Raw terminal switching (ED50 about 40 tokens, plateau near 67\%) overstates durable change, because paired stochastic floors already diverge near 35\%; a four-step falsification battery recasts an apparent high-dose persistence dip as a finite-horizon, endpoint-definition-sensitive artifact that closes under longer continuation. Part II lifts the framework to agentic coding loops, where a model emits tool calls whose results feed the next prompt and state extends to a working tree. Treating the context-management policy as the controlled variable (append, summarize-and-replace, drop-to-todo, or Markov-on-state), redirect survival is memory-policy-determined; under summarization, what the injected text says and whether the agent obeys it decouple sharply (a surface-form context detector finds the text only 0-1\% of the time while the agent still obeys it 70-86\% of the time). In a controlled experiment on two models with forced pre-action compaction and an off-disk untrusted-file injection, the compaction summary itself carries the instruction forward: scrubbing it from the summary collapses compliance to the no-injection baseline (auto 30\% vs scrubbed 3\% vs baseline 0\%; +27pp, 95\% CI [+14,+40], McNemar $p\approx 10^{-7}$). A provenance audit and mediation analysis support authority laundering: the summarizer restates the untrusted instruction as a bare requirement, stripping its source in 58\% of cases. Across both substrates, context-update rules are first-class safety-relevant design choices: recursive-loop evaluations should distinguish transient movement from durable escape, subtract stochastic floors, and check behavior rather than post-compaction context text.
 \end{abstract}
 
 
@@ -3771,23 +3756,11 @@ This Box collects the reporting standard described in §6.5 in checklist form. I
 \setcounter{section}{0}
 \renewcommand{\thesection}{\arabic{section}}
 
-\noindent\emph{Part II extends the framework of Part I from free-form
-text loops to agentic coding loops. It was prepared as a separate
-manuscript and is incorporated here at the request of arXiv moderation;
-section numbers below are local to Part II. Citations of ``the parent
-paper'' refer to Part I.}
+\noindent\emph{Part II extends the framework from free-form text loops to
+agentic coding loops, in which the model emits tool calls whose results
+feed the next prompt and the loop's state extends to a working tree and
+test status. Section numbers below are local to Part II.}
 
-
-\textit{Continuation of "Perturbation dose responses in recursive large-language-model loops" (\citet{arxiv260502236}; hereafter \textbf{the parent paper}). Framework (§1-§3) plus three experimental rounds (§4-§6: AC1, memory-policy survival; AC2, the survival/compliance decoupling; AC3, the powered two-model causal-laundering isolation). A third model family, the remaining perturbation classes and surfaces, and an aggressive-summarizer arm are noted as future work (§8).}
-
-
-\section*{Abstract}
-
-The parent paper studied recursive language-model loops on free-form text, separating the model from the context-update rule (the "nudge"), and found that persistent redirection in append-mode loops is memory-policy-conditioned: the same generator, same perturbation, and same horizon produce qualitatively different durable-redirect rates depending on whether the loop appends, paraphrases-replaces, summarizes-and-replaces, or alternates roles. This paper lifts the same state-generator-nudge formalism to \textbf{agentic coding loops}, recursive systems in which a language model emits \textit{tool calls} whose results are fed back into the next prompt, and where the loop's "state" extends beyond text to include a working tree, git history, and build/test status.
-
-The lift is not trivial. The agent's per-turn output $Y_t = (r_t, A_t, O_t)$ now carries reasoning text $r_t$, a list of tool calls $A_t$, and tool results $O_t$ produced by an external transition $E_{t+1} = T(E_t, A_t)$ on a hybrid state $E_t = (W_t, G_t, b_t)$ that the model does not see directly. The Nudge Operator $\mathcal{N}_\eta(X_t, Y_t, E_{t+1}) \to X_{t+1}$ now decides not only how to update text but also \textit{what to surface from the external state}. Six Nudge variants, append, summarize-replace, todo-replace, state-replace, dialog, reflection-replace, produce six qualitatively different memory architectures, each implementable in a few hundred lines of code and each corresponding to a real system in the wild.
-
-The central theoretical claim is that \textbf{each Nudge defines a different selectivity profile for which kinds of perturbations durably redirect the agent}. Append-mode is selective for any perturbation that fits in the visible window. Summarize-replace is selective for perturbations the summarizer chooses to keep; the summarizer is a \textit{learnable filter}, simultaneously a defensive abstraction and an attack surface. Todo-replace is selective for perturbations the planner commits to a task list. State-replace is selective only for perturbations that produce observable side effects on the working tree. The same dose-response and persistent-escape machinery developed in the parent paper applies under each Nudge, but with three distinct ED50 endpoints (redirect-survival, success-degradation, and redirect-compliance) that need not coincide. Predictions and falsification criteria are pre-specified in §3.7. Two experimental rounds follow. Round 1 (§5.1-§5.6, configuration AC1: a pluggable-Nudge harness on the Anthropic API, redirect-class perturbations on five synthetic coding tasks, $n=478$) confirms that redirect \textit{survival} is memory-policy-determined (append/summarize 100\%, todo/state-replace 0\%; H1, H4) and validates the harness. Round 2 (§5.7, configuration AC2, $n=360$) forces the summarizer to fire and surfaces a sharp decoupling: under summarize-replace a surface-form/embedding detector finds the redirect's text in the terminal context only 0-1\% of the time, yet the agent enacts the redirect 70-86\% of the time (H5), and the summarizer prompt shifts compliance (conservative 86\% vs aggressive 70\%, H2-on-compliance) while the memory policy as a whole trades injection-robustness against task fidelity. A third round (§5.9, AC3) tests the mechanism on two models (Claude Haiku 4.5 and Sonnet 4.6) with forced pre-action compaction (so the agent cannot act before the summary), an off-disk poison-document surface delivered under a policy that marks file contents as untrusted (so the only carrier into the resumed run is the context), summary ablation, and AST-checkable compliance. Removing the injected instruction from the summary collapses compliance to the no-injection baseline: pooled over both models, \texttt{summary\_auto} 30\% versus \texttt{summary\_scrubbed} 3\% versus \texttt{summary\_baseline} 0\%, an unconditioned laundering effect of +27 percentage points (cluster-bootstrap 95\% CI [+14, +40]; GEE odds ratio 12.3, p < 0.0001), present in both models. The laundered instruction is obeyed at least as often as the same instruction shown verbatim in untrusted full history (\texttt{append\_raw} 16\%). A provenance audit and a mediation analysis support an authority-laundering reading: the instruction is present in 89\% of auto-summaries and stripped of its untrusted-source attribution in 58\% of those, and compliance rises from 0\% (instruction absent) to 22\% (present, provenance preserved) to 43\% (present, provenance stripped). The effect is concentrated on strategically-salient instructions (use a heap, use a decorator) rather than incidental ones (name a function X).
 
 
 \section*{Plain-language summary}
@@ -3796,7 +3769,7 @@ The central theoretical claim is that \textbf{each Nudge defines a different sel
 
 \begin{itemize}
   \item \textbf{Agentic coding loop.} A recursive system in which a language model is asked to fix a bug or add a feature, and is given tools (read a file, edit a file, run a shell command, search the codebase) that the system invokes on the model's behalf. The model emits a tool call; the system runs it; the result becomes part of the next prompt. Repeat until the model says it's done. Claude Code, Aider, OpenHands, and the leaked Claude Code source all implement variants of this.
-  \item \textbf{State.} What the agent's loop carries from one turn to the next. In a text-only recursive loop (the parent paper) the state is just the running prompt. In an agentic loop the state is hybrid: the running prompt \textbf{plus} the current working tree, the git history, and the test-pass status, but the model only ever sees what the loop \textit{renders} into the next prompt.
+  \item \textbf{State.} What the agent's loop carries from one turn to the next. In a text-only recursive loop (Part I) the state is just the running prompt. In an agentic loop the state is hybrid: the running prompt \textbf{plus} the current working tree, the git history, and the test-pass status, but the model only ever sees what the loop \textit{renders} into the next prompt.
   \item \textbf{Nudge.} The rule that builds the next prompt from the current prompt + the model's last turn (assistant text + tool calls + tool results). Six rules are studied here:
   \item \textit{append} (full conversation history, like Claude Code's default),
   \item \textit{summarize-replace} (compact the history when it fills, like Claude Code's auto-compaction),
@@ -3813,7 +3786,7 @@ The central theoretical claim is that \textbf{each Nudge defines a different sel
 These are pre-specified predictions, not findings. The experiments described in subsequent sections are designed to falsify them.
 
 \begin{enumerate}
-  \item \textbf{Append-mode redirect-survival ED50 ≈ 50-200 tokens} under full-history. Bounded-memory append (12K tail-clip) plateaus below 50\%, like the parent paper.
+  \item \textbf{Append-mode redirect-survival ED50 ≈ 50-200 tokens} under full-history. Bounded-memory append (12K tail-clip) plateaus below 50\%, like Part I.
   \item \textbf{Summarize-replace under conservative summarization will have \textit{lower} ED50 than append}, summarizers reinforce explicit "user said" content. Under aggressive summarization, ED50 will be \textit{higher} and possibly non-monotonic.
   \item \textbf{Todo-replace will be bimodal}: redirects either commit to the Todo (very low ED50) or are ignored (effectively infinite ED50). No middle ground.
   \item \textbf{State-replace ED50 is undefined for text-only redirects}: the agent never sees them. The same Nudge will have a \textit{very low} ED50 for environmental perturbations (file mutation, fake test failure).
@@ -3829,13 +3802,13 @@ It is not a benchmark of how good Claude Code is at SWE-bench. It is not an eval
 
 \subsection{Motivation}
 
-A recursive language-model loop's behavior depends not only on the model and the input but on the rule that updates the loop's state between turns. The parent paper made this rule (the \textbf{Nudge Operator} $\mathcal{N}_\eta$) a first-class variable: it factorized recursive text generation into state $X_t$, generator $P_\theta$, and nudge $\mathcal{N}_\eta$, and showed that under the same generator and the same perturbation, \textit{changing the nudge changes whether the loop is redirectable, by how much, and for how long}. The headline finding was that under append-mode with full history, the half-effect dose for durable redirection is on the order of a thousand tokens; under bounded memory it never reaches half-effect because the perturbation is clipped out within ten to fifteen post-injection turns; under replace-mode, "switching" is mostly state-write tautology; under dialog, basin structure depends on the role partition.
+A recursive language-model loop's behavior depends not only on the model and the input but on the rule that updates the loop's state between turns. Part I made this rule (the \textbf{Nudge Operator} $\mathcal{N}_\eta$) a first-class variable: it factorized recursive text generation into state $X_t$, generator $P_\theta$, and nudge $\mathcal{N}_\eta$, and showed that under the same generator and the same perturbation, \textit{changing the nudge changes whether the loop is redirectable, by how much, and for how long}. The headline finding was that under append-mode with full history, the half-effect dose for durable redirection is on the order of a thousand tokens; under bounded memory it never reaches half-effect because the perturbation is clipped out within ten to fifteen post-injection turns; under replace-mode, "switching" is mostly state-write tautology; under dialog, basin structure depends on the role partition.
 
 Practically all coding agents in active use are recursive loops in this sense. They emit tool calls whose results become future context. Their context-update rules are heterogeneous: some keep full history (Aider's default), some auto-compact (Claude Code), some operate from a maintained Todo list (some research scaffolds), some are nearly Markov-on-the-working-tree (constrained patch agents). The rule chosen has the same kind of structural consequence here as in the text-only setting, but the consequences are richer because the loop's state extends into the file system. A perturbation injected as a user message might be summarized into the next prompt, or might be paraphrased away, or might commit to a Todo entry, or might be lost the moment the conversation history is reset to the working tree. The selectivity profile of an agentic Nudge is the dose-response curve of \textit{what the Nudge lets through}.
 
-This paper develops the theoretical framework for studying that selectivity profile. It does not replace the parent paper's framework; it generalizes it. The state-generator-nudge factorization, the three-way split into raw / net / persistent endpoints, the dose-response formalism, and the persistent-escape definitions all carry over. What changes is that $X_t$ is no longer a free-floating text trajectory; it is a \textit{render} of a hybrid state, and the Nudge has more degrees of freedom in how it does the rendering.
+This paper develops the theoretical framework for studying that selectivity profile. It does not replace Part I's framework; it generalizes it. The state-generator-nudge factorization, the three-way split into raw / net / persistent endpoints, the dose-response formalism, and the persistent-escape definitions all carry over. What changes is that $X_t$ is no longer a free-floating text trajectory; it is a \textit{render} of a hybrid state, and the Nudge has more degrees of freedom in how it does the rendering.
 
-\subsection{What carries over from the parent paper}
+\subsection{What carries over from Part I}
 
 The following structural elements transfer directly:
 
@@ -3843,9 +3816,9 @@ The following structural elements transfer directly:
   \item \textbf{State-generator-nudge factorization.} $Y_t \sim P_\theta(\cdot \mid X_t; f)$, $X_{t+1} = \mathcal{N}_\eta(X_t, Y_t)$. The agentic version replaces the second equation with $X_{t+1} = \mathcal{N}_\eta(X_t, Y_t, E_{t+1})$, allowing the Nudge to read from external state.
   \item \textbf{Three-way endpoint decomposition.} Raw switching (final-turn disagreement with paired control), net switching (raw minus paired-control floor), persistent escape (kicked AND in same post-perturbation cluster at terminal turn). Each lifts cleanly with revised cluster definitions.
   \item \textbf{Dose-response and ED50.} Tokens of injected perturbation $\to$ probability of redirect. Same logistic / mixed-effects machinery; same family-cluster bootstrap; same Wilson 95\% intervals.
-  \item \textbf{Memory-policy comparison.} The parent paper's bounded-vs-full-history finding is the special case of comparing $\mathcal{N}_\text{append}^L$ at different $L$; here we compare across qualitatively different $\mathcal{N}_\eta$.
+  \item \textbf{Memory-policy comparison.} Part I's bounded-vs-full-history finding is the special case of comparing $\mathcal{N}_\text{append}^L$ at different $L$; here we compare across qualitatively different $\mathcal{N}_\eta$.
   \item \textbf{Stochastic-floor subtraction.} Two paired control runs already disagree from sampling alone; raw switching minus this floor is net switching. In the agentic setting the floor is \textbf{per-task}, not global, because tasks differ in how many valid solution paths exist.
-  \item \textbf{Append/replace/dialog as a partition of memory architectures.} The parent paper's $\{O_1, O_2, O_3, D_1, D_2\}$ partition lifts to $\{A_1, A_2, A_3, A_4, D_1, D_2\}$ here, with one extra regime ($A_4$, state-replace) that has no clean text-loop analog.
+  \item \textbf{Append/replace/dialog as a partition of memory architectures.} Part I's $\{O_1, O_2, O_3, D_1, D_2\}$ partition lifts to $\{A_1, A_2, A_3, A_4, D_1, D_2\}$ here, with one extra regime ($A_4$, state-replace) that has no clean text-loop analog.
 \end{itemize}
 
 \subsection{What is genuinely new}
@@ -3858,11 +3831,11 @@ Three things change qualitatively. None of them break the framework; all of them
   \item \textbf{Goal-directedness.} The agent is solving a task. "Convergence" no longer means "the trajectory settled into a basin"; it means "the agent emitted a terminal turn." Attractors in the agentic setting are \textit{strategy basins} (terminal success, edit-test-debug loop, planning-without-editing, premature done) more than \textit{embedding basins}. Persistent escape needs a corresponding redefinition: a redirect "works" if it durably reroutes the agent's \textit{strategy}, observable through tool-trace clusters, patch-distance basins, and task-success deltas, not necessarily through conversation-tail embedding clusters.
 \end{enumerate}
 
-These three differences imply that the \textit{measurement layer} must be redesigned even though the \textit{experimental logic} of the parent paper survives intact. Embedding-space PCA-and-K-means on conversation tails is now a \textit{secondary diagnostic}, not the primary analysis. Primary analyses live on tool-call sequences, patch-distance basins, and per-task task-success curves.
+These three differences imply that the \textit{measurement layer} must be redesigned even though the \textit{experimental logic} of Part I survives intact. Embedding-space PCA-and-K-means on conversation tails is now a \textit{secondary diagnostic}, not the primary analysis. Primary analyses live on tool-call sequences, patch-distance basins, and per-task task-success curves.
 
 \subsection{Originality at a glance}
 
-> Prior work on agentic coding evaluates \textit{capability} (SWE-bench, AgentBench) or \textit{robustness to attack} (AgentDojo, BIPIA, ToolEmu). This paper measures \textit{memory-policy-conditioned redirectability}: how much perturbation is needed to durably move an agentic coding loop, separated by Nudge variant (append / summarize-replace / todo-replace / state-replace / dialog / reflection-replace) and decomposed into three endpoint families (redirect-survival, success-degradation, redirect-compliance). The framework is the parent paper's recursive-loop machinery lifted to hybrid state; the headline contribution is the \textbf{selectivity profile} of each Nudge: what kinds of perturbation each memory architecture lets persist into the agent's behavior. The summarizer in auto-compacting agents is identified as a \textit{learnable safety filter and a learnable attack surface}. Memory policy in agents is a first-class safety-relevant design choice rather than an implementation detail.
+> Prior work on agentic coding evaluates \textit{capability} (SWE-bench, AgentBench) or \textit{robustness to attack} (AgentDojo, BIPIA, ToolEmu). This paper measures \textit{memory-policy-conditioned redirectability}: how much perturbation is needed to durably move an agentic coding loop, separated by Nudge variant (append / summarize-replace / todo-replace / state-replace / dialog / reflection-replace) and decomposed into three endpoint families (redirect-survival, success-degradation, redirect-compliance). The framework is Part I's recursive-loop machinery lifted to hybrid state; the headline contribution is the \textbf{selectivity profile} of each Nudge: what kinds of perturbation each memory architecture lets persist into the agent's behavior. The summarizer in auto-compacting agents is identified as a \textit{learnable safety filter and a learnable attack surface}. Memory policy in agents is a first-class safety-relevant design choice rather than an implementation detail.
 
 
 \section{Related work}
@@ -3877,7 +3850,7 @@ ReAct \citep{arxiv230510601} interleaves reasoning and tool calls; Reflexion \ci
 
 \subsection{Indirect prompt injection and tool-output attacks}
 
-Indirect prompt injection benchmarks, \citet{arxiv230212173}, BIPIA \citep{arxiv231214197}, AgentDojo \citep{arxiv240613352}, measure whether an agent follows malicious instructions hidden in tool output. They typically score \textit{immediate compliance} at the next step. The parent paper introduced a \textit{durable-redirect} endpoint, distinguishing transient compliance from persistent strategy change. The agentic lift makes the durable-redirect endpoint particularly relevant for IPI: a redirect that survives one summarization is more dangerous than one that compels a single noncompliant tool call. Our overwrite-vs-insert decomposition (parent paper §5.2) further isolates state-write mechanics from model behavior; the same decomposition applies here but in a richer state space.
+Indirect prompt injection benchmarks, \citet{arxiv230212173}, BIPIA \citep{arxiv231214197}, AgentDojo \citep{arxiv240613352}, measure whether an agent follows malicious instructions hidden in tool output. They typically score \textit{immediate compliance} at the next step. Part I introduced a \textit{durable-redirect} endpoint, distinguishing transient compliance from persistent strategy change. The agentic lift makes the durable-redirect endpoint particularly relevant for IPI: a redirect that survives one summarization is more dangerous than one that compels a single noncompliant tool call. Our overwrite-vs-insert decomposition (Part I §5.2) further isolates state-write mechanics from model behavior; the same decomposition applies here but in a richer state space.
 
 \subsection{Memory architectures for LLM agents}
 
@@ -3885,11 +3858,11 @@ MemGPT \citep{arxiv231008560} manages tiered context buffers via explicit paging
 
 \subsection{Model collapse and recursive training}
 
-\citet{shumailov2024} and \citet{arxiv230701850} document training-time model collapse under recursive synthesis. Our setting is \textit{inference-time} recursion of a frozen agent, identical to the parent paper's frame. The two settings share the question of whether recursive self-feeding produces convergence; we focus on intervention cost within a single inference loop, not parameter drift across training rounds.
+\citet{shumailov2024} and \citet{arxiv230701850} document training-time model collapse under recursive synthesis. Our setting is \textit{inference-time} recursion of a frozen agent, identical to Part I's frame. The two settings share the question of whether recursive self-feeding produces convergence; we focus on intervention cost within a single inference loop, not parameter drift across training rounds.
 
 \subsection{What this paper adds, relative to the above}
 
-Existing work answers "how good are agents?" or "can agents be hijacked at the next step?" Our contribution is to ask: \textit{given two agents that differ only in their context-update rule, how do their selectivity profiles for durable redirection differ?} The answer, we predict, is by an order of magnitude or more. The Nudge is treated as a controlled experimental variable, the dose-response framework from the parent paper is the primary analytical machinery, and the contribution is empirical and methodological, not a new agent, not a new benchmark, but a \textit{measurement framework} for agent memory architectures.
+Existing work answers "how good are agents?" or "can agents be hijacked at the next step?" Our contribution is to ask: \textit{given two agents that differ only in their context-update rule, how do their selectivity profiles for durable redirection differ?} The answer, we predict, is by an order of magnitude or more. The Nudge is treated as a controlled experimental variable, the dose-response framework from Part I is the primary analytical machinery, and the contribution is empirical and methodological, not a new agent, not a new benchmark, but a \textit{measurement framework} for agent memory architectures.
 
 
 \section{Formal framework and hypotheses}
@@ -3921,7 +3894,7 @@ where:
   \item $\mathcal{N}_\eta$ is the \textbf{Nudge Operator} parameterized by $\eta$, mapping the visible state, turn output, and post-tool external state to the next visible state.
 \end{itemize}
 
-The trajectory is the sequence $\{(X_t, Y_t, E_t)\}_{t=0}^{T}$ for some terminal turn $T$. The agent does \textbf{not} observe $E_t$ directly, only what $\mathcal{N}_\eta$ chooses to render. This is the key formal departure from the parent paper, where $X_t$ was the entire state of the loop.
+The trajectory is the sequence $\{(X_t, Y_t, E_t)\}_{t=0}^{T}$ for some terminal turn $T$. The agent does \textbf{not} observe $E_t$ directly, only what $\mathcal{N}_\eta$ chooses to render. This is the key formal departure from Part I, where $X_t$ was the entire state of the loop.
 
 \subsection{Six Nudge Operators}
 
@@ -3933,7 +3906,7 @@ Six concrete instantiations of $\mathcal{N}_\eta$ define the regimes studied her
 \mathcal{N}_\text{append}^L(X_t, Y_t, E_{t+1}) = \mathrm{tail}_L\bigl(X_t \,\Vert\, \mathrm{enc}(Y_t)\bigr)
 \end{equation*}
 
-where $\mathrm{enc}(Y_t)$ serializes the structured turn output into the standard chat-API format (assistant message containing $r_t$ and \texttt{tool\_use} blocks for each $a_t^{(i)}$, followed by \texttt{tool\_result} messages carrying $o_t^{(i)}$). $\mathrm{tail}_L$ retains the last $L$ characters; $L = \infty$ recovers full-history. $L = 12{,}000$ recovers the parent paper's bounded-memory regime. This is the default of Claude Code and Aider.
+where $\mathrm{enc}(Y_t)$ serializes the structured turn output into the standard chat-API format (assistant message containing $r_t$ and \texttt{tool\_use} blocks for each $a_t^{(i)}$, followed by \texttt{tool\_result} messages carrying $o_t^{(i)}$). $\mathrm{tail}_L$ retains the last $L$ characters; $L = \infty$ recovers full-history. $L = 12{,}000$ recovers Part I's bounded-memory regime. This is the default of Claude Code and Aider.
 
 \textbf{A2, summarize-replace.} $\mathcal{N}_\text{summary}^{\sigma, \tau}$ parameterized by a summarizer model $\sigma$ and a trigger threshold $\tau$:
 
@@ -3968,7 +3941,7 @@ The agent operates as a Markov chain on the post-tool external state, conditioni
 \mathcal{N}_\text{dialog}(X_t, Y_t, E_{t+1}) = X_t \,\Vert\, \mathrm{enc}(Y_t) \,\Vert\, u_{t+1}, \qquad u_{t+1} \sim P_\text{user}(\cdot \mid X_t, Y_t, \text{Persona})
 \end{equation*}
 
-where $P_\text{user}$ is a separate language-model instance with its own persona prompt that emits a new user message each turn. Direct analog of the parent paper's D1.
+where $P_\text{user}$ is a separate language-model instance with its own persona prompt that emits a new user message each turn. Direct analog of Part I's D1.
 
 \textbf{D2, reflection-replace.} $\mathcal{N}_\text{reflect}$ replaces the agent's reasoning with a generated reflection:
 
@@ -3980,7 +3953,7 @@ A reflector model summarizes what was attempted and what should be done differen
 
 \subsection{Three persistence endpoints}
 
-The parent paper's persistent-escape endpoint splits into three quantitatively distinct ED50 measures in the agentic setting. The key is that "the perturbation persisted" can mean three different things, and each Nudge has a different relationship between them.
+Part I's persistent-escape endpoint splits into three quantitatively distinct ED50 measures in the agentic setting. The key is that "the perturbation persisted" can mean three different things, and each Nudge has a different relationship between them.
 
 Let $\pi$ denote a perturbation of dose $d$ (tokens of redirect text) injected at turn $t^* < T$. Let the trajectory under $\pi$ be $\{X_t^\pi, Y_t^\pi, E_t^\pi\}$ and under a paired control (same task, same seed, no $\pi$) be $\{X_t^c, Y_t^c, E_t^c\}$.
 
@@ -4008,22 +3981,22 @@ The selectivity profile is the headline finding of this paper. Two Nudges differ
 
 \subsection{What is "kicked," "persisted," and "displaced" in the agentic setting}
 
-We retain the parent paper's three-way decomposition but instantiate each on the appropriate observable:
+We retain Part I's three-way decomposition but instantiate each on the appropriate observable:
 
 \begin{itemize}
-  \item \textbf{Kicked} at injection: the post-perturbation tool-trace cluster (or patch-state cluster) at turn $t^* + k$ differs from the pre-perturbation cluster at turn $t^* - 1$, for some short $k$ (typically $k=2$). This is the analog of "$C_+ \ne C_0$" in the parent paper.
+  \item \textbf{Kicked} at injection: the post-perturbation tool-trace cluster (or patch-state cluster) at turn $t^* + k$ differs from the pre-perturbation cluster at turn $t^* - 1$, for some short $k$ (typically $k=2$). This is the analog of "$C_+ \ne C_0$" in Part I.
   \item \textbf{Persisted (loose)}, \textit{retained source-basin escape}: the terminal cluster differs from the pre-perturbation cluster. The agent \textit{left} its starting strategy basin and remained outside through to the terminal turn.
   \item \textbf{Persisted (strict)}, \textit{destination-coherent persistence}: the terminal cluster equals the post-perturbation cluster. The agent committed to a specific new strategy basin.
 \end{itemize}
 
-These are exactly the parent paper's two persistent-escape endpoints (parent §5.1.3), with "cluster" reinterpreted as a tool-trace or patch-state cluster rather than a context-tail embedding cluster. The corresponding lessons from the parent paper apply: the loose endpoint is a property of \textit{durable departure from initial strategy}, the strict endpoint is a property of \textit{commitment to a specific alternative strategy}, and the strict endpoint can be non-monotonic at high doses for finite-horizon-and-cluster-granularity reasons (parent §5.1.3) that we predict will reappear here.
+These are exactly Part I's two persistent-escape endpoints (parent §5.1.3), with "cluster" reinterpreted as a tool-trace or patch-state cluster rather than a context-tail embedding cluster. The corresponding lessons from Part I apply: the loose endpoint is a property of \textit{durable departure from initial strategy}, the strict endpoint is a property of \textit{commitment to a specific alternative strategy}, and the strict endpoint can be non-monotonic at high doses for finite-horizon-and-cluster-granularity reasons (parent §5.1.3) that we predict will reappear here.
 
 \subsection{Hybrid state and the perturbation surface}
 
-In the parent paper the perturbation surface was one-dimensional: inject text into $X_{t^*}$. In the agentic setting it is three-dimensional:
+In Part I the perturbation surface was one-dimensional: inject text into $X_{t^*}$. In the agentic setting it is three-dimensional:
 
 \begin{itemize}
-  \item \textbf{In-context perturbation:} inject a redirect message into $X_{t^*}$ via the user role. Direct analog of the parent paper.
+  \item \textbf{In-context perturbation:} inject a redirect message into $X_{t^*}$ via the user role. Direct analog of Part I.
   \item \textbf{External perturbation:} mutate $E_{t^*}$ between turns, modify a file out-of-band, alter a test, change an environment variable. The agent learns about this only via its tool calls.
   \item \textbf{Mediated perturbation:} alter $O_{t^*}$, the tool result for a tool the agent already called. (This is what indirect prompt injection does: the agent reads a file whose content has been corrupted; the perturbation enters $X_{t^*+1}$ via the tool-result mechanism.)
 \end{itemize}
@@ -4048,7 +4021,7 @@ We pre-specify the following predictions; all are quantitative and falsifiable.
 
 \textbf{H7 (selectivity-profile invariance across model scale).} The qualitative ordering of the four Nudges' redirect-class $\text{ED50}_\text{Surv}$ values is preserved across Claude Haiku 4.5, Sonnet 4.6, and Opus 4.7. The absolute ED50 may shift; the ordering does not. \textit{Falsified if any one model's ordering differs.}
 
-These seven hypotheses define the quantitative claims the paper will defend or relinquish based on experimental evidence. Each is falsifiable at the standard two-sided 95\% bootstrap confidence level used throughout the parent paper.
+These seven hypotheses define the quantitative claims the paper will defend or relinquish based on experimental evidence. Each is falsifiable at the standard two-sided 95\% bootstrap confidence level used throughout Part I.
 
 \subsection{Operational primary endpoints}
 
@@ -4077,7 +4050,7 @@ Each endpoint is paired with one or more of the seven hypotheses and has a falsi
 
 \subsection{Harness}
 
-The experiments run on a minimal Python harness (\texttt{src/experiments/agentic/}) that owns the recursive loop directly, so that the Nudge is a \textit{pluggable component} rather than an opaque property of an off-the-shelf agent. This is the same architectural move the parent paper made for text loops: separate the generator from the context-update rule. Off-the-shelf coding agents (Claude Code, Aider, Cursor, OpenHands) each hard-code one Nudge and manage their own context internally; none expose it as a controlled variable, so none can serve as the system-under-test for a Nudge comparison.
+The experiments run on a minimal Python harness (\texttt{src/experiments/agentic/}) that owns the recursive loop directly, so that the Nudge is a \textit{pluggable component} rather than an opaque property of an off-the-shelf agent. This is the same architectural move Part I made for text loops: separate the generator from the context-update rule. Off-the-shelf coding agents (Claude Code, Aider, Cursor, OpenHands) each hard-code one Nudge and manage their own context internally; none expose it as a controlled variable, so none can serve as the system-under-test for a Nudge comparison.
 
 The loop (\texttt{loop.py}) drives one trajectory: at each turn it sends the current visible state $X_t$ (an Anthropic Messages list) to the agent model, executes any tool calls $A_t$ against a sandboxed working tree, optionally injects a perturbation, and hands the running state to the Nudge to assemble $X_{t+1}$. The agent model is \texttt{claude-haiku-4-5}, called one turn at a time (\texttt{agent\_client.py}) so the Nudge can rewrite the message list between turns.
 
@@ -4095,7 +4068,7 @@ The loop (\texttt{loop.py}) drives one trajectory: at each turn it sends the cur
 
 \subsection{Pre-registration status}
 
-The seven hypotheses of §3.7 and the five primary endpoints of §3.8 were specified before data collection. They were, however, designed after observing the parent paper's results, so confirmatory inference is bounded in the same way the parent paper bounds its own (Limitations, §7).
+The seven hypotheses of §3.7 and the five primary endpoints of §3.8 were specified before data collection. They were, however, designed after observing Part I's results, so confirmatory inference is bounded in the same way Part I bounds its own (Limitations, §7).
 
 
 \section{Results}
@@ -4164,7 +4137,7 @@ Two trajectories hung at the step where a timed-out \texttt{run\_bash} left an o
 
 \subsection{What Round 1 establishes}
 
-Round 1 establishes that the parent paper's recursive-loop machinery transfers intact to agentic coding loops: the state-generator-nudge factorization, the redirect/survival/compliance endpoint decomposition, per-task stochastic-floor controls, Wilson intervals, and family-cluster bootstrap all operate on tool-using trajectories with a real working tree. It confirms the strongest, most mechanical predictions (H1, H4) and, in doing so, validates the harness end-to-end. The hypotheses that carry the paper's novel claim, that the \textit{summarizer} is a learnable filter with its own selectivity profile (H2, H5), and that the qualitative Nudge ordering is model-scale-invariant (H7), are the subject of the subsequent round.
+Round 1 establishes that Part I's recursive-loop machinery transfers intact to agentic coding loops: the state-generator-nudge factorization, the redirect/survival/compliance endpoint decomposition, per-task stochastic-floor controls, Wilson intervals, and family-cluster bootstrap all operate on tool-using trajectories with a real working tree. It confirms the strongest, most mechanical predictions (H1, H4) and, in doing so, validates the harness end-to-end. The hypotheses that carry the paper's novel claim, that the \textit{summarizer} is a learnable filter with its own selectivity profile (H2, H5), and that the qualitative Nudge ordering is model-scale-invariant (H7), are the subject of the subsequent round.
 
 \subsection{Round 2: summarization launders the injection (AC2; H2, H5)}
 
